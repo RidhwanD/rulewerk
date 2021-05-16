@@ -66,4 +66,4 @@ Use the script `build-vlog-library.sh` [as shown here](#anchor-build-vlog) to cr
 * To build the standalone client jar, run `mvn install -Pclient`. This generates `standalone-rulewerk-client-[VERSION].jar` in `rulewerk-client/target`.
 * The CI setup is [documented here](https://github.com/knowsys/rulewerk/wiki/CI-Setup).
 
-This is a fork to contains rulewerk RPQ implementation.
+This is a fork to contain rulewerk RPQ implementation.
