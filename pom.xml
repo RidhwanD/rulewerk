@@ -20,6 +20,7 @@
 		<module>rulewerk-core</module>
 		<module>rulewerk-vlog</module>
 		<module>rulewerk-rdf</module>
+		<module>rulewerk-rpq</module>
 		<module>rulewerk-owlapi</module>
 		<module>rulewerk-graal</module>
 		<module>rulewerk-parser</module>
