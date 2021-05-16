@@ -21,6 +21,7 @@
 		<module>rulewerk-vlog</module>
 		<module>rulewerk-rdf</module>
 		<module>rulewerk-rpq</module>
+		<module>rulewerk-synthesis</module>
 		<module>rulewerk-owlapi</module>
 		<module>rulewerk-graal</module>
 		<module>rulewerk-parser</module>
