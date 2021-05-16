@@ -34,6 +34,11 @@
 		</dependency>
 		<dependency>
 			<groupId>${project.groupId}</groupId>
+			<artifactId>rulewerk-rpq</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
 			<artifactId>rulewerk-graal</artifactId>
 			<version>${project.version}</version>
 		</dependency>
@@ -97,3 +102,4 @@
 		</plugins>
 	</build>
 </project>
+
