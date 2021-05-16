@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<project
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.semanticweb.rulewerk</groupId>
+		<artifactId>rulewerk-parent</artifactId>
+		<version>0.7.0</version>
+	</parent>
+
+	<artifactId>rulewerk-rpq</artifactId>
+	<packaging>jar</packaging>
+
+	<name>Rulewerk RPQ Support</name>
+	<description>Bindings and utilities for working with RPQ data</description>
+
+	<dependencies>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>rulewerk-core</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>rulewerk-vlog</artifactId>
+			<version>${project.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<!-- Useful Collection utilities, like intersection -->
+		<dependency>
+		    <groupId>org.apache.commons</groupId>
+		    <artifactId>commons-collections4</artifactId>
+		    <version>4.2</version>
+		    <scope>test</scope>
+		</dependency>
+	</dependencies>
+
+</project>

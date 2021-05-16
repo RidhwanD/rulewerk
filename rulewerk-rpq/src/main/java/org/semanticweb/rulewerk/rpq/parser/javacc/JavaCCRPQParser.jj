@@ -1,0 +1,576 @@
+/*-
+ * #%L
+ * rulewerk-parser
+ * %%
+ * Copyright (C) 2018 - 2020 Rulewerk Developers
+ * %%
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * #L%
+ */
+
+options
+{
+	// Use \ u escapes in streams AND use a reader for the query
+	// => get both raw and escaped unicode
+	JAVA_UNICODE_ESCAPE = true;
+	UNICODE_INPUT = false;
+
+	STATIC = false;
+	// DEBUG_PARSER = true;
+	// DEBUG_LOOKAHEAD = true;
+	// DEBUG_TOKEN_MANAGER = true;
+	IGNORE_CASE = false;
+}
+
+PARSER_BEGIN(JavaCCRPQParser)
+package org.semanticweb.rulewerk.rpq.parser.javacc;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.ArrayDeque;
+import java.util.Deque;
+
+import org.semanticweb.rulewerk.rpq.parser.ParsingException;
+import org.semanticweb.rulewerk.rpq.parser.javacc.JavaCCRPQParserBase;
+import org.semanticweb.rulewerk.core.exceptions.PrefixDeclarationException;
+
+import org.semanticweb.rulewerk.rpq.model.api.RegExpression;
+import org.semanticweb.rulewerk.rpq.model.api.AlternRegExpression;
+import org.semanticweb.rulewerk.rpq.model.api.ConcatRegExpression;
+import org.semanticweb.rulewerk.rpq.model.api.KStarRegExpression;
+import org.semanticweb.rulewerk.rpq.model.api.KPlusRegExpression;
+import org.semanticweb.rulewerk.rpq.model.api.EdgeLabel;
+import org.semanticweb.rulewerk.rpq.model.api.ConverseEdgeLabel;
+import org.semanticweb.rulewerk.rpq.model.api.RegPathQuery;
+import org.semanticweb.rulewerk.rpq.model.api.RPQConjunction;
+import org.semanticweb.rulewerk.core.model.api.Statement;
+import org.semanticweb.rulewerk.core.model.api.Rule;
+import org.semanticweb.rulewerk.core.model.api.Literal;
+import org.semanticweb.rulewerk.core.model.api.NegativeLiteral;
+import org.semanticweb.rulewerk.core.model.api.PositiveLiteral;
+import org.semanticweb.rulewerk.core.model.api.Fact;
+import org.semanticweb.rulewerk.core.model.api.Term;
+import org.semanticweb.rulewerk.core.model.api.Constant;
+import org.semanticweb.rulewerk.core.model.api.DataSource;
+import org.semanticweb.rulewerk.core.model.api.PrefixDeclarationRegistry;
+import org.semanticweb.rulewerk.core.model.api.Argument;
+import org.semanticweb.rulewerk.core.model.api.Command;
+import org.semanticweb.rulewerk.core.reasoner.KnowledgeBase;
+
+import org.semanticweb.rulewerk.core.model.implementation.Expressions;
+import org.semanticweb.rulewerk.rpq.model.implementation.RPQExpressions;
+
+public class JavaCCRPQParser extends JavaCCRPQParserBase
+{
+	private SubParserFactory getSubParserFactory() {
+		return new SubParserFactory(this);
+	}
+
+	public void ensureEndOfInput() throws ParseException {
+		jj_consume_token(EOF);
+	}
+}
+
+PARSER_END(JavaCCRPQParser)
+
+TOKEN_MGR_DECLS : {
+	// use initializer block to work around auto-generated constructors.
+	{
+		states = new ArrayDeque<Integer>();
+	}
+
+	Deque<Integer> states;
+
+	void pushState() {
+		states.push(curLexState);
+	}
+
+	void popState() {
+		SwitchTo(states.pop());
+	}
+}
+
+void parse() throws PrefixDeclarationException : {
+} {
+	( base() )?
+	( prefix() )*
+	( query() )
+	< EOF >
+}
+
+void base() throws PrefixDeclarationException : {
+	Token iri;
+} {
+	< BASE > iri = < IRI_ABSOLUTE > < DOT > {
+		setBase(iri.image);
+	}
+}
+
+void prefix() throws PrefixDeclarationException : {
+	Token pn;
+	String iri;
+} {
+	< PREFIX > pn = < PNAME_NS > iri = absoluteIri() < DOT > {
+		setPrefix(pn.image, iri);
+	}
+}
+
+String absoluteIri() throws PrefixDeclarationException : {
+	Token iri;
+} {
+	iri = < IRI_ABSOLUTE > { return absolutizeIri(iri.image); }
+  | iri = < PNAME_LN > { return resolvePrefixedName(iri.image); }
+}
+
+RPQConjunction<RegPathQuery> query() throws PrefixDeclarationException : {
+    List<RegPathQuery> rpqs;
+	List<Term> vars;
+} {
+    LOOKAHEAD(< SELECT > )
+	< SELECT > (< DISTINCT >)? vars = listOfTerms() < WHERE > < LBRACE > rpqs = listOfRegPathQuery() < RBRACE > {
+    	setRPQs(rpqs);
+    	setProjVar(vars);
+    	return RPQExpressions.makeRPQConjunction(rpqs, vars);
+    }
+	| LOOKAHEAD(< ASK >)
+    < ASK > < LBRACE > rpqs = listOfRegPathQuery() < RBRACE > {
+    	vars = new ArrayList< Term >();
+    	setRPQs(rpqs);
+    	setProjVar(vars);
+    	return RPQExpressions.makeRPQConjunction(rpqs, vars);
+    }
+}
+
+RegPathQuery regPathQuery() throws PrefixDeclarationException : {
+	RegExpression rx;
+	Term t1;
+	Term t2;
+} {
+	t1 = term() rx = regExpression() t2 = term()  {
+		return RPQExpressions.makeRegPathQuery(rx, t1, t2);
+	}
+}
+
+List < RegPathQuery > listOfRegPathQuery() throws PrefixDeclarationException : {
+    RegPathQuery rpq;
+    List < RegPathQuery > list = new ArrayList < RegPathQuery > ();
+} {
+    < LBRACE > rpq = regPathQuery() < DOT > { list.add(rpq); } ( rpq = regPathQuery() < DOT >  { list.add(rpq); } )* < RBRACE > {
+		return list;
+	}
+}
+
+RegExpression regExpression() throws PrefixDeclarationException : {
+    RegExpression rx;
+} {
+    ( 
+    LOOKAHEAD(absoluteIri() )
+	rx = edgeLabel() { return rx; }
+	| LOOKAHEAD(< LPAREN > regExpression() < ALTERN >)
+    rx = alternRegExpression() { return rx; }
+	| LOOKAHEAD(< LPAREN > regExpression() < CONCAT >)
+	rx = concatRegExpression() { return rx; }
+	| LOOKAHEAD(< LPAREN > regExpression() < KSTAR >)
+	rx = kStarRegExpression() { return rx; }
+	| LOOKAHEAD(< LPAREN > regExpression() < KPLUS >)
+	rx = kPlusRegExpression() { return rx; }
+	| LOOKAHEAD(< LPAREN > < CONVEL > edgeLabel())
+	rx = converseEdgeLabel() { return rx; }
+	) 
+}
+
+AlternRegExpression alternRegExpression() throws PrefixDeclarationException : {
+	RegExpression rx1;
+	RegExpression rx2;
+} {
+	< LPAREN > rx1 = regExpression() < ALTERN > rx2 = regExpression() < RPAREN >  {
+		return RPQExpressions.makeAlternRegExpression(rx1, rx2);
+	}	
+}
+
+ConcatRegExpression concatRegExpression() throws PrefixDeclarationException : {
+	RegExpression rx1;
+	RegExpression rx2;
+} {
+	< LPAREN > rx1 = regExpression() < CONCAT > rx2 = regExpression() < RPAREN >  {
+		return RPQExpressions.makeConcatRegExpression(rx1, rx2);
+	}	
+}
+
+KStarRegExpression kStarRegExpression() throws PrefixDeclarationException : {
+	RegExpression rx;
+} {
+	< LPAREN > rx = regExpression()< KSTAR > < RPAREN >  {
+		return RPQExpressions.makeKStarRegExpression(rx);
+	}
+}
+
+KPlusRegExpression kPlusRegExpression() throws PrefixDeclarationException : {
+	RegExpression rx;
+} {
+	< LPAREN > rx = regExpression()< KPLUS > < RPAREN >  {
+		return RPQExpressions.makeKPlusRegExpression(rx);
+	}
+}
+
+ConverseEdgeLabel converseEdgeLabel() throws PrefixDeclarationException : {
+	EdgeLabel el;
+} {
+	< LPAREN > < CONVEL > el = edgeLabel() < RPAREN >  {
+		return RPQExpressions.makeConverseEdgeLabel(el);
+	}
+}
+
+EdgeLabel edgeLabel() throws PrefixDeclarationException : {
+	String s;
+} {
+	s = absoluteIri()  {
+		return RPQExpressions.makeEdgeLabel(s);
+	}
+}
+
+List < Term > listOfTerms() throws PrefixDeclarationException : {
+    Term t;
+    List < Term > list = new ArrayList < Term > ();
+} {
+    t = term() { list.add(t); } ( t = term() { list.add(t); } )* {
+		return list;
+	}
+}
+
+Term term() throws PrefixDeclarationException : {
+    Token t;
+    String s;
+    Constant c;
+	Term tt;
+} {
+    s = absoluteIri() { return createConstant(s); }
+  | t = < VARORPREDNAME > { return createConstant(t.image); }
+  | c = NumericLiteral() { return c; }
+  | c = RDFLiteral() { return c; }
+  | t = < UNIVAR > {
+        s = t.image.substring(1);
+        return createUniversalVariable(s);
+    }
+  | try {
+		tt = ConfigurableLiteral () { return tt; }
+	} catch (ParsingException e) {
+		throw makeParseExceptionWithCause("Invalid configurable literal expression", e);
+	}
+}
+
+Constant NumericLiteral() : {
+    Token t;
+} {
+    t = < INTEGER > { return createConstant(t.image, PrefixDeclarationRegistry.XSD_INTEGER); }
+  | t = < DECIMAL > { return createConstant(t.image, PrefixDeclarationRegistry.XSD_DECIMAL); }
+  | t = < DOUBLE > { return createConstant(t.image, PrefixDeclarationRegistry.XSD_DOUBLE); }
+}
+
+Constant RDFLiteral() throws PrefixDeclarationException : {
+    String lex;
+    Token lang = null;   // Optional lang tag and datatype.
+    String dt = null;
+} {
+    lex = String() ( lang = < LANGTAG > | < DATATYPE > dt = absoluteIri() )? {
+		if (lang != null) {
+			return createLanguageStringConstant(lex, lang.image);
+		}
+		return createConstant(lex, dt);
+	}
+}
+
+Term ConfigurableLiteral() throws ParsingException : {
+	String s;
+	Token t;
+} {
+	( LOOKAHEAD( < PIPE_DELIMITED_LITERAL >,
+				 { isConfigurableLiteralRegistered(ConfigurableLiteralDelimiter.PIPE) } )
+	 t = < PIPE_DELIMITED_LITERAL > {
+		return parseConfigurableLiteral(ConfigurableLiteralDelimiter.PIPE, t.image, getSubParserFactory());
+	 }
+	 | LOOKAHEAD( < HASH_DELIMITED_LITERAL >,
+				  { isConfigurableLiteralRegistered(ConfigurableLiteralDelimiter.HASH) } )
+	 t = < HASH_DELIMITED_LITERAL > {
+		return parseConfigurableLiteral(ConfigurableLiteralDelimiter.HASH, t.image, getSubParserFactory());
+	 }
+	 )
+}
+
+String String() : {
+    Token t;
+} {
+    ( t = < SINGLE_QUOTED_STRING >
+    | t = < DOUBLE_QUOTED_STRING >
+    | t = < TRIPLE_QUOTED_STRING >
+    | t = < SIXFOLD_QUOTED_STRING >
+	) { return unescapeStr(t.image, t.beginLine, t.beginColumn); }
+}
+
+String PrefixedName() throws PrefixDeclarationException : {
+    Token t;
+} {
+	t = < PNAME_LN > { return resolvePrefixedName(t.image); }
+}
+
+// ------------------------------------------
+
+// Whitespace
+< * > SKIP : {
+  < WHITESPACE : [ " ", "\t", "\n", "\r", "\f" ] >
+}
+
+// Comments
+< DEFAULT, DIRECTIVE_ARGUMENTS > SKIP : {
+  < COMMENT : "%" ( ~[ "\n" ] )* "\n" >
+}
+
+MORE : {
+  "@": DIRECTIVE
+}
+
+< DEFAULT, TERM, DIRECTIVE_ARGUMENTS, RPQS, REGEX > MORE : {
+	"<" { pushState(); } : ABSOLUTE_IRI
+}
+
+< DEFAULT > TOKEN [IGNORE_CASE] : {
+  < SELECT : "select" >
+}
+
+< DEFAULT > TOKEN [IGNORE_CASE] : {
+  < DISTINCT : "distinct" >
+}
+
+< DEFAULT > TOKEN [IGNORE_CASE] : {
+  < WHERE : "where" >
+}
+
+< DEFAULT > TOKEN [IGNORE_CASE] : {
+  < ASK : "ask" >
+}
+
+< DEFAULT, TERM, RPQS, REGEX, DIRECTIVE_ARGUMENTS > TOKEN : {
+  < VARORPREDNAME : < A2Z> (< A2ZND >)* >
+  | < #A2Z : [ "a"-"z", "A"-"Z" ] >
+  | < #A2ZN : [ "a"-"z", "A"-"Z", "0"-"9" ] >
+  | < #A2ZND : [ "a"-"z", "A"-"Z", "0"-"9", "-", "_" ] >
+  | < PNAME_LN : (< PN_PREFIX >)? ":" < PN_LOCAL > >
+  | < PNAME_NS : < PN_PREFIX > ":" >
+  | < #PN_CHARS_BASE : [ "a"-"z", "A"-"Z", "\u00c0"-"\u00d6",
+						 "\u00d8"-"\u00f6", "\u00f8"-"\u02ff",
+						 "\u0370"-"\u037d", "\u037f"-"\u1fff",
+						 "\u200c"-"\u200d", "\u2070"-"\u218f",
+						 "\u2c00"-"\u2fef", "\u3001"-"\ud7ff",
+						 "\uf900"-"\ufffd" ] >
+  | < #PN_CHARS_U : < PN_CHARS_BASE > | "_" >
+  | < #PN_CHARS : ( < PN_CHARS_U > | [ "-", "0"-"9", "\u00b7",
+									   "\u0300"-"\u036f",
+									   "\u203f"-"\u2040" ] ) >
+  | < #PN_PREFIX : < PN_CHARS_BASE >
+		( ( < PN_CHARS > | "." )* < PN_CHARS > )? >
+  | < #PN_LOCAL : ( < PN_CHARS_U > | [ ":", "0"-"9" ] )
+		( ( < PN_CHARS > | [ ".", ":" ] )* < PN_CHARS > )? >
+  |	< COMMA : "," >
+  | < NAMED_NULL : "_:" ( < PN_CHARS_U > | [ "0"-"9" ] ) (( < PN_CHARS > | "." )* < PN_CHARS > )? > {
+		matchedToken.image = JavaCCRPQParserBase.stripChars(matchedToken.image, 2);
+	}
+}
+
+< DEFAULT, TERM, RPQS, REGEX, DIRECTIVE_ARGUMENTS, PAREN_DELIMITED > TOKEN : {
+	< LPAREN : "(" > {
+		pushState();
+
+		if (curLexState == DEFAULT || curLexState == RPQS) {
+			SwitchTo(REGEX);
+		}
+	}
+  | < RPAREN : ")" > { popState(); }
+}
+
+< DEFAULT, TERM, RPQS, DIRECTIVE_ARGUMENTS, BRACE_DELIMITED > TOKEN : {
+	< LBRACE : "{" > {
+		pushState();
+
+		if (curLexState == DEFAULT) {
+			SwitchTo(RPQS);
+		}
+	}
+  | < RBRACE : "}" > { popState(); }
+}
+
+< TERM, DIRECTIVE_ARGUMENTS > TOKEN : {
+  < INTEGER : (< SIGN >)? < DIGITS > >
+  | < DECIMAL : (< SIGN >)? ( < DIGITS > "." (< DIGIT >)*
+							  | "." < DIGITS > ) >
+  | < DOUBLE : (< SIGN >)? ( < DIGITS > "." (< DIGIT >)* < EXPONENT >
+                           | "." (< DIGITS >) (< EXPONENT >)
+                           | < DIGITS > < EXPONENT > ) >
+  | < #SIGN : [ "+", "-" ] >
+  | < #DIGIT : [ "0"-"9" ] >
+  | < #DIGITS : (< DIGIT >)+ >
+  | < #EXPONENT : [ "e", "E" ] (< SIGN >)? < DIGITS > >
+  | < COLON : ":" >
+}
+
+< DEFAULT, DIRECTIVE_ARGUMENTS > TOKEN : {
+  < ARROW : ":-" >
+}
+
+< DEFAULT, DIRECTIVE_ARGUMENTS > TOKEN : {
+  < TILDE : "~" >
+}
+
+< REGEX > TOKEN : {
+  < CONCAT : "/" >
+}
+
+< REGEX > TOKEN : {
+  < ALTERN : "|" >
+}
+
+< REGEX > TOKEN : {
+  < KSTAR : "*" >
+}
+
+< REGEX > TOKEN : {
+  < KPLUS : "+" >
+}
+
+< REGEX > TOKEN : {
+  < CONVEL : "^" >
+}
+
+< ABSOLUTE_IRI > TOKEN : {
+	< IRI_ABSOLUTE : (~[ ">", "<", "\"", "{", "}", "^", "\\", "|", "`", "\u0000"-"\u0020" ])* ">" > {
+			  matchedToken.image = JavaCCRPQParserBase.stripDelimiters(matchedToken.image, 1);
+			  popState();
+		  }
+}
+
+< DIRECTIVE > TOKEN [IGNORE_CASE] : {
+    < BASE : "base" > : DIRECTIVE_ARGUMENTS
+  | < PREFIX : "prefix" > : DIRECTIVE_ARGUMENTS
+  | < SOURCE : "source" > : DIRECTIVE_ARGUMENTS
+  | < CUSTOM_DIRECTIVE : < DIRECTIVENAME > > {
+		matchedToken.image = JavaCCRPQParserBase.stripChars(matchedToken.image, 1);
+	}: DIRECTIVE_ARGUMENTS
+  | < DIRECTIVENAME : [ "a"-"z", "A"-"Z" ] ([ "a"-"z", "A"-"Z", "0"-"9", "-", "_" ])* >
+}
+
+< DEFAULT, RPQS, DIRECTIVE_ARGUMENTS > TOKEN : {
+	< DOT : "." > : DEFAULT
+}
+
+< DIRECTIVE_ARGUMENTS > TOKEN : {
+  < ARITY : "[" < INTEGER > "]" > {
+			  matchedToken.image = JavaCCRPQParserBase.stripDelimiters(matchedToken.image, 1);
+		  }
+  | < ARGUMENT_NAME : < DIRECTIVENAME > >
+}
+
+< DEFAULT, RPQS, TERM, DIRECTIVE_ARGUMENTS > TOKEN : {
+	< UNIVAR : "?" < VARORPREDNAME > >
+}
+
+< TERM, RPQS, DIRECTIVE_ARGUMENTS > TOKEN : {
+    < EXIVAR : "!" < VARORPREDNAME > >
+  | < LANGTAG : "@" ( < A2Z > )+ ( "-" ( < A2ZN > )+ )? > {
+		matchedToken.image = JavaCCRPQParserBase.stripChars(matchedToken.image, 1);
+	}
+  | < DATATYPE : "^^" >
+}
+
+< TERM, DIRECTIVE_ARGUMENTS > MORE : {
+  < "'" > { pushState(); } : SINGLE_QUOTED
+  | < "\"" > { pushState(); } : DOUBLE_QUOTED
+  | < "'''" > { pushState(); }: TRIPLE_QUOTED
+  | < "\"\"\"" > { pushState(); } : SIXFOLD_QUOTED
+  | < "|" > { pushState(); } : PIPE_DELIMITED
+  | < "#" > { pushState(); } : HASH_DELIMITED
+}
+
+< TERM, BRACKET_DELIMITED > TOKEN : {
+    < LBRACKET : "[" > { pushState(); } : BRACKET_DELIMITED
+}
+
+< PIPE_DELIMITED > TOKEN : {
+	< PIPE_DELIMITED_LITERAL : ( ~ [ "|" ] )* "|" > {
+		popState();
+		matchedToken.image = JavaCCRPQParserBase.stripDelimiters(matchedToken.image, 1);
+	}
+}
+
+< HASH_DELIMITED > TOKEN : {
+	< HASH_DELIMITED_LITERAL : ( ~ [ "#" ] )* "#" > {
+		popState();
+		matchedToken.image = JavaCCRPQParserBase.stripDelimiters(matchedToken.image, 1);
+	}
+}
+
+< PAREN_DELIMITED > TOKEN : {
+	< UNPAREN : ( ~ [ "(", ")" ] )+ >
+}
+
+< BRACE_DELIMITED > TOKEN : {
+	< UNBRACE : (~ [ "{", "}" ] )+ >
+}
+
+< BRACKET_DELIMITED > TOKEN : {
+    < RBRACKET : "]" > { popState(); }
+  | < UNBRACKET : ( ~ [ "[", "]" ] )+ >
+}
+
+< SINGLE_QUOTED > TOKEN : {
+	< SINGLE_QUOTED_STRING : ( ~[ "'", "\\", "\n", "\r" ]
+							 | < ESCAPE_SEQUENCE > )* "'" > {
+		popState();
+		matchedToken.image = JavaCCRPQParserBase.stripDelimiters(matchedToken.image, 1);
+	}
+}
+
+< DOUBLE_QUOTED > TOKEN : {
+	< DOUBLE_QUOTED_STRING : ( ~[ "\"", "\\", "\n", "\r" ]
+							 | < ESCAPE_SEQUENCE > )* "\"" > {
+		popState();
+		matchedToken.image = JavaCCRPQParserBase.stripDelimiters(matchedToken.image, 1);
+	}
+}
+
+< TRIPLE_QUOTED > TOKEN : {
+	< TRIPLE_QUOTED_STRING : ( ~[ "'", "\\" ]
+							 | < ESCAPE_SEQUENCE >
+							 | ( "'" ~[ "'" ] )
+							 | ( "''" ~[ "'" ] ) )* "'''" > {
+		popState();
+		matchedToken.image = JavaCCRPQParserBase.stripDelimiters(matchedToken.image, 3);
+	}
+}
+
+< SIXFOLD_QUOTED > TOKEN : {
+	< SIXFOLD_QUOTED_STRING : ( ~[ "\"", "\\" ]
+							  | < ESCAPE_SEQUENCE >
+							  | ( "\"" ~[ "\"" ] )
+							  | ( "\"\"" ~[ "\"" ] ) )* "\"\"\"" > {
+		popState();
+		matchedToken.image = JavaCCRPQParserBase.stripDelimiters(matchedToken.image, 3);
+	}
+}
+
+< SINGLE_QUOTED, DOUBLE_QUOTED, TRIPLE_QUOTED, SIXFOLD_QUOTED > MORE : {
+	< ESCAPE_SEQUENCE : "\\" [ "t", "b", "n", "r", "f", "\\", "\"", "'" ] >
+}
