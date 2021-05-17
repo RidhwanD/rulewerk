@@ -30,8 +30,6 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.semanticweb.rulewerk.core.exceptions.ReasonerStateException;
-import org.semanticweb.rulewerk.core.exceptions.RulewerkRuntimeException;
-import org.semanticweb.rulewerk.core.model.api.Literal;
 import org.semanticweb.rulewerk.core.model.api.PositiveLiteral;
 import org.semanticweb.rulewerk.core.model.api.Predicate;
 import org.semanticweb.rulewerk.core.model.api.Term;
@@ -158,7 +156,7 @@ public final class ReasoningUtils {
 		final String pattern = "%d{yyyy-MM-dd HH:mm:ss} %-5p - %m%n";
 		consoleAppender.setLayout(new PatternLayout(pattern));
 		// Change to Level.ERROR for fewer messages:
-		consoleAppender.setThreshold(Level.INFO);
+		consoleAppender.setThreshold(Level.ERROR);
 
 		consoleAppender.activateOptions();
 		Logger.getRootLogger().addAppender(consoleAppender);

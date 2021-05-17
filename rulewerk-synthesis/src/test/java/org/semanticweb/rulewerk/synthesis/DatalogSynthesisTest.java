@@ -1,6 +1,5 @@
 package org.semanticweb.rulewerk.synthesis;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -8,19 +7,14 @@ import java.util.List;
 import org.semanticweb.rulewerk.core.model.api.Constant;
 import org.semanticweb.rulewerk.core.model.api.Fact;
 import org.semanticweb.rulewerk.core.model.api.Rule;
-import org.semanticweb.rulewerk.core.model.api.Statement;
 import org.semanticweb.rulewerk.core.model.api.UniversalVariable;
 import org.semanticweb.rulewerk.core.model.implementation.Expressions;
 
-import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Context;
-import com.microsoft.z3.Model;
-import com.microsoft.z3.Solver;
 
 public class DatalogSynthesisTest {
 
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
 		List<Fact> it = new ArrayList<Fact>();
 		List<Fact> otp = new ArrayList<Fact>();
 		List<Fact> otm = new ArrayList<Fact>();
@@ -78,37 +72,9 @@ public class DatalogSynthesisTest {
 
 		DatalogSynthesis ds = new DatalogSynthesis(it, otp, otm, rs, ctx);
 		
-//		ds.whyNotProv(, rs);
-		
-//		List<Statement> newRs = ds.getExistNeg(rs);
-//		for (Statement r : newRs) {
-//			System.out.println(r);
-//		}
-		
-//		BoolExpr v_a = ctx.mkBoolConst("a");
-//		BoolExpr v_b = ctx.mkBoolConst("b");
-//		BoolExpr v_c = ctx.mkBoolConst("c");
-//		BoolExpr v_aORv_b = ctx.mkOr(v_a, v_b);
-//		BoolExpr v_aORv_bANDv_c = ctx.mkAnd(v_aORv_b, v_c);
-//		
-//		Model m = ds.consultSATSolver(v_aORv_bANDv_c);
-//		
-//		System.out.println(m.getConstInterp(v_c).isFalse());
-		
-//		List<Rule> wp = new ArrayList<Rule>();
-//		wp.add(r1);
-//		wp.add(r3);
-//		wp.add(r4);
-//		ds.whyProvExpr(wp);
-//		
-//		
-//		List<Rule> wm = new ArrayList<Rule>();
-//		wm.add(r2);
-//		
-//		System.out.println(ds.whyNotCoProvExpr(wm,
-//				ds.coprovInv(op1, wp)));
-		
-		ds.synthesis();
+		List<Rule> result = ds.synthesis();
+		for (Rule r : result) {
+			System.out.println(r);
+		}
 	}
-
 }

@@ -32,7 +32,7 @@ public class DatalogSynthesis {
 	private Map<BoolExpr, Rule> var2rule;
 	private Map<Rule, BoolExpr> rule2var;
 	private Context ctx;
-	private double coprovChance = 0.1; 		// Set probability of coprov being performed.
+	private double coprovChance = 0.05; 		// Set probability of coprov being performed.
 
 	public DatalogSynthesis(List<Fact> inputTuple, List<Fact> outputPTuple, List<Fact> outputNTuple, List<Rule> ruleSet, Context ctx){
 		this.inputTuple = inputTuple;
@@ -129,7 +129,8 @@ public class DatalogSynthesis {
 		return enList;
 	}
 	
-	public List<Rule> whyProv(Fact t, List<Rule> Pplus){
+	public List<Rule> whyProv(PositiveLiteral t, List<Rule> Pplus){
+		System.out.println("Investigate "+t);
 		// should return list of rules that produce term t.
 		return Pplus;
 	}
@@ -161,10 +162,12 @@ public class DatalogSynthesis {
 	}
 	
 	public List<Rule> whyNotProv(PositiveLiteral t, List<Rule> Pmin) throws IOException{
+		System.out.println("Investigate "+t);
 		// Use the delta debugging here
 		int d = 2;
 		while (d <= Pmin.size()) {
-			List<List<Rule>> partition = this.split(Pmin, d);
+			List<List<Rule>> partition = split(Pmin, d);
+			System.out.println("Partition: "+partition);
 			boolean deltabuggy = false; boolean revdeltabuggy = false;
 			int idx = 0; int iddbuggy = 0; int idrbuggy = 0;
 			while (idx < partition.size() && !deltabuggy) {
@@ -172,6 +175,7 @@ public class DatalogSynthesis {
 				List<Rule> buggy = new ArrayList<Rule>(this.ruleSet);
 				buggy.removeAll(partition.get(idx));
 				kb.addStatements(buggy);
+				kb.addStatements(this.inputTuple);
 				try (final Reasoner reasoner = new VLogReasoner(kb)) {
 					reasoner.reason();
 					long generate = ReasoningUtils.printOutQueryCount(t, reasoner);
@@ -186,6 +190,7 @@ public class DatalogSynthesis {
 				List<Rule> buggy2 = new ArrayList<Rule>(this.ruleSet);
 				buggy2.removeAll(revDelta);
 				kb2.addStatements(buggy2);
+				kb2.addStatements(this.inputTuple);
 				try (final Reasoner reasoner2 = new VLogReasoner(kb2)) {
 					reasoner2.reason();
 					long generate = ReasoningUtils.printOutQueryCount(t, reasoner2);
@@ -221,6 +226,7 @@ public class DatalogSynthesis {
 	}
 	
 	public List<Rule> coprovInv(Fact t, List<Rule>Pplus) {
+		System.out.println("Investigate "+t);
 		List<Statement> enRules = this.getExistNeg(Pplus);
 		for (Statement r : enRules) {
 			System.out.println(r);
@@ -314,8 +320,9 @@ public class DatalogSynthesis {
 		List<Rule> pPlus = this.ruleSet;
 		List<Rule> pMin = new ArrayList<Rule>();
 		Model result = this.consultSATSolver(phi);
-		boolean loop = true;
+		boolean loop = true; int iter = 0;
 		while (result != null && loop) {
+			iter++;
 			System.out.println();
 			loop = false;
 			System.out.println("P+:");
@@ -333,15 +340,20 @@ public class DatalogSynthesis {
 					long generate = ReasoningUtils.printOutQueryCount(t, reasoner);
 					if (generate == 0) {
 						loop = true;
-						if (pMin.size() > 0)
+						if (pMin.size() > 0) {
+							System.out.println("============= Perform Why Not Provenance ==============");
 							phi = this.ctx.mkAnd(phi, this.whyNotProvExpr(this.whyNotProv(t, pMin)));
+							System.out.println("=============== Why Not Provenance End ================");
+						}
 					} else if (generate == 1) {
 						Random rand = new Random();
 						double n = rand.nextInt(100)/100;
 						if (n <= this.coprovChance) {
-							loop = true;
-							if (pMin.size() > 0 && pPlus.size() > 0)
+							if (pMin.size() > 0 && pPlus.size() > 0) {
+								System.out.println("============= Perform Co-Provenance ==============");
 								phi = this.ctx.mkAnd(phi, this.whyNotCoProvExpr(pMin, this.coprovInv(t, pPlus)));
+								System.out.println("=============== Co-Provenance End ================");
+							}
 						}
 					}
 				}
@@ -349,8 +361,11 @@ public class DatalogSynthesis {
 					long generate = ReasoningUtils.printOutQueryCount(t, reasoner);
 					if (generate == 1) {
 						loop = true;
-						if (pPlus.size() > 0)
+						if (pPlus.size() > 0) {
+							System.out.println("============= Perform Why Provenance ==============");
 							phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProv(t, pPlus)));
+							System.out.println("=============== Why Provenance End ================");
+						}
 					}
 				}
 			} catch (IOException e) {
@@ -362,6 +377,10 @@ public class DatalogSynthesis {
 				pMin = this.derivePMinus(result);
 			}
 		}
+		if (result != null)
+			System.out.println("Synthesis finished in "+iter+" iteration(s)");
+		else
+			System.out.println("No solutions found.");
 		return pPlus;
 	}
 }
