@@ -135,6 +135,66 @@ public class DatalogSynthesis {
 		return Pplus;
 	}
 	
+	public List<Rule> whyProvAlt(PositiveLiteral t, List<Rule> Pplus) throws IOException{
+		System.out.println("Investigate "+t);
+		// Alternative of why provenance  the delta debugging here
+		int d = 2;
+		while (d <= Pplus.size()) {
+			List<List<Rule>> partition = split(Pplus, d);
+			System.out.println("Partition: "+partition);
+			boolean deltabuggy = false; boolean revdeltabuggy = false;
+			int idx = 0; int iddbuggy = 0; int idrbuggy = 0;
+			while (idx < partition.size() && !deltabuggy) {
+				KnowledgeBase kb = new KnowledgeBase();
+				kb.addStatements(partition.get(idx));
+				kb.addStatements(this.inputTuple);
+				try (final Reasoner reasoner = new VLogReasoner(kb)) {
+					System.out.println("Using knowledge base 1 containing ");
+					for (Statement s : kb.getStatements()) {
+						System.out.println("- "+s);
+					}
+					reasoner.reason();
+					long generate = ReasoningUtils.printOutQueryCount(t, reasoner);
+					if (generate == 1) {
+						deltabuggy = true;
+						iddbuggy = idx;
+					}
+				}
+				if (!deltabuggy) {
+					KnowledgeBase kb2 = new KnowledgeBase();
+					List<Rule> revDelta = new ArrayList<Rule>(Pplus);
+					revDelta.removeAll(partition.get(idx));
+					kb2.addStatements(revDelta);
+					kb2.addStatements(this.inputTuple);
+					try (final Reasoner reasoner2 = new VLogReasoner(kb2)) {
+						System.out.println("Using knowledge base 2 containing ");
+						for (Statement s : kb.getStatements()) {
+							System.out.println("- "+s);
+						}
+						reasoner2.reason();
+						long generate = ReasoningUtils.printOutQueryCount(t, reasoner2);
+						if (generate == 1) {
+							revdeltabuggy = true;
+							idrbuggy = idx;
+						}
+					}
+				}
+				idx += 1;
+			}
+			if (deltabuggy) {
+				Pplus = partition.get(iddbuggy);
+				d = 2;
+			} else if (revdeltabuggy) {
+				List<Rule> revDelta = new ArrayList<Rule>(Pplus);
+				revDelta.removeAll(partition.get(idrbuggy));
+				Pplus = revDelta;
+				d -= 1;
+			} else d *= 2;
+		}
+		
+		return Pplus;
+	}
+	
 	public BoolExpr whyProvExpr(List<Rule> wp) {
 		BoolExpr conjVars = this.rule2var.get(wp.get(0));
 		if (wp.size() > 1) {
@@ -363,7 +423,7 @@ public class DatalogSynthesis {
 						loop = true;
 						if (pPlus.size() > 0) {
 							System.out.println("============= Perform Why Provenance ==============");
-							phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProv(t, pPlus)));
+							phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvAlt(t, pPlus)));
 							System.out.println("=============== Why Provenance End ================");
 						}
 					}
@@ -377,10 +437,12 @@ public class DatalogSynthesis {
 				pMin = this.derivePMinus(result);
 			}
 		}
-		if (result != null)
+		if (result != null) {
 			System.out.println("Synthesis finished in "+iter+" iteration(s)");
-		else
+			return pPlus;
+		} else {
 			System.out.println("No solutions found.");
-		return pPlus;
+			return null;
+		}
 	}
 }

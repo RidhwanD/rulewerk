@@ -32,13 +32,13 @@ public class DatalogSynthesisTest {
 		final Fact i1 = Expressions.makeFact(Expressions.makePredicate("parent", 2), ch1, jm1);
 		final Fact i2 = Expressions.makeFact(Expressions.makePredicate("parent", 2), ezb, jm1);
 		final Fact i3 = Expressions.makeFact(Expressions.makePredicate("parent", 2), ch2, ch1);
-		final Fact i4 = Expressions.makeFact(Expressions.makePredicate("parent", 2), ctr, ch1);
+		final Fact i4 = Expressions.makeFact(Expressions.makePredicate("parent", 2), ctr, ch2);
 		it.add(i1); it.add(i2); it.add(i3); it.add(i4);
 
 		final Fact op1 = Expressions.makeFact(Expressions.makePredicate("Ancestor", 2), ch1, jm1);
-		final Fact op2 = Expressions.makeFact(Expressions.makePredicate("Ancestor", 2), ezb, jm1);
-		final Fact op3 = Expressions.makeFact(Expressions.makePredicate("Ancestor", 2), ch2, ch1);
-		final Fact op4 = Expressions.makeFact(Expressions.makePredicate("Ancestor", 2), ch2, jm1);
+		final Fact op2 = Expressions.makeFact(Expressions.makePredicate("Ancestor", 2), ch2, ch1);
+		final Fact op3 = Expressions.makeFact(Expressions.makePredicate("Ancestor", 2), ch2, jm1);
+		final Fact op4 = Expressions.makeFact(Expressions.makePredicate("Ancestor", 2), ctr, jm1);
 		otp.add(op1); otp.add(op2); otp.add(op3); otp.add(op4);
 
 		final Fact om1 = Expressions.makeFact(Expressions.makePredicate("Ancestor", 2), ch1, ezb);
@@ -73,8 +73,10 @@ public class DatalogSynthesisTest {
 		DatalogSynthesis ds = new DatalogSynthesis(it, otp, otm, rs, ctx);
 		
 		List<Rule> result = ds.synthesis();
-		for (Rule r : result) {
-			System.out.println(r);
+		if (result != null) {
+			for (Rule r : result) {
+				System.out.println(r);
+			}
 		}
 	}
 }
