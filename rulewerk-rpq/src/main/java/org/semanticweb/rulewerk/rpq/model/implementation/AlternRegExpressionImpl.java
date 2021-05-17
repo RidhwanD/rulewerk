@@ -27,11 +27,11 @@ public class AlternRegExpressionImpl implements AlternRegExpression {
 	}
 	
 	public void setExp1(RegExpression exp) {
-		this.exp1 = exp1;
+		this.exp1 = exp;
 	}
 	
 	public void setExp2(RegExpression exp) {
-		this.exp2 = exp2;
+		this.exp2 = exp;
 	}
 	
 	@Override

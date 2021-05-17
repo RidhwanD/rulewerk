@@ -1,10 +1,7 @@
 package org.semanticweb.rulewerk.rpq.model.implementation;
 
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-import org.semanticweb.rulewerk.rpq.model.api.ConverseEdgeLabel;
 import org.semanticweb.rulewerk.rpq.model.api.ConverseTransition;
 import org.semanticweb.rulewerk.rpq.model.api.EdgeLabel;
 import org.semanticweb.rulewerk.rpq.model.api.NDFiniteAutomata;

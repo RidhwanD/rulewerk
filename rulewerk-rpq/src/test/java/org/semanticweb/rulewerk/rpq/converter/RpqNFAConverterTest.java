@@ -19,7 +19,6 @@ import org.semanticweb.rulewerk.rpq.model.implementation.RPQExpressions;
 import org.semanticweb.rulewerk.rpq.parser.ParsingException;
 import org.semanticweb.rulewerk.rpq.parser.RPQParser;
 import org.semanticweb.rulewerk.core.reasoner.KnowledgeBase;
-import org.semanticweb.rulewerk.rpq.converter.RpqNFAConverter;
 import org.semanticweb.rulewerk.rpq.model.api.AlternRegExpression;
 import org.semanticweb.rulewerk.rpq.model.api.ConcatRegExpression;
 import org.semanticweb.rulewerk.rpq.model.api.ConverseEdgeLabel;
@@ -29,7 +28,6 @@ import org.semanticweb.rulewerk.rpq.model.api.NDFAQuery;
 import org.semanticweb.rulewerk.rpq.model.api.NDFiniteAutomata;
 import org.semanticweb.rulewerk.rpq.model.api.NDFiniteAutomataAlt;
 import org.semanticweb.rulewerk.rpq.model.api.RPQConjunction;
-import org.semanticweb.rulewerk.rpq.model.api.RegExpression;
 import org.semanticweb.rulewerk.rpq.model.api.RegPathQuery;
 import org.semanticweb.rulewerk.rpq.model.api.State;
 
@@ -186,7 +184,10 @@ public class RpqNFAConverterTest {
 		
 		////////////////////////////////////////////////////
 		
-		String input = "@prefix g: <http://example.org/gmark/> . SELECT DISTINCT ?x2 ?x0 ?x1 WHERE {  {  ?x0 ((((^g:ptag)/g:ptitle)/(^g:pemail))/(g:plike*)) ?x1 . }}";
+//		String input = "@prefix g: <http://example.org/gmark/> . SELECT DISTINCT ?x0 ?x1 WHERE {  {  ?x0 ((((^g:ptag)/g:ptitle)/(^g:pemail))/(g:plike*)) ?x1 . }}";
+//		String input = "select ?X where {{ ?X ( ( <http://example.org/m> | <http://example.org/n> ) / (( ^<http://example.org/l> )* ) ) <http://example.org/c> . }}";
+//		String input = "select ?X where {{ ?X ( ( <http://example.org/o> / <http://example.org/p> ) | ( ( <http://example.org/o> / <http://example.org/p> )* ) ) <http://example.org/c> .}}";
+		String input = "select ?X where {{ ?X ( ( ( <http://example.org/m> | <http://example.org/n> ) / ( (^<http://example.org/l>)* ) )* ) <http://example.org/c> .}}";
 		
 		RPQConjunction<RegPathQuery> rpqs = RPQParser.parse(input);
 		
@@ -207,11 +208,13 @@ public class RpqNFAConverterTest {
 		System.out.println(nnfa.getConvTransition());
 		
 		System.out.println();
-		NDFiniteAutomataAlt nnfas = RpqConverterUtils.simplify(nnfa);
-		System.out.println(nnfas.getTransition());
-		System.out.println(nnfas.getConvTransition());
 		System.out.println("Simplified Translation");
 		final List<Statement> datalogResult2 = RpqNFAConverter.RPQTranslateAlt(rpqs.getRPQs().get(0), kb1);
 		for (Statement r:datalogResult2) System.out.println(r);
+		
+		System.out.println();
+		NDFiniteAutomataAlt nnfas = RpqConverterUtils.simplify(nnfa);
+		System.out.println(nnfas.getTransition());
+		System.out.println(nnfas.getConvTransition());
 	}
 }

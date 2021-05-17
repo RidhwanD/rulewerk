@@ -3,7 +3,6 @@ package org.semanticweb.rulewerk.rpq.converter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 
 import org.semanticweb.rulewerk.core.model.api.Conjunction;
 import org.semanticweb.rulewerk.core.model.api.Constant;
@@ -15,7 +14,6 @@ import org.semanticweb.rulewerk.core.model.api.ExistentialVariable;
 import org.semanticweb.rulewerk.core.model.implementation.Expressions;
 import org.semanticweb.rulewerk.rpq.model.implementation.RPQExpressions;
 import org.semanticweb.rulewerk.core.reasoner.KnowledgeBase;
-import org.semanticweb.rulewerk.rpq.converter.RpqConverter;
 import org.semanticweb.rulewerk.rpq.model.api.AlternRegExpression;
 import org.semanticweb.rulewerk.rpq.model.api.ConcatRegExpression;
 import org.semanticweb.rulewerk.rpq.model.api.ConverseEdgeLabel;

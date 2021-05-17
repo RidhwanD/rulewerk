@@ -6,7 +6,6 @@ import java.util.List;
 
 import org.apache.commons.lang3.Validate;
 import org.semanticweb.rulewerk.core.model.api.Term;
-import org.semanticweb.rulewerk.rpq.model.implementation.Serializer;
 import org.semanticweb.rulewerk.rpq.model.api.RPQConjunction;
 import org.semanticweb.rulewerk.rpq.model.api.RegPathQuery;
 

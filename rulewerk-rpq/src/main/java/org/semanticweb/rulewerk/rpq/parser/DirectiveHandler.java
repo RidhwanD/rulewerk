@@ -28,7 +28,6 @@ import org.semanticweb.rulewerk.core.model.api.Argument;
 import org.semanticweb.rulewerk.core.model.api.PrefixDeclarationRegistry;
 import org.semanticweb.rulewerk.core.model.api.Term;
 import org.semanticweb.rulewerk.core.model.api.Terms;
-import org.semanticweb.rulewerk.core.reasoner.KnowledgeBase;
 import org.semanticweb.rulewerk.rpq.parser.javacc.JavaCCRPQParser;
 import org.semanticweb.rulewerk.rpq.parser.javacc.SubParserFactory;
 

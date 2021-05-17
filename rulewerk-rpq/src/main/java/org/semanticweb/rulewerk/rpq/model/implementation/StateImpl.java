@@ -1,6 +1,5 @@
 package org.semanticweb.rulewerk.rpq.model.implementation;
 
-import org.semanticweb.rulewerk.rpq.model.api.EdgeLabel;
 import org.semanticweb.rulewerk.rpq.model.api.State;
 
 public class StateImpl implements State {
@@ -23,10 +22,10 @@ public class StateImpl implements State {
 		if (obj == null) {
 			return false;
 		}
-		if (!(obj instanceof EdgeLabel)) {
+		if (!(obj instanceof State)) {
 			return false;
 		}
-		final EdgeLabel other = (EdgeLabel) obj;
+		final State other = (State) obj;
 
 		return this.name.equals(other.getName());
 	}

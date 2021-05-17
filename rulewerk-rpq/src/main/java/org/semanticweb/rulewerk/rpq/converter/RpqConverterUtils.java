@@ -219,6 +219,13 @@ public class RpqConverterUtils {
 		return res;
 	}
 	
+	public static boolean isExist(Set<Transition> trans, Transition tran) {
+		for (Transition t : trans) {
+			if (t.equals(tran)) return true;
+		}
+		return false;
+	}
+	
 	public static NDFiniteAutomataAlt simplify(NDFiniteAutomataAlt ndfa) {
 		Set<State> stateCopy = new HashSet<State>();
 		for (State s : ndfa.getState()) {
@@ -238,7 +245,6 @@ public class RpqConverterUtils {
 				if (!s.equals(ndfa.getInitState()) && !ndfa.getFinState().contains(s)) {
 					Map<Integer, Set<State>> inOut = getInOut(s, transCopy, ndfa.getConvTransition());
 					if (inOut != null) {
-						System.out.println("Removing state "+s+" with "+inOut);
 						Set<Transition> newTrans = new HashSet<Transition>();
 						iterate = true;
 						removable.add(s);
@@ -246,16 +252,16 @@ public class RpqConverterUtils {
 						for (State orig : inOut.get(0)) {
 							for (State dest : inOut.get(1)) {
 								if (!orig.equals(s) && !dest.equals(s)) {
-									newTrans.add(RPQExpressions.makeTransition(orig, dest, epsilon));
-									System.out.println("Add transition "+RPQExpressions.makeTransition(orig, dest, epsilon));
+									Transition t = RPQExpressions.makeTransition(orig, dest, epsilon);
+									if (!isExist(transCopy,t) && !isExist(newTrans,t))
+										newTrans.add(t);
 								}
 							}
 						}
 						for (Transition t : transCopy) {
-							if (!t.getOrigin().equals(s) && ! t.getDest().equals(s)) {
+							if (!t.getOrigin().equals(s) && ! t.getDest().equals(s) && !isExist(newTrans,t)) {
 								newTrans.add(t);
 							} else {
-								System.out.println("Remove transition "+t);
 							}
 						}
 						transCopy = newTrans;

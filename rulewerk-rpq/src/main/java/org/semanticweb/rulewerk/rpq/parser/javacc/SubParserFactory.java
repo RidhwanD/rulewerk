@@ -5,8 +5,6 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
 import org.semanticweb.rulewerk.core.model.api.PrefixDeclarationRegistry;
-import org.semanticweb.rulewerk.core.reasoner.KnowledgeBase;
-import org.semanticweb.rulewerk.core.reasoner.implementation.Skolemization;
 import org.semanticweb.rulewerk.rpq.parser.ParserConfiguration;
 import org.semanticweb.rulewerk.rpq.parser.RPQParser;
 

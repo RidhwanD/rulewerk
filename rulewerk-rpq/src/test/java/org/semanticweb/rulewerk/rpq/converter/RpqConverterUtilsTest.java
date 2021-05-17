@@ -7,7 +7,6 @@ import org.semanticweb.rulewerk.rpq.model.api.KPlusRegExpression;
 import org.semanticweb.rulewerk.rpq.model.api.KStarRegExpression;
 import org.semanticweb.rulewerk.rpq.model.api.RegExpression;
 import org.semanticweb.rulewerk.rpq.model.implementation.RPQExpressions;
-import org.semanticweb.rulewerk.rpq.converter.RpqConverterUtils;
 
 public class RpqConverterUtilsTest {
 	public static void main(String[] arg) {

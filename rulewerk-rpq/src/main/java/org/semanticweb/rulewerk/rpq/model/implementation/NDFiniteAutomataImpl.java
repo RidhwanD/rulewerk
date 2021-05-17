@@ -9,8 +9,6 @@ import org.semanticweb.rulewerk.rpq.model.api.RegExpression;
 import org.semanticweb.rulewerk.rpq.model.api.State;
 
 import java.util.Map;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 
 public class NDFiniteAutomataImpl implements NDFiniteAutomata{

@@ -38,7 +38,7 @@ public class TransitionImpl implements Transition {
 		if (obj == null) {
 			return false;
 		}
-		if (!(obj instanceof EdgeLabel)) {
+		if (!(obj instanceof Transition)) {
 			return false;
 		}
 		final Transition other = (Transition) obj;
