@@ -5,11 +5,8 @@ import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
-import org.semanticweb.rulewerk.core.model.api.Literal;
 import org.semanticweb.rulewerk.core.model.api.Predicate;
 import org.semanticweb.rulewerk.core.model.api.Rule;
 import org.semanticweb.rulewerk.core.model.api.Statement;
@@ -24,7 +21,6 @@ import org.semanticweb.rulewerk.rpq.converter.RpqConverter;
 import org.semanticweb.rulewerk.rpq.converter.RpqNFAConverter;
 import org.semanticweb.rulewerk.rpq.model.api.RPQConjunction;
 import org.semanticweb.rulewerk.rpq.model.api.RegPathQuery;
-import org.semanticweb.rulewerk.rpq.model.implementation.RPQExpressions;
 import org.semanticweb.rulewerk.rpq.parser.ParsingException;
 import org.semanticweb.rulewerk.rpq.parser.RPQParser;
 
@@ -89,9 +85,9 @@ public class ReasoningGMarkCase {
 			final List<Term> uvars = statement.getProjVars();
 			List<Statement> datalogResult = null;
 			if (ver == 1) {
-				datalogResult = RpqConverter.CRPQTranslate(uvars, statement, null, kb);
+				datalogResult = RpqConverter.CRPQTranslate(uvars, statement, null);
 			} else {
-				datalogResult = RpqNFAConverter.CRPQTranslate(uvars, statement, null, kb);
+				datalogResult = RpqNFAConverter.CRPQTranslate(uvars, statement, null);
 			}
 			long afterUsedMem2 = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 			long endTime2 = System.nanoTime();

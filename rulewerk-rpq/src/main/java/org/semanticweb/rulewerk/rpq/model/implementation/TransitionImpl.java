@@ -42,7 +42,6 @@ public class TransitionImpl implements Transition {
 			return false;
 		}
 		final Transition other = (Transition) obj;
-
 		return this.origin.equals(other.getOrigin()) && this.label.equals(other.getLabel()) && this.destination.equals(other.getDest());
 	}
 	

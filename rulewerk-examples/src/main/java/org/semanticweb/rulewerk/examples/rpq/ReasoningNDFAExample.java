@@ -25,12 +25,14 @@ import org.semanticweb.rulewerk.rpq.converter.RpqNFAConverter;
 import org.semanticweb.rulewerk.rpq.model.api.AlternRegExpression;
 import org.semanticweb.rulewerk.rpq.model.api.ConcatRegExpression;
 import org.semanticweb.rulewerk.rpq.model.api.ConverseEdgeLabel;
+import org.semanticweb.rulewerk.rpq.model.api.ConverseTransition;
 import org.semanticweb.rulewerk.rpq.model.api.EdgeLabel;
 import org.semanticweb.rulewerk.rpq.model.api.KStarRegExpression;
 import org.semanticweb.rulewerk.rpq.model.api.NDFAQuery;
 import org.semanticweb.rulewerk.rpq.model.api.NDFiniteAutomata;
 import org.semanticweb.rulewerk.rpq.model.api.RegPathQuery;
 import org.semanticweb.rulewerk.rpq.model.api.State;
+import org.semanticweb.rulewerk.rpq.model.api.Transition;
 
 public class ReasoningNDFAExample {
 	public static void main(String[] arg) throws IOException {
@@ -60,16 +62,13 @@ public class ReasoningNDFAExample {
 		
 		final Set<EdgeLabel> alphabet1 = new HashSet<EdgeLabel>(Arrays.asList(a,b,d));
 		
-		final Map<State,Map<EdgeLabel,List<State>>> transition1 = new HashMap<State,Map<EdgeLabel,List<State>>>();
-		transition1.put(q0, new HashMap<EdgeLabel,List<State>>() {{ 
-			put(a, new ArrayList<State>(Arrays.asList(q0)));
-			put(b, new ArrayList<State>(Arrays.asList(q1))); 
-			put(d, new ArrayList<State>(Arrays.asList(q1)));
-		}});
-		transition1.put(q1, new HashMap<EdgeLabel,List<State>>() {{ put(a, new ArrayList<State>(Arrays.asList(q2))); }});
-		transition1.put(q2, new HashMap<EdgeLabel,List<State>>() {{ put(b, new ArrayList<State>(Arrays.asList(q2))); }});
-		
-		final Map<State,Map<ConverseEdgeLabel,List<State>>> convTransition1 = new HashMap<State,Map<ConverseEdgeLabel,List<State>>>();
+		final Set<Transition> transition1 = new HashSet<Transition>();
+		transition1.add(RPQExpressions.makeTransition(q0, q0, a));
+		transition1.add(RPQExpressions.makeTransition(q0, q1, b));
+		transition1.add(RPQExpressions.makeTransition(q0, q1, d));
+		transition1.add(RPQExpressions.makeTransition(q1, q2, a));
+		transition1.add(RPQExpressions.makeTransition(q2, q2, b));
+		final Set<ConverseTransition> convTransition1 = new HashSet<ConverseTransition>();
 		
 		final NDFiniteAutomata ndfa1 = RPQExpressions.makeNDFiniteAutomata(c3, states1, alphabet1, q0, finStates1, transition1, convTransition1);
 		
@@ -96,11 +95,11 @@ public class ReasoningNDFAExample {
 		
 		final Set<EdgeLabel> alphabet2 = new HashSet<EdgeLabel>(Arrays.asList(a));
 		
-		final Map<State,Map<EdgeLabel,List<State>>> transition2 = new HashMap<State,Map<EdgeLabel,List<State>>>();
-		transition2.put(q0, new HashMap<EdgeLabel,List<State>>() {{ put(a, new ArrayList<State>(Arrays.asList(q1))); }});
+		final Set<Transition> transition2 = new HashSet<Transition>();
+		transition2.add(RPQExpressions.makeTransition(q0, q1, a));
 		
-		final Map<State,Map<ConverseEdgeLabel,List<State>>> convTransition2 = new HashMap<State,Map<ConverseEdgeLabel,List<State>>>();
-		convTransition2.put(q1, new HashMap<ConverseEdgeLabel,List<State>>() {{ put(ac, new ArrayList<State>(Arrays.asList(q0))); }});
+		final Set<ConverseTransition> convTransition2 = new HashSet<ConverseTransition>();
+		convTransition2.add(RPQExpressions.makeConverseTransition(q1, q0, ac));
 		
 		final NDFiniteAutomata ndfa2 = RPQExpressions.makeNDFiniteAutomata(c4s, states2, alphabet2, q0, finStates2, transition2, convTransition2);
 		
@@ -124,9 +123,9 @@ public class ReasoningNDFAExample {
 		
 		final Set<EdgeLabel> alphabet3 = new HashSet<EdgeLabel>(Arrays.asList(n3));
 		
-		final Map<State,Map<EdgeLabel,List<State>>> transition3 = new HashMap<State,Map<EdgeLabel,List<State>>>();
-		transition3.put(q0, new HashMap<EdgeLabel,List<State>>() {{ put(n3, new ArrayList<State>(Arrays.asList(q1))); }});
-		transition3.put(q1, new HashMap<EdgeLabel,List<State>>() {{ put(n3, new ArrayList<State>(Arrays.asList(q1))); }});
+		final Set<Transition> transition3 = new HashSet<Transition>();
+		transition3.add(RPQExpressions.makeTransition(q0, q1, n3));
+		transition3.add(RPQExpressions.makeTransition(q1, q1, n3));
 		
 		final NDFiniteAutomata ndfa3 = RPQExpressions.makeNDFiniteAutomata(c5, states3, alphabet3, q0, finStates3, transition3, convTransition1);
 		
@@ -141,9 +140,9 @@ public class ReasoningNDFAExample {
 		
 		final Set<EdgeLabel> alphabet4 = new HashSet<EdgeLabel>(Arrays.asList(n8));
 		
-		final Map<State,Map<EdgeLabel,List<State>>> transition4 = new HashMap<State,Map<EdgeLabel,List<State>>>();
-		transition4.put(q2, new HashMap<EdgeLabel,List<State>>() {{ put(n8, new ArrayList<State>(Arrays.asList(q3))); }});
-		transition4.put(q3, new HashMap<EdgeLabel,List<State>>() {{ put(n8, new ArrayList<State>(Arrays.asList(q3))); }});
+		final Set<Transition> transition4 = new HashSet<Transition>();
+		transition4.add(RPQExpressions.makeTransition(q2, q3, n8));
+		transition4.add(RPQExpressions.makeTransition(q3, q3, n8));
 		
 		final NDFiniteAutomata ndfa4 = RPQExpressions.makeNDFiniteAutomata(c6, states4, alphabet4, q2, finStates4, transition4, convTransition1);
 		
@@ -164,8 +163,8 @@ public class ReasoningNDFAExample {
 		
 		/////////////////////////////////////////////////
 
-//		final List<Statement> datalogResult = RpqNFAConverter.NDFAQueryTranslate(ndfaq1, kb1);
-//		final List<Statement> datalogResult = RpqNFAConverter.RPQTranslate(RPQExpressions.makeRegPathQuery(ndfaq1.getNDFA().getRegex(), ndfaq1.getTerm1(), ndfaq1.getTerm2()), kb1);
+//		final List<Statement> datalogResult = RpqNFAConverter.NDFAQueryTranslate(ndfaq1);
+//		final List<Statement> datalogResult = RpqNFAConverter.RPQTranslate(RPQExpressions.makeRegPathQuery(ndfaq1.getNDFA().getRegex(), ndfaq1.getTerm1(), ndfaq1.getTerm2()));
 //		
 //		for (Statement r: datalogResult) {
 //			kb1.addStatement(r);
@@ -178,8 +177,8 @@ public class ReasoningNDFAExample {
 //			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(Expressions.makePredicate("Q_"+c3.getName(), 2), Arrays.asList(x, y)), reasoner);
 //		}
 		
-//		final List<Statement> datalogResult = RpqNFAConverter.NDFAQueryTranslate(ndfaq2, kb2);
-//		final List<Statement> datalogResult = RpqNFAConverter.RPQTranslate(RPQExpressions.makeRegPathQuery(ndfaq2.getNDFA().getRegex(), ndfaq2.getTerm1(), ndfaq2.getTerm2()), kb2);
+//		final List<Statement> datalogResult = RpqNFAConverter.NDFAQueryTranslate(ndfaq2);
+//		final List<Statement> datalogResult = RpqNFAConverter.RPQTranslate(RPQExpressions.makeRegPathQuery(ndfaq2.getNDFA().getRegex(), ndfaq2.getTerm1(), ndfaq2.getTerm2()));
 //		
 //		for (Statement r: datalogResult) {
 //			kb2.addStatement(r);
@@ -192,12 +191,12 @@ public class ReasoningNDFAExample {
 //			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(Expressions.makePredicate("Q_"+c4s.getName(), 2), Arrays.asList(x, const2)), reasoner);
 //		}
 		
-		final List<Statement> datalogResult = RpqNFAConverter.CNDFATranslate(uvars, queries, conjunct, kb3);
+		final List<Statement> datalogResult = RpqNFAConverter.CNDFATranslate(uvars, queries, conjunct);
 //		List<RegPathQuery> qs = new ArrayList<RegPathQuery>();
 //		for (NDFAQuery nfa : queries) {
 //			qs.add(RPQExpressions.makeRegPathQuery(nfa.getNDFA().getRegex(), nfa.getTerm1(), nfa.getTerm2()));
 //		}
-//		final Set<Statement> datalogResult = RpqNFAConverter.CRPQTranslate(uvars, RPQExpressions.makeRPQConjunction(qs, uvars), conjunct, kb3);
+//		final Set<Statement> datalogResult = RpqNFAConverter.CRPQTranslate(uvars, RPQExpressions.makeRPQConjunction(qs, uvars), conjunct);
 		
 		
 		for (Statement r: datalogResult) {

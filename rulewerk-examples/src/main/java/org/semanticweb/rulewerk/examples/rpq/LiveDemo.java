@@ -3,9 +3,12 @@ package org.semanticweb.rulewerk.examples.rpq;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.semanticweb.rulewerk.core.model.api.Predicate;
+import org.semanticweb.rulewerk.core.model.api.Rule;
 import org.semanticweb.rulewerk.core.model.api.Statement;
 import org.semanticweb.rulewerk.core.model.api.Term;
 import org.semanticweb.rulewerk.core.model.implementation.Expressions;
@@ -39,7 +42,7 @@ public class LiveDemo {
 		inputStreamLiveDemo.close();
 		
 		System.out.println("Loading and Parsing Query ");
-		File queryInput = new File(ExamplesUtils.INPUT_FOLDER + "rpq/livedemo/query-" + 2 + ".sparql");
+		File queryInput = new File(ExamplesUtils.INPUT_FOLDER + "rpq/livedemo/query-" + 3 + ".sparql");
 		FileInputStream input = new FileInputStream(queryInput);
 		
 		// Set of people who have authored something and year of their published works
@@ -67,16 +70,21 @@ public class LiveDemo {
 		// ============================ TRANSLATING ============================= //
 		long startTime2 = System.currentTimeMillis();
 		final List<Term> uvars = statement.getProjVars();
-//		final List<Statement> datalogResult = RpqConverter.CRPQTranslate(uvars, statement, null, kb);
-		final List<Statement> datalogResult = RpqNFAConverter.CRPQTranslate(uvars, statement, null, kb);
+//		final List<Statement> datalogResult = RpqConverter.CRPQTranslate(uvars, statement, null);
+//		final List<Statement> datalogResult = RpqNFAConverter.CRPQTranslate(uvars, statement, null);
+		final List<Statement> datalogResult = RpqNFAConverter.CRPQTranslateAlt(uvars, statement, null);
 		long endTime2 = System.currentTimeMillis();
 		long duration2 = (endTime2 - startTime2);
 		
+		final List<Predicate> preds = new ArrayList<Predicate>();
 		int numRuleGenerated = 0;
 		for (Statement r: datalogResult) {
 			kb.addStatement(r);
-			System.out.println(r);
+			Rule rs = (Rule) r;
+			Predicate p = rs.getHead().getLiterals().get(0).getPredicate();
+			if (!preds.contains(p) && !p.getName().equals("Ans")) preds.add(p);
 			numRuleGenerated++;
+			System.out.println(r);
 		}
 		
 		System.out.println("Reasoning");
@@ -87,12 +95,14 @@ public class LiveDemo {
 			reasoner.reason();
 			/* Execute some queries */
 			System.out.println("- Answering Query");
-			ReasoningUtils.printOutQueryCount(Expressions.makePositiveLiteral(Expressions.makePredicate("Ans", 1), Expressions.makeAbstractConstant("Jim")), reasoner);			
-//			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(Expressions.makePredicate("Q_^friendOf", uvars.size()), uvars), reasoner);			
-//			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(Expressions.makePredicate("Q_(friendOf | ^friendOf)", uvars.size()), uvars), reasoner);		
-//			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(Expressions.makePredicate("Q_hasProfession", uvars.size()), Arrays.asList(uvars.get(0),Expressions.makeAbstractConstant("Archaeologist"))), reasoner);		
+			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(Expressions.makePredicate("Ans", uvars.size()), uvars), reasoner);			
+			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(Expressions.makePredicate("Q_hasProfession", uvars.size()), uvars.get(0),Expressions.makeAbstractConstant("Illustrator")), reasoner);			
+			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(Expressions.makePredicate("Q_((friendOf | ^friendOf))+", uvars.size()), uvars), reasoner);		
+			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(Expressions.makePredicate("Q_hasProfession", uvars.size()), Arrays.asList(uvars.get(0),Expressions.makeAbstractConstant("Archaeologist"))), reasoner);		
 			long endTime3 = System.currentTimeMillis();
 			duration3 = (endTime3 - startTime3);
+			
+			ReasoningUtils.printOutQueryCountMult(preds, reasoner);
 		}
 		
 		System.out.println("Generated Datalog statements: " + numRuleGenerated);

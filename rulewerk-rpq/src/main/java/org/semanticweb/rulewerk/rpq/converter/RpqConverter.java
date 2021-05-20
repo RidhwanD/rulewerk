@@ -1,7 +1,6 @@
 package org.semanticweb.rulewerk.rpq.converter;
 
 import java.util.Arrays;
-import java.util.Set;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
@@ -17,7 +16,6 @@ import org.semanticweb.rulewerk.core.model.api.TermType;
 import org.semanticweb.rulewerk.core.model.api.UniversalVariable;
 import org.semanticweb.rulewerk.core.model.api.Variable;
 import org.semanticweb.rulewerk.core.model.implementation.Expressions;
-import org.semanticweb.rulewerk.core.reasoner.KnowledgeBase;
 import org.semanticweb.rulewerk.rpq.model.api.AlternRegExpression;
 import org.semanticweb.rulewerk.rpq.model.api.ConcatRegExpression;
 import org.semanticweb.rulewerk.rpq.model.api.ConverseEdgeLabel;
@@ -34,11 +32,10 @@ public final class RpqConverter {
 	 *
 	 * @param exp 	non-null {@link RegExpression} of the RPQ
 	 * @param v1 	non-null {@link Term} from the RPQ 
-	 * @param v2 	non-null {@link Term} from the RPQ 
-	 * @param terms	non-null list of {@link Term} that are constants from the knowledge base 
+	 * @param v2 	non-null {@link Term} from the RPQ
 	 * @return a set of {@link Statement} of Datalog rules corresponding to the input
 	 */
-	public static List<Statement> translateExpression(final RegExpression exp, final Term v1, final Term v2, final Set<Term> terms) {
+	public static List<Statement> translateExpression(final RegExpression exp, final Term v1, final Term v2) {
 		if (exp.getType() == RegExpressionType.EDGE_LABEL || exp.getType() == RegExpressionType.CONVERSE_EDGE_LABEL) {
 			final List<Statement> datalogRule = new ArrayList<Statement>();
 			final Predicate IDBpredicate = Expressions.makePredicate("Q_"+exp.getName(), 2);
@@ -66,8 +63,8 @@ public final class RpqConverter {
 				var = Expressions.makeUniversalVariable("x"+String.valueOf(i));
 			}
 			final Variable x = Expressions.makeUniversalVariable(var.getName());
-        	final List<Statement> listOne = translateExpression(expc.getExp1(), v1, x, terms);
-			final List<Statement> listTwo = translateExpression(expc.getExp2(), x, v2, terms);
+        	final List<Statement> listOne = translateExpression(expc.getExp1(), v1, x);
+			final List<Statement> listTwo = translateExpression(expc.getExp2(), x, v2);
 			final List<Statement> datalogRule = Stream.concat(listOne.stream(), listTwo.stream())
                     .collect(Collectors.toList());
 			final Predicate IDBpredicate1 = Expressions.makePredicate("Q_"+expc.getName(), 2);
@@ -80,8 +77,8 @@ public final class RpqConverter {
 			return datalogRule;
 		} else if (exp.getType() == RegExpressionType.ALTERNATION) {
 			AlternRegExpression expc = (AlternRegExpression) exp;
-			final List<Statement> listOne = translateExpression(expc.getExp1(), v1, v2, terms);
-			final List<Statement> listTwo = translateExpression(expc.getExp2(), v1, v2, terms);
+			final List<Statement> listOne = translateExpression(expc.getExp1(), v1, v2);
+			final List<Statement> listTwo = translateExpression(expc.getExp2(), v1, v2);
 			final List<Statement> datalogRule = Stream.concat(listOne.stream(), listTwo.stream())
                     .collect(Collectors.toList());
 			final Predicate IDBpredicate1 = Expressions.makePredicate("Q_"+expc.getName(), 2);
@@ -96,7 +93,7 @@ public final class RpqConverter {
 			return datalogRule;
 		} else if (exp.getType() == RegExpressionType.KLEENE_STAR) {
 			KStarRegExpression expc = (KStarRegExpression) exp;
-			final List<Statement> datalogRule = translateExpression(expc.getExp(), v1, v2, terms);
+			final List<Statement> datalogRule = translateExpression(expc.getExp(), v1, v2);
 			final Predicate IDBpredicate1 = Expressions.makePredicate("Q_"+expc.getName(), 2);
 			final Predicate IDBpredicate2 = Expressions.makePredicate("Q_"+expc.getExp().getName(), 2);
 			Variable var = Expressions.makeUniversalVariable("x1");
@@ -106,7 +103,7 @@ public final class RpqConverter {
 				var = Expressions.makeUniversalVariable("x"+String.valueOf(i));
 			}
 			final Variable x = Expressions.makeUniversalVariable(var.getName());
-        	datalogRule.addAll(RpqConverterUtils.produceFacts(IDBpredicate1, terms));
+        	datalogRule.addAll(RpqConverterUtils.createKBaseRules(IDBpredicate1));
         	datalogRule.add(Expressions.makeRule(
 					Expressions.makePositiveLiteral(IDBpredicate1, Arrays.asList(v1,v2)),
 					Expressions.makePositiveLiteral(IDBpredicate1, Arrays.asList(v1,x)),
@@ -114,7 +111,7 @@ public final class RpqConverter {
 			return datalogRule;
 		} else if (exp.getType() == RegExpressionType.KLEENE_PLUS) {
 			KPlusRegExpression expc = (KPlusRegExpression) exp;
-			final List<Statement> datalogRule = translateExpression(expc.getExp(), v1, v2, terms);
+			final List<Statement> datalogRule = translateExpression(expc.getExp(), v1, v2);
 			final Predicate IDBpredicate1 = Expressions.makePredicate("Q_"+expc.getName(), 2);
 			final Predicate IDBpredicate2 = Expressions.makePredicate("Q_"+expc.getExp().getName(), 2);
 			Variable var = Expressions.makeUniversalVariable("x1");
@@ -138,6 +135,12 @@ public final class RpqConverter {
 		}
 	}
 	
+	/**
+	 * Creates a set of Datalog {@link Statement} from a {@link RegExpression}.
+	 *
+	 * @param exp 	non-null {@link RegExpression} of the RPQ
+	 * @return a set of {@link Statement} of Datalog rules corresponding to the input
+	 */
 	public static List<Statement> translateExpression(final RegExpression exp) {
 		final Variable x = Expressions.makeUniversalVariable("x");
 		final Variable y = Expressions.makeUniversalVariable("y");
@@ -196,7 +199,7 @@ public final class RpqConverter {
 			final List<Statement> datalogRule = translateExpression(expc.getExp());
 			final Predicate IDBpredicate1 = Expressions.makePredicate("Q_"+expc.getName(), 2);
 			final Predicate IDBpredicate2 = Expressions.makePredicate("Q_"+expc.getExp().getName(), 2);
-			datalogRule.addAll(RpqConverterUtils.produceFacts(IDBpredicate1));
+			datalogRule.addAll(RpqConverterUtils.createKBaseRules(IDBpredicate1));
         	datalogRule.add(Expressions.makeRule(
 					Expressions.makePositiveLiteral(IDBpredicate1, Arrays.asList(x,z)),
 					Expressions.makePositiveLiteral(IDBpredicate1, Arrays.asList(x,y)),
@@ -225,12 +228,10 @@ public final class RpqConverter {
 	 * Creates a set of Datalog {@link Statement} from a 2RPQ{@link RegPathQuery}.
 	 *
 	 * @param query non-null {@link RegPathQuery}
-	 * @param kb 	non-null {@link KnowledgeBase}
 	 * @return a set of {@link Statement} of Datalog rules corresponding to the input
 	 */
-	public static List<Statement> RPQTranslate(final RegPathQuery query, final KnowledgeBase kb) {
-		Set<Term> terms = RpqConverterUtils.getTermFromKB(kb);
-		return translateExpression(query.getExpression(), query.getTerm1(), query.getTerm2(), terms);
+	public static List<Statement> RPQTranslate(final RegPathQuery query) {
+		return translateExpression(query.getExpression(), query.getTerm1(), query.getTerm2());
 	}
 	
 	/**
@@ -239,11 +240,9 @@ public final class RpqConverter {
 	 * @param uvars		non-null List of {@link UniversalVariable}
 	 * @param rpqcon	non-null {@link RPQConjunction} of {@link RegPathQuery}
 	 * @param con		{@link Conjunction} of {@link Literal}
-	 * @param kb 		non-null {@link KnowledgeBase}
 	 * @return a set of {@link Statement} of Datalog rules corresponding to the input
 	 */
-	public static List<Statement> CRPQTranslate(final List<Term> uvars, final RPQConjunction<RegPathQuery> rpqcon, final Conjunction<Literal> con, final KnowledgeBase kb) {
-//		final Set<Term> kbterms = RpqConverterUtils.getTermFromKB(kb);
+	public static List<Statement> CRPQTranslate(final List<Term> uvars, final RPQConjunction<RegPathQuery> rpqcon, final Conjunction<Literal> con) {
 		final List<Literal> literals = new ArrayList<Literal>();
 		final List<Statement> datalogRule = new ArrayList<Statement>();
 		for (RegPathQuery rpq : rpqcon.getRPQs()) {
@@ -255,8 +254,7 @@ public final class RpqConverter {
 			if (t2.getType() == TermType.EXISTENTIAL_VARIABLE) {
 				t2 = Expressions.makeUniversalVariable(t2.getName());
 			}
-//			datalogRule.addAll(translateExpression(rpq.getExpression(), t1, t2, kbterms));
-			datalogRule.addAll(translateExpression(rpq.getExpression()));
+			RpqConverterUtils.combineProgram(datalogRule, translateExpression(rpq.getExpression()));
 			literals.add(Expressions.makePositiveLiteral(Expressions.makePredicate("Q_"+rpq.getExpression().getName(), 2), Arrays.asList(t1,t2)));
 		}
 		if (con != null) {

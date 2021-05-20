@@ -1,7 +1,6 @@
 package org.semanticweb.rulewerk.rpq.model.implementation;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.semanticweb.rulewerk.core.model.api.Term;
@@ -13,9 +12,7 @@ import org.semanticweb.rulewerk.rpq.model.api.EdgeLabel;
 import org.semanticweb.rulewerk.rpq.model.api.KPlusRegExpression;
 import org.semanticweb.rulewerk.rpq.model.api.KStarRegExpression;
 import org.semanticweb.rulewerk.rpq.model.api.NDFAQuery;
-import org.semanticweb.rulewerk.rpq.model.api.NDFAQueryAlt;
 import org.semanticweb.rulewerk.rpq.model.api.NDFiniteAutomata;
-import org.semanticweb.rulewerk.rpq.model.api.NDFiniteAutomataAlt;
 import org.semanticweb.rulewerk.rpq.model.api.RPQConjunction;
 import org.semanticweb.rulewerk.rpq.model.api.RegExpression;
 import org.semanticweb.rulewerk.rpq.model.api.RegPathQuery;
@@ -138,19 +135,11 @@ public class RPQExpressions {
 		return new ConverseTransitionImpl(origin, destination, label);
 	}
 	
-	public static NDFiniteAutomata makeNDFiniteAutomata(RegExpression regex, Set<State> states, Set<EdgeLabel> alphabet, State initState, Set<State> finState, Map<State,Map<EdgeLabel,List<State>>> transition, Map<State,Map<ConverseEdgeLabel,List<State>>> convTransition) {
+	public static NDFiniteAutomata makeNDFiniteAutomata(RegExpression regex, Set<State> states, Set<EdgeLabel> alphabet, State initState, Set<State> finState, Set<Transition> transition, Set<ConverseTransition> convTransition) {
 		return new NDFiniteAutomataImpl(regex, states, alphabet, initState, finState, transition, convTransition);
-	}
-	
-	public static NDFiniteAutomataAlt makeNDFiniteAutomataAlt(RegExpression regex, Set<State> states, Set<EdgeLabel> alphabet, State initState, Set<State> finState, Set<Transition> transition, Set<ConverseTransition> convTransition) {
-		return new NDFiniteAutomataAltImpl(regex, states, alphabet, initState, finState, transition, convTransition);
 	}
 	
 	public static NDFAQuery makeNDFAQuery(NDFiniteAutomata ndfa, Term t1, Term t2) {
 		return new NDFAQueryImpl(ndfa, t1, t2);
-	}
-	
-	public static NDFAQueryAlt makeNDFAQueryAlt(NDFiniteAutomataAlt ndfa, Term t1, Term t2) {
-		return new NDFAQueryAltImpl(ndfa, t1, t2);
 	}
 }

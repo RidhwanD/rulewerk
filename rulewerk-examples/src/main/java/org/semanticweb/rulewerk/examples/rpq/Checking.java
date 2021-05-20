@@ -59,7 +59,7 @@ public class Checking {
 				Expressions.makePositiveLiteral(Expressions.makePredicate("TRIPLE", 3), x6, Expressions.makeAbstractConstant("c"), x7));
 		Rule rb = Expressions.makeRule(
 				Expressions.makePositiveLiteral(Expressions.makePredicate("Cek4", 2), x10, x11), 
-				Expressions.makePositiveLiteral(Expressions.makePredicate("Cek2", 2), x10, x11));
+				Expressions.makePositiveLiteral(Expressions.makePredicate("Cek3", 2), x10, x11));
 		Rule rz = Expressions.makeRule(
 				Expressions.makePositiveLiteral(Expressions.makePredicate("Cek", 2), x7, x9), 
 				Expressions.makePositiveLiteral(Expressions.makePredicate("Cek3", 2), x7, x8), 

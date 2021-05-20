@@ -53,7 +53,7 @@ public class ReasoningRPQParserExample {
 		RPQConjunction<RegPathQuery> statement = RPQParser.parse(input);
 		System.out.println(statement);
 		
-//		final List<Statement> datalogResult = RpqConverter.CRPQTranslate(uvars, statement, null, kb1);
+//		final List<Statement> datalogResult = RpqConverter.CRPQTranslate(uvars, statement, null);
 //		
 //		for (Statement r: datalogResult) {
 //			kb1.addStatement(r);
@@ -79,7 +79,7 @@ public class ReasoningRPQParserExample {
 		statement = RPQParser.parse(input);
 		System.out.println(statement);
 		
-//		final List<Statement> datalogResult = RpqConverter.CRPQTranslate(uvars2, statement, null, kb2);
+//		final List<Statement> datalogResult = RpqConverter.CRPQTranslate(uvars2, statement, null);
 //		
 //		for (Statement r: datalogResult) {
 //			kb2.addStatement(r);
@@ -110,7 +110,7 @@ public class ReasoningRPQParserExample {
 		statement = RPQParser.parse(input);
 		System.out.println(statement);
 		
-		final List<Statement> datalogResult = RpqConverter.CRPQTranslate(uvars3, statement, conjunct, kb3);
+		final List<Statement> datalogResult = RpqConverter.CRPQTranslate(uvars3, statement, conjunct);
 		
 		for (Statement r: datalogResult) {
 			kb3.addStatement(r);

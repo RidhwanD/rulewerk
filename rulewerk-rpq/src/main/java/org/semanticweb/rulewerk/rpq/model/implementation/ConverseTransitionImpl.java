@@ -2,9 +2,7 @@ package org.semanticweb.rulewerk.rpq.model.implementation;
 
 import org.semanticweb.rulewerk.rpq.model.api.ConverseEdgeLabel;
 import org.semanticweb.rulewerk.rpq.model.api.ConverseTransition;
-import org.semanticweb.rulewerk.rpq.model.api.EdgeLabel;
 import org.semanticweb.rulewerk.rpq.model.api.State;
-import org.semanticweb.rulewerk.rpq.model.api.Transition;
 
 public class ConverseTransitionImpl implements ConverseTransition {
 	private State origin;
@@ -40,10 +38,10 @@ public class ConverseTransitionImpl implements ConverseTransition {
 		if (obj == null) {
 			return false;
 		}
-		if (!(obj instanceof EdgeLabel)) {
+		if (!(obj instanceof ConverseTransition)) {
 			return false;
 		}
-		final Transition other = (Transition) obj;
+		final ConverseTransition other = (ConverseTransition) obj;
 
 		return this.origin.equals(other.getOrigin()) && this.label.equals(other.getLabel()) && this.destination.equals(other.getDest());
 	}

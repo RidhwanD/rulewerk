@@ -11,9 +11,11 @@ import java.util.Set;
 import org.semanticweb.rulewerk.rpq.model.api.AlternRegExpression;
 import org.semanticweb.rulewerk.rpq.model.api.ConcatRegExpression;
 import org.semanticweb.rulewerk.rpq.model.api.ConverseEdgeLabel;
+import org.semanticweb.rulewerk.rpq.model.api.ConverseTransition;
 import org.semanticweb.rulewerk.rpq.model.api.EdgeLabel;
 import org.semanticweb.rulewerk.rpq.model.api.NDFiniteAutomata;
 import org.semanticweb.rulewerk.rpq.model.api.State;
+import org.semanticweb.rulewerk.rpq.model.api.Transition;
 
 public class NDFiniteAutomataImplTest {
 	public static void main(String[] arg) {
@@ -35,22 +37,15 @@ public class NDFiniteAutomataImplTest {
 		final Set<State> states = new HashSet<State>(Arrays.asList(q0,q1,q2,q3,q4,q5));
 		final Set<State> finStates = new HashSet<State>(Arrays.asList(q3,q5));
 		
-		final Map<State,Map<EdgeLabel,List<State>>> transition = new HashMap<State,Map<EdgeLabel,List<State>>>();
-		transition.put(q0, new HashMap<EdgeLabel,List<State>>() {{ put(empStr, new ArrayList<State>(Arrays.asList(q1,q2))); }});
-		transition.put(q1, new HashMap<EdgeLabel,List<State>>() {{ put(empStr, new ArrayList<State>(Arrays.asList(q3))); }});
-		transition.put(q2, new HashMap<EdgeLabel,List<State>>() {{ put(a, new ArrayList<State>(Arrays.asList(q4))); }});
-		transition.put(q4, new HashMap<EdgeLabel,List<State>>() {{ put(b, new ArrayList<State>(Arrays.asList(q5))); }});
+		final Set<Transition> transition = new HashSet<Transition>();
+		transition.add(RPQExpressions.makeTransition(q0, q1, empStr));
+		transition.add(RPQExpressions.makeTransition(q0, q2, empStr));
+		transition.add(RPQExpressions.makeTransition(q1, q3, empStr));
+		transition.add(RPQExpressions.makeTransition(q2, q4, a));
+		transition.add(RPQExpressions.makeTransition(q4, q5, b));
 		
-		final Map<State,Map<ConverseEdgeLabel,List<State>>> convTransition = new HashMap<State,Map<ConverseEdgeLabel,List<State>>>();
+		final Set<ConverseTransition> convTransition = new HashSet<ConverseTransition>();
 		
 		final NDFiniteAutomata ndfa = RPQExpressions.makeNDFiniteAutomata(abe, states, alphabet, q0, finStates, transition, convTransition);
-		
-		System.out.println(ndfa.isAuxiliary(q0));
-		System.out.println(ndfa.isAuxiliary(q1));
-		System.out.println(ndfa.isAuxiliary(q2));
-		System.out.println(ndfa.isAuxiliary(q3));
-		System.out.println(ndfa.isAuxiliary(q4));
-		System.out.println(ndfa.isAuxiliary(q5));
-		
 	}
 }

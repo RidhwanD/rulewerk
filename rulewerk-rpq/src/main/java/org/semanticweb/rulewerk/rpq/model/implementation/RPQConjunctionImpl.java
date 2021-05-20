@@ -40,7 +40,7 @@ public class RPQConjunctionImpl <T extends RegPathQuery> implements RPQConjuncti
 	public int hashCode() {
 		return this.rpqs.hashCode();
 	}
-
+	
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj) {
