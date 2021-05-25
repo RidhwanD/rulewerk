@@ -91,10 +91,10 @@ public class Serializer {
 		void write(final Serializer serializer) throws IOException;
 	}
 
-	protected final Writer writer;
-	protected final Function<String, String> iriTransformer;
-	protected final SerializerTermVisitor serializerTermVisitor = new SerializerTermVisitor();
-	protected final SerializerStatementVisitor serializerStatementVisitor = new SerializerStatementVisitor();
+	final Writer writer;
+	final Function<String, String> iriTransformer;
+	final SerializerTermVisitor serializerTermVisitor = new SerializerTermVisitor();
+	final SerializerStatementVisitor serializerStatementVisitor = new SerializerStatementVisitor();
 
 	/**
 	 * Runtime exception used to report errors that occurred in visitors that do not
