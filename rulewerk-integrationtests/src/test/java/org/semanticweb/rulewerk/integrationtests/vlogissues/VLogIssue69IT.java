@@ -30,11 +30,11 @@ import org.semanticweb.rulewerk.core.reasoner.Reasoner;
 import org.semanticweb.rulewerk.parser.ParsingException;
 import org.semanticweb.rulewerk.parser.RuleParser;
 
-public class VLogIssue69 extends VLogIssue {
+public class VLogIssue69IT extends VLogIssue {
 
 	@Test
-	public void test() throws ParsingException, IOException {
-		try (final Reasoner reasoner = getReasonerWithKbFromResource("vlog/67.rls")) {
+	public void ruleset_succeeds() throws ParsingException, IOException {
+		try (final Reasoner reasoner = getReasonerWithKbFromResource("vlog/69.rls")) {
 			reasoner.reason();
 
 			PositiveLiteral query1 = RuleParser.parsePositiveLiteral("prec(?X,?Y)");
