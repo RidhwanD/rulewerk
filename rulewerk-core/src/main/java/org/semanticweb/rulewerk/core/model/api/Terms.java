@@ -233,6 +233,18 @@ public class Terms {
 	}
 	
 	/**
+	 * Returns a stream of set construct found in the given stream of terms.
+	 * Ordering and duplicates are not affected.
+	 * 
+	 * @param terms stream of all terms
+	 * @return stream of results
+	 */
+	public static Stream<SetConstruct> getSetConstructs(Stream<? extends Term> terms) {
+		return terms.filter(term -> term.getType() == TermType.SET_CONSTRUCT)
+				.map(SetConstruct.class::cast);
+	}
+	
+	/**
 	 * Returns a stream of set terms found in the given stream of terms.
 	 * Ordering and duplicates are not affected.
 	 * 

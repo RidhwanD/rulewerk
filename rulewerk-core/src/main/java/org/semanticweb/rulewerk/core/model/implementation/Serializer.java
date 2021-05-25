@@ -531,9 +531,13 @@ public class Serializer {
 	public void writeSetConstruct(SetConstruct setConstruct) throws IOException {
 		writer.write("{");
 		if (!setConstruct.isEmpty()) {
-			if (setConstruct.getElement() instanceof UniversalVariable) writer.write("?");
-			if (setConstruct.getElement() instanceof ExistentialVariable) writer.write("!");	
-			writer.write(setConstruct.getElement().getName());
+			if (setConstruct.getElement() instanceof UniversalVariable) {
+				UniversalVariable v = (UniversalVariable) setConstruct.getElement();
+				writeUniversalVariable(v);
+			} else if (setConstruct.getElement() instanceof AbstractConstant) {
+				AbstractConstant c = (AbstractConstant) setConstruct.getElement();
+				writeAbstractConstant(c);
+			}
 		}
 		writer.write("}");
 	}
@@ -545,11 +549,27 @@ public class Serializer {
 	 * @throws IOException
 	 */
 	public void writeSetUnion(SetUnion setUnion) throws IOException {
-		if (setUnion.getSetTerm1() instanceof SetVariable) writer.write("$");
-		writer.write(setUnion.getSetTerm1().getName());
+		if (setUnion.getSetTerm1() instanceof SetVariable) {
+			SetVariable v = (SetVariable) setUnion.getSetTerm1();
+			writeSetVariable(v);
+		} else if (setUnion.getSetTerm1() instanceof SetConstruct) {
+			SetConstruct c = (SetConstruct) setUnion.getSetTerm1();
+			writeSetConstruct(c);
+		} else if (setUnion.getSetTerm1() instanceof SetUnion) {
+			SetUnion c = (SetUnion) setUnion.getSetTerm1();
+			writeSetUnion(c);
+		}
 		writer.write(" U ");
-		if (setUnion.getSetTerm2() instanceof SetVariable) writer.write("$");
-		writer.write(setUnion.getSetTerm2().getName());
+		if (setUnion.getSetTerm2() instanceof SetVariable) {
+			SetVariable v = (SetVariable) setUnion.getSetTerm2();
+			writeSetVariable(v);
+		} else if (setUnion.getSetTerm2() instanceof SetConstruct) {
+			SetConstruct c = (SetConstruct) setUnion.getSetTerm2();
+			writeSetConstruct(c);
+		} else if (setUnion.getSetTerm2() instanceof SetUnion) {
+			SetUnion c = (SetUnion) setUnion.getSetTerm2();
+			writeSetUnion(c);
+		}
 	}
 	
 	/**

@@ -95,7 +95,6 @@ public class RuleImpl implements Rule {
 		
 		Set<SetVariable> setVars = head.getSetVariables().collect(Collectors.toSet());
 		setVars.addAll(body.getSetVariables().collect(Collectors.toSet()));
-		System.out.println(setVars);
 		
 		for (Term t : setVars) {
 			boolean appear = false;

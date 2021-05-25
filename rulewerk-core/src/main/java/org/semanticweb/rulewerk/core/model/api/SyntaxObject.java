@@ -49,7 +49,13 @@ public interface SyntaxObject extends Entity {
 	 * @return stream of universal variables
 	 */
 	default Stream<UniversalVariable> getUniversalVariables() {
-		return Terms.getUniversalVariables(getTerms());
+		Stream<UniversalVariable> univVars = Terms.getUniversalVariables(getTerms());
+		Set<UniversalVariable> univVarsSets = new HashSet<UniversalVariable>();
+		for (SetConstruct sc : Terms.getSetConstructs(getTerms()).collect(Collectors.toSet())) {
+			if (sc.getElement() != null && sc.getElement().isVariable())
+				univVarsSets.add((UniversalVariable) sc.getElement());
+		}
+		return Stream.concat(univVars, univVarsSets.stream());
 	}
 
 	/**
@@ -122,13 +128,11 @@ public interface SyntaxObject extends Entity {
 	 */
 	default Stream<SetVariable> getSetVariables() {
 		Stream<SetVariable> setVars = Terms.getSetVariables(getTerms());
-		Set<SetUnion> setUnions = Terms.getSetUnions(getTerms()).collect(Collectors.toSet());
 		Set<SetVariable> setVarsUnions = new HashSet<SetVariable>();
-		for (SetUnion su : setUnions) {
+		for (SetUnion su : Terms.getSetUnions(getTerms()).collect(Collectors.toSet())) {
 			setVarsUnions.addAll(su.getSetVariables());
 		}
-		Stream<SetVariable> setVars2 = setVarsUnions.stream();
-		return Stream.concat(setVars, setVars2);
+		return Stream.concat(setVars, setVarsUnions.stream());
 	}
 
 }
