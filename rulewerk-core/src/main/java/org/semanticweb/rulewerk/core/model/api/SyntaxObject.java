@@ -1,7 +1,7 @@
 package org.semanticweb.rulewerk.core.model.api;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /*-
@@ -49,13 +49,12 @@ public interface SyntaxObject extends Entity {
 	 * @return stream of universal variables
 	 */
 	default Stream<UniversalVariable> getUniversalVariables() {
-		Stream<UniversalVariable> univVars = Terms.getUniversalVariables(getTerms());
-		Set<UniversalVariable> univVarsSets = new HashSet<UniversalVariable>();
-		for (SetConstruct sc : Terms.getSetConstructs(getTerms()).collect(Collectors.toSet())) {
+		List<UniversalVariable> univVarsSets = new ArrayList<UniversalVariable>();
+		for (SetConstruct sc : Terms.getSetConstructs(getTerms()).collect(Collectors.toList())) {
 			if (sc.getElement() != null && sc.getElement().isVariable())
 				univVarsSets.add((UniversalVariable) sc.getElement());
 		}
-		return Stream.concat(univVars, univVarsSets.stream());
+		return Stream.concat(Terms.getUniversalVariables(getTerms()), univVarsSets.stream());
 	}
 
 	/**
@@ -120,6 +119,15 @@ public interface SyntaxObject extends Entity {
 	default Stream<SetTerm> getSetTerms() {
 		return Terms.getSetTerms(getTerms());
 	}
+	
+	/**
+	 * Return the stream of distinct named nulls in this object.
+	 * 
+	 * @return stream of named nulls
+	 */
+	default Stream<SetUnion> getSetUnions() {
+		return Terms.getSetUnions(getTerms());
+	}
 
 	/**
 	 * Return the stream of distinct set variables in this object.
@@ -127,12 +135,11 @@ public interface SyntaxObject extends Entity {
 	 * @return stream of set variables
 	 */
 	default Stream<SetVariable> getSetVariables() {
-		Stream<SetVariable> setVars = Terms.getSetVariables(getTerms());
-		Set<SetVariable> setVarsUnions = new HashSet<SetVariable>();
-		for (SetUnion su : Terms.getSetUnions(getTerms()).collect(Collectors.toSet())) {
+		List<SetVariable> setVarsUnions = new ArrayList<SetVariable>();
+		for (SetUnion su : Terms.getSetUnions(getTerms()).collect(Collectors.toList())) {
 			setVarsUnions.addAll(su.getSetVariables());
 		}
-		return Stream.concat(setVars, setVarsUnions.stream());
+		return Stream.concat(Terms.getSetVariables(getTerms()), setVarsUnions.stream());
 	}
 
 }

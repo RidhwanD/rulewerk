@@ -23,7 +23,7 @@ public class SetExpressionTest {
 		
 		UniversalVariable x = Expressions.makeUniversalVariable("x");
 		UniversalVariable y = Expressions.makeUniversalVariable("y");
-		ExistentialVariable z = Expressions.makeExistentialVariable("y");
+		ExistentialVariable z = Expressions.makeExistentialVariable("z");
 		
 		Constant const1 = Expressions.makeAbstractConstant("1");
 		

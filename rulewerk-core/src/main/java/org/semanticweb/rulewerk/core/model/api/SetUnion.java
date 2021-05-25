@@ -1,6 +1,6 @@
 package org.semanticweb.rulewerk.core.model.api;
 
-import java.util.Set;
+import java.util.List;
 
 /**
 * Interface for {@link TermType#SET_UNION} terms.
@@ -16,6 +16,6 @@ public interface SetUnion extends SetTerm {
 	
 	public Term getSetTerm1();
 	public Term getSetTerm2();
-	public Set<SetVariable> getSetVariables();
+	public List<SetVariable> getSetVariables();
 	
 }

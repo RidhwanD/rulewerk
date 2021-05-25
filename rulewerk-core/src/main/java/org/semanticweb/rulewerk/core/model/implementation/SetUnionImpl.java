@@ -1,7 +1,7 @@
 package org.semanticweb.rulewerk.core.model.implementation;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.semanticweb.rulewerk.core.model.api.SetTerm;
 import org.semanticweb.rulewerk.core.model.api.SetUnion;
@@ -49,8 +49,8 @@ public class SetUnionImpl implements SetUnion {
 		return termVisitor.visit(this);
 	}
 
-	public Set<SetVariable> getSetVariables() {
-		Set<SetVariable> setVars = new HashSet<SetVariable>();
+	public List<SetVariable> getSetVariables() {
+		List<SetVariable> setVars = new ArrayList<SetVariable>();
 		if (this.setTerm1 instanceof SetVariable) 
 			setVars.add((SetVariable) this.setTerm1);
 		else if (this.setTerm1 instanceof SetUnion) {
