@@ -26,12 +26,12 @@ import org.semanticweb.rulewerk.rpq.parser.RPQParser;
 
 public class ReasoningGMarkCase {
 	public static void main(String[] arg) throws IOException, ParsingException {
-		int ver = 2;
+		int ver = 1;
 		ReasoningUtils.configureLogging(); // use simple logger for the example
 		
-		for (int iter = 3; iter < 4; iter++) {
+		for (int iter = 1; iter < 4; iter++) {
 		int size = 500000;
-		while (size <= 500000) {
+		while (size <= 2000000) {
 		
 		FileWriter csvWriter = new FileWriter(ExamplesUtils.OUTPUT_FOLDER + "rpq/new/new-"+ver+"-"+size+"-"+iter+"-nc_2.csv");
 		csvWriter.append("Query");	csvWriter.append(",");	
@@ -71,7 +71,7 @@ public class ReasoningGMarkCase {
 		for (int j = 1; j < 4; j++) {
 		for (int k = 1; k < 6; k += 2) {
 		for (int l = 0; l < 10; l++) {
-			System.out.println("Loading and Parsing Query["+i+"_"+j+"_"+k+"-"+(k+1)+"] "+l+" for size " + size + "in iteration " + iter);
+			System.out.println("Loading and Parsing Query["+i+"_"+j+"_"+k+"-"+(k+1)+"] "+l+" for size " + size + " in iteration " + iter);
 			File queryInput = new File(ExamplesUtils.INPUT_FOLDER + "rpq/newqueries/shop-a-["+i+"_"+j+"_"+k+"-"+(k+1)+"]-noconverse/query-"+l+".sparql");
 			FileInputStream input = new FileInputStream(queryInput);
 			
@@ -99,7 +99,6 @@ public class ReasoningGMarkCase {
 			long afterFreeMem1 = Runtime.getRuntime().freeMemory();
 			long endTime2 = System.nanoTime();
 			long duration2 = (endTime2 - startTime2);
-//			long actualMemUsed2 = afterUsedMem2 - beforeUsedMem2;
 			
 			final List<Predicate> preds = new ArrayList<Predicate>();
 			int numRuleGenerated = 0;
@@ -113,7 +112,6 @@ public class ReasoningGMarkCase {
 
 			System.out.println("Reasoning");
 			long duration3 = 0;
-//			long actualMemUsed3 = 0;
 			long beforeTotMem2 = 0;
 			long beforeFreeMem2 = 0;
 			long afterTotMem2 = 0;
@@ -134,7 +132,6 @@ public class ReasoningGMarkCase {
 				afterTotMem2 = Runtime.getRuntime().totalMemory();
 				afterFreeMem2 = Runtime.getRuntime().freeMemory();
 				duration3 = (endTime3 - startTime3);
-//				actualMemUsed3 = afterUsedMem3 - beforeUsedMem3;
 
 				total = ReasoningUtils.printOutQueryCountMult(preds, reasoner);
 			}
@@ -144,10 +141,10 @@ public class ReasoningGMarkCase {
 			long maxMem = Runtime.getRuntime().maxMemory();
 			
 			System.out.println("Generated Datalog statements: " + numRuleGenerated);
-			System.out.println("Parsing time: "+duration1+ " ms");
-			System.out.println("Translating time: "+duration2+ " ms; Memory usage: "+actualMemUsed1/1024+" KB");
-			System.out.println("Reasoning time: "+duration3+ " ms; Memory usage: "+actualMemUsed2/1024+" KB");
-			System.out.println("Max memory: "+maxMem+ " ms");
+			System.out.println("Parsing time: "+duration1+ " ns");
+			System.out.println("Translating time: "+duration2+ " ns; Memory usage: "+actualMemUsed1/1024+" KB");
+			System.out.println("Reasoning time: "+duration3+ " ns; Memory usage: "+actualMemUsed2/1024+" KB");
+			System.out.println("Max memory: "+maxMem/1024+ " KB");
 			System.out.println();
 			
 			kb.removeStatements(datalogResult);
