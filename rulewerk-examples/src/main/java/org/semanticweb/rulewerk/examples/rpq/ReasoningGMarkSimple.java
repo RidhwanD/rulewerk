@@ -48,7 +48,7 @@ public class ReasoningGMarkSimple {
 		inputStreamGMarkShop.close();
 			
 		System.out.println("Loading and Parsing Query ");
-		File queryInput = new File(ExamplesUtils.INPUT_FOLDER + "rpq/shop-a-translated-1500000/query-" + 47 + "-mod.sparql");
+		File queryInput = new File(ExamplesUtils.INPUT_FOLDER + "rpq/newqueries/shop-a-[2_3_3-4]/query-1.sparql");
 		FileInputStream input = new FileInputStream(queryInput);
 //		String input = "@prefix g: <http://example.org/gmark/> . SELECT DISTINCT ?x0 ?x1 WHERE {  {  ?x0 (((^g:ptag)/g:ptitle)/(^g:pemail)) ?x1 . }}";
 		

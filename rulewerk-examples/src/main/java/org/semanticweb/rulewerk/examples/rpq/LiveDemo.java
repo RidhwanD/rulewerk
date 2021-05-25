@@ -17,7 +17,6 @@ import org.semanticweb.rulewerk.core.reasoner.Reasoner;
 import org.semanticweb.rulewerk.examples.ExamplesUtils;
 import org.semanticweb.rulewerk.parser.RuleParser;
 import org.semanticweb.rulewerk.reasoner.vlog.VLogReasoner;
-import org.semanticweb.rulewerk.rpq.converter.RpqConverter;
 import org.semanticweb.rulewerk.rpq.converter.RpqNFAConverter;
 import org.semanticweb.rulewerk.rpq.model.api.RPQConjunction;
 import org.semanticweb.rulewerk.rpq.model.api.RegPathQuery;
@@ -42,7 +41,7 @@ public class LiveDemo {
 		inputStreamLiveDemo.close();
 		
 		System.out.println("Loading and Parsing Query ");
-		File queryInput = new File(ExamplesUtils.INPUT_FOLDER + "rpq/livedemo/query-" + 3 + ".sparql");
+		File queryInput = new File(ExamplesUtils.INPUT_FOLDER + "rpq/livedemo/query-" + 5 + ".sparql");
 		FileInputStream input = new FileInputStream(queryInput);
 		
 		// Set of people who have authored something and year of their published works
@@ -96,9 +95,9 @@ public class LiveDemo {
 			/* Execute some queries */
 			System.out.println("- Answering Query");
 			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(Expressions.makePredicate("Ans", uvars.size()), uvars), reasoner);			
-			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(Expressions.makePredicate("Q_hasProfession", uvars.size()), uvars.get(0),Expressions.makeAbstractConstant("Illustrator")), reasoner);			
-			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(Expressions.makePredicate("Q_((friendOf | ^friendOf))+", uvars.size()), uvars), reasoner);		
-			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(Expressions.makePredicate("Q_hasProfession", uvars.size()), Arrays.asList(uvars.get(0),Expressions.makeAbstractConstant("Archaeologist"))), reasoner);		
+//			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(Expressions.makePredicate("Q_hasProfession", uvars.size()), uvars.get(0),Expressions.makeAbstractConstant("Illustrator")), reasoner);			
+//			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(Expressions.makePredicate("Q_((friendOf | ^friendOf))+", uvars.size()), uvars), reasoner);		
+//			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(Expressions.makePredicate("Q_hasProfession", uvars.size()), Arrays.asList(uvars.get(0),Expressions.makeAbstractConstant("Archaeologist"))), reasoner);		
 			long endTime3 = System.currentTimeMillis();
 			duration3 = (endTime3 - startTime3);
 			

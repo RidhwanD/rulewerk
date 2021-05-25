@@ -31,22 +31,28 @@ public class ReasoningGMarkCase {
 		
 		for (int iter = 3; iter < 4; iter++) {
 		int size = 500000;
-		while (size <= 2000000) {
+		while (size <= 500000) {
 		
-		FileWriter csvWriter = new FileWriter(ExamplesUtils.OUTPUT_FOLDER + "rpq/new-"+ver+"-"+size+"-"+iter+"-nc_2.csv");
-		csvWriter.append("Query");	csvWriter.append(",");	
-		csvWriter.append("DS");		csvWriter.append(",");	
-		csvWriter.append("FQA");	csvWriter.append(",");	
-		csvWriter.append("PT");		csvWriter.append(",");	
-		csvWriter.append("TT");		csvWriter.append(",");
-		csvWriter.append("RT");		csvWriter.append(",");	
-		csvWriter.append("NR");		csvWriter.append("\n");	
-		
-		FileWriter csvWriter2 = new FileWriter(ExamplesUtils.OUTPUT_FOLDER + "rpq/new-"+ver+"-"+size+"-"+iter+"-nc_mem.csv");
-		csvWriter2.append("Query");	csvWriter2.append(",");	
-		csvWriter2.append("NR");	csvWriter2.append(",");
-		csvWriter2.append("PM");	csvWriter2.append(",");	
-		csvWriter2.append("TM");	csvWriter2.append("\n");
+//		FileWriter csvWriter = new FileWriter(ExamplesUtils.OUTPUT_FOLDER + "rpq/new/new-"+ver+"-"+size+"-"+iter+"-nc_2.csv");
+//		csvWriter.append("Query");	csvWriter.append(",");	
+//		csvWriter.append("DS");		csvWriter.append(",");	
+//		csvWriter.append("FQA");	csvWriter.append(",");	
+//		csvWriter.append("PT");		csvWriter.append(",");	
+//		csvWriter.append("TT");		csvWriter.append(",");
+//		csvWriter.append("RT");		csvWriter.append(",");	
+//		csvWriter.append("NR");		csvWriter.append("\n");	
+//		
+//		FileWriter csvWriter2 = new FileWriter(ExamplesUtils.OUTPUT_FOLDER + "rpq/new/new-"+ver+"-"+size+"-"+iter+"-nc_mem.csv");
+//		csvWriter2.append("Query");	csvWriter2.append(",");	
+//		csvWriter2.append("TTMB");	csvWriter2.append(",");
+//		csvWriter2.append("TFMB");	csvWriter2.append(",");	
+//		csvWriter2.append("TTMA");	csvWriter2.append(",");
+//		csvWriter2.append("TFMA");	csvWriter2.append(",");	
+//		csvWriter2.append("RTMB");	csvWriter2.append(",");
+//		csvWriter2.append("RFMB");	csvWriter2.append(",");	
+//		csvWriter2.append("RTMA");	csvWriter2.append(",");
+//		csvWriter2.append("RFMA");	csvWriter2.append(",");
+//		csvWriter2.append("Peak");	csvWriter2.append("\n");
 		
 		System.out.println("Loading Knowledge Base from file");
 		File rpqGMarkShopFile = new File(ExamplesUtils.INPUT_FOLDER + "rpq/shop-a-graph-triple-"+size+".txt");
@@ -71,28 +77,32 @@ public class ReasoningGMarkCase {
 			
 			// ============================== PARSING =============================== //
 			long startTime1 = System.nanoTime();
-			long beforeUsedMem1 = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+//			long beforeUsedMem1 = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 			RPQConjunction<RegPathQuery> statement = RPQParser.parse(input);
-			long afterUsedMem1 = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+//			long afterUsedMem1 = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 			long endTime1 = System.nanoTime();
 			long duration1 = (endTime1 - startTime1);
-			long actualMemUsed1 = afterUsedMem1 - beforeUsedMem1;
+//			long actualMemUsed1 = afterUsedMem1 - beforeUsedMem1;
 
 			System.out.println("Translating Query");
 			// ============================ TRANSLATING ============================= //
 			long startTime2 = System.nanoTime();
-			long beforeUsedMem2 = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+			long beforeTotMem1 = Runtime.getRuntime().totalMemory();
+			long beforeFreeMem1 = Runtime.getRuntime().freeMemory();
 			final List<Term> uvars = statement.getProjVars();
 			List<Statement> datalogResult = null;
 			if (ver == 1) {
 				datalogResult = RpqConverter.CRPQTranslate(uvars, statement, null);
-			} else {
+			} else if (ver == 2) {
 				datalogResult = RpqNFAConverter.CRPQTranslate(uvars, statement, null);
+			} else if (ver == 3) {
+				datalogResult = RpqNFAConverter.CRPQTranslateAlt(uvars, statement, null);
 			}
-			long afterUsedMem2 = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+			long afterTotMem1 = Runtime.getRuntime().totalMemory();
+			long afterFreeMem1 = Runtime.getRuntime().freeMemory();
 			long endTime2 = System.nanoTime();
 			long duration2 = (endTime2 - startTime2);
-			long actualMemUsed2 = afterUsedMem2 - beforeUsedMem2;
+//			long actualMemUsed2 = afterUsedMem2 - beforeUsedMem2;
 			
 			final List<Predicate> preds = new ArrayList<Predicate>();
 			int numRuleGenerated = 0;
@@ -103,54 +113,68 @@ public class ReasoningGMarkCase {
 				if (!preds.contains(p) && !p.getName().equals("Ans")) preds.add(p);
 				numRuleGenerated++;
 			}
-//			for (int i = 0; i < preds.size(); i++)
-//				System.out.println(preds.get(i));
 
 			System.out.println("Reasoning");
 			long duration3 = 0;
-			long actualMemUsed3 = 0;
+//			long actualMemUsed3 = 0;
+			long beforeTotMem2 = 0;
+			long beforeFreeMem2 = 0;
+			long afterTotMem2 = 0;
+			long afterFreeMem2 = 0;
 			long ans = 0;
 			long total = 0;
 			// ============================ REASONING ============================== //
 			try (final Reasoner reasoner = new VLogReasoner(kb)) {
 				long startTime3 = System.nanoTime();
-				long beforeUsedMem3 = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+				beforeTotMem2 = Runtime.getRuntime().totalMemory();
+				beforeFreeMem2 = Runtime.getRuntime().freeMemory();
 				reasoner.reason();
 				/* Execute some queries */
 				System.out.println("- Answering Query");
 				ans = ReasoningUtils.printOutQueryCount(Expressions.makePositiveLiteral(Expressions.makePredicate("Ans", uvars.size()), uvars), reasoner);
 				
 				long endTime3 = System.nanoTime();
-				long afterUsedMem3 = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+				afterTotMem2 = Runtime.getRuntime().totalMemory();
+				afterFreeMem2 = Runtime.getRuntime().freeMemory();
 				duration3 = (endTime3 - startTime3);
-				actualMemUsed3 = afterUsedMem3 - beforeUsedMem3;
+//				actualMemUsed3 = afterUsedMem3 - beforeUsedMem3;
 
 				total = ReasoningUtils.printOutQueryCountMult(preds, reasoner);
 			}
 			
+			long actualMemUsed1 = afterTotMem1 - beforeTotMem1;
+			long actualMemUsed2 = afterTotMem2 - beforeTotMem2;
+			
 			System.out.println("Generated Datalog statements: " + numRuleGenerated);
 			System.out.println("Parsing time: "+duration1+ " ms");
-			System.out.println("Translating time: "+duration2+ " ms");
-			System.out.println("Reasoning time: "+duration3+ " ms");
+			System.out.println("Translating time: "+duration2+ " ms; Memory usage: "+actualMemUsed1/1024+" KB");
+			System.out.println("Reasoning time: "+duration3+ " ms; Memory usage: "+actualMemUsed2/1024+" KB");
+			System.out.println("Peak memory usage: "+duration1+ " ms");
 			System.out.println();
 			
 			kb.removeStatements(datalogResult);
 			
-			csvWriter.append(String.valueOf(i+"_"+j+"_"+k+"_"+l)); 	csvWriter.append(",");
-			csvWriter.append(String.valueOf(numRuleGenerated)); 	csvWriter.append(",");
-			csvWriter.append(String.valueOf(total));				csvWriter.append(",");
-			csvWriter.append(String.valueOf(duration1));			csvWriter.append(",");
-			csvWriter.append(String.valueOf(duration2));			csvWriter.append(",");
-			csvWriter.append(String.valueOf(duration3));			csvWriter.append(",");
-			csvWriter.append(String.valueOf(ans));					csvWriter.append("\n");
-			
-			csvWriter2.append(String.valueOf(i+"_"+j+"_"+k+"_"+l)); csvWriter2.append(",");
-			csvWriter2.append(String.valueOf(actualMemUsed1));		csvWriter2.append(",");
-			csvWriter2.append(String.valueOf(actualMemUsed2));		csvWriter2.append(",");
-			csvWriter2.append(String.valueOf(actualMemUsed3));		csvWriter2.append("\n");
+//			csvWriter.append(String.valueOf(i+"_"+j+"_"+k+"_"+l)); 	csvWriter.append(",");
+//			csvWriter.append(String.valueOf(numRuleGenerated)); 	csvWriter.append(",");
+//			csvWriter.append(String.valueOf(total));				csvWriter.append(",");
+//			csvWriter.append(String.valueOf(duration1));			csvWriter.append(",");
+//			csvWriter.append(String.valueOf(duration2));			csvWriter.append(",");
+//			csvWriter.append(String.valueOf(duration3));			csvWriter.append(",");
+//			csvWriter.append(String.valueOf(ans));					csvWriter.append("\n");
+//			
+//			csvWriter2.append(String.valueOf(i+"_"+j+"_"+k+"_"+l)); csvWriter2.append(",");
+//			csvWriter2.append(String.valueOf(beforeTotMem1));		csvWriter2.append(",");
+//			csvWriter2.append(String.valueOf(beforeFreeMem1));		csvWriter2.append(",");
+//			csvWriter2.append(String.valueOf(afterTotMem1));		csvWriter2.append(",");
+//			csvWriter2.append(String.valueOf(afterFreeMem1));		csvWriter2.append(",");
+//			csvWriter2.append(String.valueOf(beforeTotMem2));		csvWriter2.append(",");
+//			csvWriter2.append(String.valueOf(beforeFreeMem2));		csvWriter2.append(",");
+//			csvWriter2.append(String.valueOf(afterTotMem2));		csvWriter2.append(",");
+//			csvWriter2.append(String.valueOf(afterFreeMem2));		csvWriter2.append(",");
+//			csvWriter2.append(String.valueOf(afterFreeMem2));		csvWriter2.append("\n");
 		}}}}
-		csvWriter.flush();		csvWriter.close();
-		csvWriter2.flush();		csvWriter2.close();
+//		csvWriter.flush();		csvWriter.close();
+//		csvWriter2.flush();		csvWriter2.close();
 		System.out.println(size+" FINISHED");
 		size += 500000;
 		}
