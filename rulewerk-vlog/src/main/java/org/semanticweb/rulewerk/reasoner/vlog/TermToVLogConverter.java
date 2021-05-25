@@ -155,17 +155,17 @@ class TermToVLogConverter implements TermVisitor<karmaresearch.vlog.Term> {
 	}
 
 	@Override
-	public Term visit(SetVariable term) {
+	public karmaresearch.vlog.Term visit(final SetVariable term) {
 		return null;
 	}
 
 	@Override
-	public Term visit(SetConstruct term) {
+	public karmaresearch.vlog.Term visit(final SetConstruct term) {
 		return null;
 	}
 
 	@Override
-	public Term visit(SetUnion term) {
+	public karmaresearch.vlog.Term visit(final SetUnion term) {
 		return null;
 	}
 

@@ -187,7 +187,7 @@ public class Serializer {
 		}
 
 		@Override
-		public Void visit(SetVariable term) {
+		public Void visit(final SetVariable term) {
 			try {
 				Serializer.this.writeSetVariable(term);
 			} catch (IOException e) {
@@ -197,7 +197,7 @@ public class Serializer {
 		}
 
 		@Override
-		public Void visit(SetConstruct term) {
+		public Void visit(final SetConstruct term) {
 			try {
 				Serializer.this.writeSetConstruct(term);
 			} catch (IOException e) {
@@ -207,7 +207,7 @@ public class Serializer {
 		}
 
 		@Override
-		public Void visit(SetUnion term) {
+		public Void visit(final SetUnion term) {
 			try {
 				Serializer.this.writeSetUnion(term);
 			} catch (IOException e) {
@@ -518,9 +518,9 @@ public class Serializer {
 	 * @param universalVariable a {@link UniversalVariable}
 	 * @throws IOException
 	 */
-	public void writeSetVariable(SetVariable setVariable) throws IOException {
-		writer.write("$");
-		writer.write(setVariable.getName());
+	public void writeSetVariable(final SetVariable setVariable) throws IOException {
+		this.writer.write("$");
+		this.writer.write(setVariable.getName());
 	}
 
 	/**
@@ -529,18 +529,18 @@ public class Serializer {
 	 * @param universalVariable a {@link UniversalVariable}
 	 * @throws IOException
 	 */
-	public void writeSetConstruct(SetConstruct setConstruct) throws IOException {
-		writer.write("{");
+	public void writeSetConstruct(final SetConstruct setConstruct) throws IOException {
+		this.writer.write("{");
 		if (!setConstruct.isEmpty()) {
 			if (setConstruct.getElement() instanceof UniversalVariable) {
 				UniversalVariable v = (UniversalVariable) setConstruct.getElement();
-				writeUniversalVariable(v);
+				this.writeUniversalVariable(v);
 			} else if (setConstruct.getElement() instanceof AbstractConstant) {
 				AbstractConstant c = (AbstractConstant) setConstruct.getElement();
-				writeAbstractConstant(c);
+				this.writeAbstractConstant(c);
 			}
 		}
-		writer.write("}");
+		this.writer.write("}");
 	}
 
 	/**
@@ -549,27 +549,27 @@ public class Serializer {
 	 * @param universalVariable a {@link UniversalVariable}
 	 * @throws IOException
 	 */
-	public void writeSetUnion(SetUnion setUnion) throws IOException {
+	public void writeSetUnion(final SetUnion setUnion) throws IOException {
 		if (setUnion.getSetTerm1() instanceof SetVariable) {
 			SetVariable v = (SetVariable) setUnion.getSetTerm1();
-			writeSetVariable(v);
+			this.writeSetVariable(v);
 		} else if (setUnion.getSetTerm1() instanceof SetConstruct) {
 			SetConstruct c = (SetConstruct) setUnion.getSetTerm1();
-			writeSetConstruct(c);
+			this.writeSetConstruct(c);
 		} else if (setUnion.getSetTerm1() instanceof SetUnion) {
 			SetUnion c = (SetUnion) setUnion.getSetTerm1();
-			writeSetUnion(c);
+			this.writeSetUnion(c);
 		}
-		writer.write(" U ");
+		this.writer.write(" U ");
 		if (setUnion.getSetTerm2() instanceof SetVariable) {
 			SetVariable v = (SetVariable) setUnion.getSetTerm2();
-			writeSetVariable(v);
+			this.writeSetVariable(v);
 		} else if (setUnion.getSetTerm2() instanceof SetConstruct) {
 			SetConstruct c = (SetConstruct) setUnion.getSetTerm2();
-			writeSetConstruct(c);
+			this.writeSetConstruct(c);
 		} else if (setUnion.getSetTerm2() instanceof SetUnion) {
 			SetUnion c = (SetUnion) setUnion.getSetTerm2();
-			writeSetUnion(c);
+			this.writeSetUnion(c);
 		}
 	}
 	
@@ -579,7 +579,7 @@ public class Serializer {
 	 * @param term a {@link Term}
 	 * @throws IOException
 	 */
-	public void writeSetTerm(SetTerm term) throws IOException {
+	public void writeSetTerm(final SetTerm term) throws IOException {
 		try {
 			term.accept(this.serializerTermVisitor);
 		} catch (Serializer.RuntimeIoException e) {
