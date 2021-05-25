@@ -40,6 +40,7 @@ import org.semanticweb.rulewerk.core.model.api.Fact;
 import org.semanticweb.rulewerk.core.model.api.LanguageStringConstant;
 import org.semanticweb.rulewerk.core.model.api.Literal;
 import org.semanticweb.rulewerk.core.model.api.NamedNull;
+import org.semanticweb.rulewerk.core.model.api.PositiveLiteral;
 import org.semanticweb.rulewerk.core.model.api.Predicate;
 import org.semanticweb.rulewerk.core.model.api.PrefixDeclarationRegistry;
 import org.semanticweb.rulewerk.core.model.api.Rule;
@@ -74,7 +75,7 @@ public class Serializer {
 	 */
 	public static final Function<String, String> identityIriSerializer = new Function<String, String>() {
 		@Override
-		public String apply(String iri) {
+		public String apply(final String iri) {
 			if (iri.contains(":") || !iri.matches(AbstractPrefixDeclarationRegistry.REGEXP_LOCNAME)) {
 				return "<" + iri + ">";
 			} else {
@@ -107,13 +108,13 @@ public class Serializer {
 		private static final long serialVersionUID = 1L;
 		final IOException cause;
 
-		public RuntimeIoException(IOException cause) {
+		public RuntimeIoException(final IOException cause) {
 			super(cause);
 			this.cause = cause;
 		}
 
 		public IOException getIoException() {
-			return cause;
+			return this.cause;
 		}
 	}
 
@@ -126,60 +127,60 @@ public class Serializer {
 	private class SerializerTermVisitor implements TermVisitor<Void> {
 
 		@Override
-		public Void visit(AbstractConstant term) {
+		public Void visit(final AbstractConstant term) {
 			try {
 				Serializer.this.writeAbstractConstant(term);
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				throw new RuntimeIoException(e);
 			}
 			return null;
 		}
 
 		@Override
-		public Void visit(DatatypeConstant term) {
+		public Void visit(final DatatypeConstant term) {
 			try {
 				Serializer.this.writeDatatypeConstant(term);
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				throw new RuntimeIoException(e);
 			}
 			return null;
 		}
 
 		@Override
-		public Void visit(LanguageStringConstant term) {
+		public Void visit(final LanguageStringConstant term) {
 			try {
 				Serializer.this.writeLanguageStringConstant(term);
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				throw new RuntimeIoException(e);
 			}
 			return null;
 		}
 
 		@Override
-		public Void visit(UniversalVariable term) {
+		public Void visit(final UniversalVariable term) {
 			try {
 				Serializer.this.writeUniversalVariable(term);
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				throw new RuntimeIoException(e);
 			}
 			return null;
 		}
 
 		@Override
-		public Void visit(ExistentialVariable term) {
+		public Void visit(final ExistentialVariable term) {
 			try {
 				Serializer.this.writeExistentialVariable(term);
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				throw new RuntimeIoException(e);
 			}
 			return null;
 		}
 
 		@Override
-		public Void visit(NamedNull term) {
+		public Void visit(final NamedNull term) {
 			try {
 				Serializer.this.writeNamedNull(term);
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				throw new RuntimeIoException(e);
 			}
 			return null;
@@ -226,30 +227,30 @@ public class Serializer {
 	private class SerializerStatementVisitor implements StatementVisitor<Void> {
 
 		@Override
-		public Void visit(Fact statement) {
+		public Void visit(final Fact statement) {
 			try {
 				Serializer.this.writeFact(statement);
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				throw new RuntimeIoException(e);
 			}
 			return null;
 		}
 
 		@Override
-		public Void visit(Rule statement) {
+		public Void visit(final Rule statement) {
 			try {
 				Serializer.this.writeRule(statement);
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				throw new RuntimeIoException(e);
 			}
 			return null;
 		}
 
 		@Override
-		public Void visit(DataSourceDeclaration statement) {
+		public Void visit(final DataSourceDeclaration statement) {
 			try {
 				Serializer.this.writeDataSourceDeclaration(statement);
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				throw new RuntimeIoException(e);
 			}
 			return null;
@@ -286,7 +287,7 @@ public class Serializer {
 	 * @param writer                    the object used to write serializations
 	 * @param prefixDeclarationRegistry the object used to abbreviate IRIs
 	 */
-	public Serializer(final Writer writer, PrefixDeclarationRegistry prefixDeclarationRegistry) {
+	public Serializer(final Writer writer, final PrefixDeclarationRegistry prefixDeclarationRegistry) {
 		this(writer, (string) -> {
 			return prefixDeclarationRegistry.unresolveAbsoluteIri(string, true);
 		});
@@ -295,13 +296,13 @@ public class Serializer {
 	/**
 	 * Writes a serialization of the given {@link Statement}.
 	 *
-	 * @param term a {@link Statement}
+	 * @param statement a {@link Statement} to serialize
 	 * @throws IOException
 	 */
-	public void writeStatement(Statement statement) throws IOException {
+	public void writeStatement(final Statement statement) throws IOException {
 		try {
 			statement.accept(this.serializerStatementVisitor);
-		} catch (Serializer.RuntimeIoException e) {
+		} catch (final Serializer.RuntimeIoException e) {
 			throw e.getIoException();
 		}
 	}
@@ -312,9 +313,9 @@ public class Serializer {
 	 * @param fact a {@link Fact}
 	 * @throws IOException
 	 */
-	public void writeFact(Fact fact) throws IOException {
-		writeLiteral(fact);
-		writer.write(STATEMENT_END);
+	public void writeFact(final Fact fact) throws IOException {
+		this.writeLiteral(fact);
+		this.writer.write(STATEMENT_END);
 	}
 
 	/**
@@ -323,9 +324,9 @@ public class Serializer {
 	 * @param rule a {@link Rule}
 	 * @throws IOException
 	 */
-	public void writeRule(Rule rule) throws IOException {
-		writeRuleNoStatment(rule);
-		writer.write(STATEMENT_END);
+	public void writeRule(final Rule rule) throws IOException {
+		this.writeRuleNoStatment(rule);
+		this.writer.write(STATEMENT_END);
 	}
 
 	/**
@@ -334,10 +335,10 @@ public class Serializer {
 	 * @param rule a {@link Rule}
 	 * @throws IOException
 	 */
-	private void writeRuleNoStatment(Rule rule) throws IOException {
-		writeLiteralConjunction(rule.getHead());
-		writer.write(" :- ");
-		writeLiteralConjunction(rule.getBody());
+	private void writeRuleNoStatment(final Rule rule) throws IOException {
+		this.writeLiteralConjunction(rule.getHead());
+		this.writer.write(" :- ");
+		this.writeLiteralConjunction(rule.getBody());
 	}
 
 	/**
@@ -346,12 +347,12 @@ public class Serializer {
 	 * @param dataSourceDeclaration a {@link DataSourceDeclaration}
 	 * @throws IOException
 	 */
-	public void writeDataSourceDeclaration(DataSourceDeclaration dataSourceDeclaration) throws IOException {
-		writer.write("@source ");
-		writePredicate(dataSourceDeclaration.getPredicate());
-		writer.write(": ");
-		writeLiteral(dataSourceDeclaration.getDataSource().getDeclarationFact());
-		writer.write(STATEMENT_END);
+	public void writeDataSourceDeclaration(final DataSourceDeclaration dataSourceDeclaration) throws IOException {
+		this.writer.write("@source ");
+		this.writePredicate(dataSourceDeclaration.getPredicate());
+		this.writer.write(": ");
+		this.writeLiteral(dataSourceDeclaration.getDataSource().getDeclarationFact());
+		this.writer.write(STATEMENT_END);
 	}
 
 	/**
@@ -360,11 +361,11 @@ public class Serializer {
 	 * @param literal a {@link Literal}
 	 * @throws IOException
 	 */
-	public void writeLiteral(Literal literal) throws IOException {
+	public void writeLiteral(final Literal literal) throws IOException {
 		if (literal.isNegated()) {
-			writer.write("~");
+			this.writer.write("~");
 		}
-		writePositiveLiteral(literal.getPredicate(), literal.getArguments());
+		this.writePositiveLiteral(literal.getPredicate(), literal.getArguments());
 	}
 
 	/**
@@ -375,21 +376,21 @@ public class Serializer {
 	 * @param arguments a list of {@link Term} arguments
 	 * @throws IOException
 	 */
-	public void writePositiveLiteral(Predicate predicate, List<Term> arguments) throws IOException {
-		writer.write(getIri(predicate.getName()));
-		writer.write("(");
+	public void writePositiveLiteral(final Predicate predicate, final List<Term> arguments) throws IOException {
+		this.writer.write(this.getIri(predicate.getName()));
+		this.writer.write("(");
 
 		boolean first = true;
 		for (final Term term : arguments) {
 			if (first) {
 				first = false;
 			} else {
-				writer.write(", ");
+				this.writer.write(", ");
 			}
-			writeTerm(term);
+			this.writeTerm(term);
 		}
 
-		writer.write(")");
+		this.writer.write(")");
 	}
 
 	/**
@@ -405,9 +406,9 @@ public class Serializer {
 			if (first) {
 				first = false;
 			} else {
-				writer.write(", ");
+				this.writer.write(", ");
 			}
-			writeLiteral(literal);
+			this.writeLiteral(literal);
 		}
 	}
 
@@ -418,11 +419,11 @@ public class Serializer {
 	 * @param predicate a {@link Predicate}
 	 * @throws IOException
 	 */
-	public void writePredicate(Predicate predicate) throws IOException {
-		writer.write(getIri(predicate.getName()));
-		writer.write("[");
-		writer.write(String.valueOf(predicate.getArity()));
-		writer.write("]");
+	public void writePredicate(final Predicate predicate) throws IOException {
+		this.writer.write(this.getIri(predicate.getName()));
+		this.writer.write("[");
+		this.writer.write(String.valueOf(predicate.getArity()));
+		this.writer.write("]");
 	}
 
 	/**
@@ -431,10 +432,10 @@ public class Serializer {
 	 * @param term a {@link Term}
 	 * @throws IOException
 	 */
-	public void writeTerm(Term term) throws IOException {
+	public void writeTerm(final Term term) throws IOException {
 		try {
 			term.accept(this.serializerTermVisitor);
-		} catch (Serializer.RuntimeIoException e) {
+		} catch (final Serializer.RuntimeIoException e) {
 			throw e.getIoException();
 		}
 	}
@@ -445,8 +446,8 @@ public class Serializer {
 	 * @param abstractConstant a {@link AbstractConstant}
 	 * @throws IOException
 	 */
-	public void writeAbstractConstant(AbstractConstant abstractConstant) throws IOException {
-		writer.write(getIri(abstractConstant.getName()));
+	public void writeAbstractConstant(final AbstractConstant abstractConstant) throws IOException {
+		this.writer.write(this.getIri(abstractConstant.getName()));
 	}
 
 	/**
@@ -455,13 +456,13 @@ public class Serializer {
 	 * @param datatypeConstant a {@link DatatypeConstant}
 	 * @throws IOException
 	 */
-	public void writeDatatypeConstant(DatatypeConstant datatypeConstant) throws IOException {
+	public void writeDatatypeConstant(final DatatypeConstant datatypeConstant) throws IOException {
 		if (PrefixDeclarationRegistry.XSD_STRING.equals(datatypeConstant.getDatatype())) {
-			writer.write(getQuotedString(datatypeConstant.getLexicalValue()));
+			this.writer.write(this.getQuotedString(datatypeConstant.getLexicalValue()));
 		} else if (PrefixDeclarationRegistry.XSD_INTEGER.equals(datatypeConstant.getDatatype())) {
-			writer.write(datatypeConstant.getLexicalValue());
+			this.writer.write(datatypeConstant.getLexicalValue());
 		} else {
-			writeDatatypeConstantNoAbbreviations(datatypeConstant);
+			this.writeDatatypeConstantNoAbbreviations(datatypeConstant);
 		}
 	}
 
@@ -472,10 +473,10 @@ public class Serializer {
 	 * @param datatypeConstant a {@link DatatypeConstant}
 	 * @throws IOException
 	 */
-	public void writeDatatypeConstantNoAbbreviations(DatatypeConstant datatypeConstant) throws IOException {
-		writer.write(getQuotedString(datatypeConstant.getLexicalValue()));
-		writer.write("^^");
-		writer.write(getIri(datatypeConstant.getDatatype()));
+	public void writeDatatypeConstantNoAbbreviations(final DatatypeConstant datatypeConstant) throws IOException {
+		this.writer.write(this.getQuotedString(datatypeConstant.getLexicalValue()));
+		this.writer.write("^^");
+		this.writer.write(this.getIri(datatypeConstant.getDatatype()));
 	}
 
 	/**
@@ -484,9 +485,9 @@ public class Serializer {
 	 * @param universalVariable a {@link UniversalVariable}
 	 * @throws IOException
 	 */
-	public void writeUniversalVariable(UniversalVariable universalVariable) throws IOException {
-		writer.write("?");
-		writer.write(universalVariable.getName());
+	public void writeUniversalVariable(final UniversalVariable universalVariable) throws IOException {
+		this.writer.write("?");
+		this.writer.write(universalVariable.getName());
 	}
 
 	/**
@@ -495,9 +496,9 @@ public class Serializer {
 	 * @param existentialVariable a {@link ExistentialVariable}
 	 * @throws IOException
 	 */
-	public void writeExistentialVariable(ExistentialVariable existentialVariable) throws IOException {
-		writer.write("!");
-		writer.write(existentialVariable.getName());
+	public void writeExistentialVariable(final ExistentialVariable existentialVariable) throws IOException {
+		this.writer.write("!");
+		this.writer.write(existentialVariable.getName());
 	}
 	
 	/**
@@ -506,9 +507,9 @@ public class Serializer {
 	 * @param namedNull a {@link NamedNull}
 	 * @throws IOException
 	 */
-	public void writeNamedNull(NamedNull namedNull) throws IOException {
-		writer.write("_:");
-		writer.write(namedNull.getName());
+	public void writeNamedNull(final NamedNull namedNull) throws IOException {
+		this.writer.write("_:");
+		this.writer.write(namedNull.getName());
 	}
 
 	/**
@@ -594,29 +595,29 @@ public class Serializer {
 	 * @throws IOException
 	 * @return true if anything has been written
 	 */
-	public boolean writePrefixDeclarationRegistry(PrefixDeclarationRegistry prefixDeclarationRegistry)
+	public boolean writePrefixDeclarationRegistry(final PrefixDeclarationRegistry prefixDeclarationRegistry)
 			throws IOException {
 		boolean result = false;
 		final String baseIri = prefixDeclarationRegistry.getBaseIri();
 		if (!PrefixDeclarationRegistry.EMPTY_BASE.contentEquals(baseIri)) {
-			writer.write("@base <");
-			writer.write(baseIri);
-			writer.write(">");
-			writer.write(STATEMENT_END);
-			writer.write("\n");
+			this.writer.write("@base <");
+			this.writer.write(baseIri);
+			this.writer.write(">");
+			this.writer.write(STATEMENT_END);
+			this.writer.write("\n");
 			result = true;
 		}
 
-		Iterator<Entry<String, String>> prefixIterator = prefixDeclarationRegistry.iterator();
+		final Iterator<Entry<String, String>> prefixIterator = prefixDeclarationRegistry.iterator();
 		while (prefixIterator.hasNext()) {
-			Entry<String, String> entry = prefixIterator.next();
-			writer.write("@prefix ");
-			writer.write(entry.getKey());
-			writer.write(" <");
-			writer.write(entry.getValue());
-			writer.write(">");
-			writer.write(STATEMENT_END);
-			writer.write("\n");
+			final Entry<String, String> entry = prefixIterator.next();
+			this.writer.write("@prefix ");
+			this.writer.write(entry.getKey());
+			this.writer.write(" <");
+			this.writer.write(entry.getValue());
+			this.writer.write(">");
+			this.writer.write(STATEMENT_END);
+			this.writer.write("\n");
 			result = true;
 		}
 		return result;
@@ -628,10 +629,10 @@ public class Serializer {
 	 * @param languageStringConstant a {@link LanguageStringConstant}
 	 * @throws IOException
 	 */
-	public void writeLanguageStringConstant(LanguageStringConstant languageStringConstant) throws IOException {
-		writer.write(getQuotedString(languageStringConstant.getString()));
-		writer.write("@");
-		writer.write(languageStringConstant.getLanguageTag());
+	public void writeLanguageStringConstant(final LanguageStringConstant languageStringConstant) throws IOException {
+		this.writer.write(this.getQuotedString(languageStringConstant.getString()));
+		this.writer.write("@");
+		this.writer.write(languageStringConstant.getLanguageTag());
 	}
 
 	/**
@@ -640,21 +641,21 @@ public class Serializer {
 	 * @param command a {@link Command}
 	 * @throws IOException
 	 */
-	public void writeCommand(Command command) throws IOException {
-		writer.write("@");
-		writer.write(command.getName());
+	public void writeCommand(final Command command) throws IOException {
+		this.writer.write("@");
+		this.writer.write(command.getName());
 
-		for (Argument argument : command.getArguments()) {
-			writer.write(" ");
+		for (final Argument argument : command.getArguments()) {
+			this.writer.write(" ");
 			if (argument.fromRule().isPresent()) {
-				writeRuleNoStatment(argument.fromRule().get());
+				this.writeRuleNoStatment(argument.fromRule().get());
 			} else if (argument.fromPositiveLiteral().isPresent()) {
-				writeLiteral(argument.fromPositiveLiteral().get());
+				this.writeLiteral(argument.fromPositiveLiteral().get());
 			} else {
-				writeTerm(argument.fromTerm().get());
+				this.writeTerm(argument.fromTerm().get());
 			}
 		}
-		writer.write(STATEMENT_END);
+		this.writer.write(STATEMENT_END);
 	}
 
 	/**
@@ -664,12 +665,12 @@ public class Serializer {
 	 *                    a string
 	 * @return serialization string
 	 */
-	public static String getSerialization(SerializationWriter writeAction) {
+	public static String getSerialization(final SerializationWriter writeAction) {
 		final StringWriter stringWriter = new StringWriter();
 		final Serializer serializer = new Serializer(stringWriter);
 		try {
 			writeAction.write(serializer);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new RuntimeException("StringWriter should never throw an IOException.");
 		}
 		return stringWriter.toString();
@@ -697,6 +698,6 @@ public class Serializer {
 	}
 
 	private String getIri(final String string) {
-		return iriTransformer.apply(string);
+		return this.iriTransformer.apply(string);
 	}
 }
