@@ -33,26 +33,26 @@ public class ReasoningGMarkCase {
 		int size = 500000;
 		while (size <= 500000) {
 		
-//		FileWriter csvWriter = new FileWriter(ExamplesUtils.OUTPUT_FOLDER + "rpq/new/new-"+ver+"-"+size+"-"+iter+"-nc_2.csv");
-//		csvWriter.append("Query");	csvWriter.append(",");	
-//		csvWriter.append("DS");		csvWriter.append(",");	
-//		csvWriter.append("FQA");	csvWriter.append(",");	
-//		csvWriter.append("PT");		csvWriter.append(",");	
-//		csvWriter.append("TT");		csvWriter.append(",");
-//		csvWriter.append("RT");		csvWriter.append(",");	
-//		csvWriter.append("NR");		csvWriter.append("\n");	
-//		
-//		FileWriter csvWriter2 = new FileWriter(ExamplesUtils.OUTPUT_FOLDER + "rpq/new/new-"+ver+"-"+size+"-"+iter+"-nc_mem.csv");
-//		csvWriter2.append("Query");	csvWriter2.append(",");	
-//		csvWriter2.append("TTMB");	csvWriter2.append(",");
-//		csvWriter2.append("TFMB");	csvWriter2.append(",");	
-//		csvWriter2.append("TTMA");	csvWriter2.append(",");
-//		csvWriter2.append("TFMA");	csvWriter2.append(",");	
-//		csvWriter2.append("RTMB");	csvWriter2.append(",");
-//		csvWriter2.append("RFMB");	csvWriter2.append(",");	
-//		csvWriter2.append("RTMA");	csvWriter2.append(",");
-//		csvWriter2.append("RFMA");	csvWriter2.append(",");
-//		csvWriter2.append("Peak");	csvWriter2.append("\n");
+		FileWriter csvWriter = new FileWriter(ExamplesUtils.OUTPUT_FOLDER + "rpq/new/new-"+ver+"-"+size+"-"+iter+"-nc_2.csv");
+		csvWriter.append("Query");	csvWriter.append(",");	
+		csvWriter.append("DS");		csvWriter.append(",");	
+		csvWriter.append("FQA");	csvWriter.append(",");	
+		csvWriter.append("PT");		csvWriter.append(",");	
+		csvWriter.append("TT");		csvWriter.append(",");
+		csvWriter.append("RT");		csvWriter.append(",");	
+		csvWriter.append("NR");		csvWriter.append("\n");	
+		
+		FileWriter csvWriter2 = new FileWriter(ExamplesUtils.OUTPUT_FOLDER + "rpq/new/new-"+ver+"-"+size+"-"+iter+"-nc_mem.csv");
+		csvWriter2.append("Query");	csvWriter2.append(",");	
+		csvWriter2.append("TTMB");	csvWriter2.append(",");
+		csvWriter2.append("TFMB");	csvWriter2.append(",");	
+		csvWriter2.append("TTMA");	csvWriter2.append(",");
+		csvWriter2.append("TFMA");	csvWriter2.append(",");	
+		csvWriter2.append("RTMB");	csvWriter2.append(",");
+		csvWriter2.append("RFMB");	csvWriter2.append(",");	
+		csvWriter2.append("RTMA");	csvWriter2.append(",");
+		csvWriter2.append("RFMA");	csvWriter2.append(",");
+		csvWriter2.append("Max");	csvWriter2.append("\n");
 		
 		System.out.println("Loading Knowledge Base from file");
 		File rpqGMarkShopFile = new File(ExamplesUtils.INPUT_FOLDER + "rpq/shop-a-graph-triple-"+size+".txt");
@@ -77,12 +77,9 @@ public class ReasoningGMarkCase {
 			
 			// ============================== PARSING =============================== //
 			long startTime1 = System.nanoTime();
-//			long beforeUsedMem1 = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 			RPQConjunction<RegPathQuery> statement = RPQParser.parse(input);
-//			long afterUsedMem1 = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 			long endTime1 = System.nanoTime();
 			long duration1 = (endTime1 - startTime1);
-//			long actualMemUsed1 = afterUsedMem1 - beforeUsedMem1;
 
 			System.out.println("Translating Query");
 			// ============================ TRANSLATING ============================= //
@@ -144,37 +141,38 @@ public class ReasoningGMarkCase {
 			
 			long actualMemUsed1 = afterTotMem1 - beforeTotMem1;
 			long actualMemUsed2 = afterTotMem2 - beforeTotMem2;
+			long maxMem = Runtime.getRuntime().maxMemory();
 			
 			System.out.println("Generated Datalog statements: " + numRuleGenerated);
 			System.out.println("Parsing time: "+duration1+ " ms");
 			System.out.println("Translating time: "+duration2+ " ms; Memory usage: "+actualMemUsed1/1024+" KB");
 			System.out.println("Reasoning time: "+duration3+ " ms; Memory usage: "+actualMemUsed2/1024+" KB");
-			System.out.println("Peak memory usage: "+duration1+ " ms");
+			System.out.println("Max memory: "+maxMem+ " ms");
 			System.out.println();
 			
 			kb.removeStatements(datalogResult);
 			
-//			csvWriter.append(String.valueOf(i+"_"+j+"_"+k+"_"+l)); 	csvWriter.append(",");
-//			csvWriter.append(String.valueOf(numRuleGenerated)); 	csvWriter.append(",");
-//			csvWriter.append(String.valueOf(total));				csvWriter.append(",");
-//			csvWriter.append(String.valueOf(duration1));			csvWriter.append(",");
-//			csvWriter.append(String.valueOf(duration2));			csvWriter.append(",");
-//			csvWriter.append(String.valueOf(duration3));			csvWriter.append(",");
-//			csvWriter.append(String.valueOf(ans));					csvWriter.append("\n");
-//			
-//			csvWriter2.append(String.valueOf(i+"_"+j+"_"+k+"_"+l)); csvWriter2.append(",");
-//			csvWriter2.append(String.valueOf(beforeTotMem1));		csvWriter2.append(",");
-//			csvWriter2.append(String.valueOf(beforeFreeMem1));		csvWriter2.append(",");
-//			csvWriter2.append(String.valueOf(afterTotMem1));		csvWriter2.append(",");
-//			csvWriter2.append(String.valueOf(afterFreeMem1));		csvWriter2.append(",");
-//			csvWriter2.append(String.valueOf(beforeTotMem2));		csvWriter2.append(",");
-//			csvWriter2.append(String.valueOf(beforeFreeMem2));		csvWriter2.append(",");
-//			csvWriter2.append(String.valueOf(afterTotMem2));		csvWriter2.append(",");
-//			csvWriter2.append(String.valueOf(afterFreeMem2));		csvWriter2.append(",");
-//			csvWriter2.append(String.valueOf(afterFreeMem2));		csvWriter2.append("\n");
+			csvWriter.append(String.valueOf(i+"_"+j+"_"+k+"_"+l)); 	csvWriter.append(",");
+			csvWriter.append(String.valueOf(numRuleGenerated)); 	csvWriter.append(",");
+			csvWriter.append(String.valueOf(total));				csvWriter.append(",");
+			csvWriter.append(String.valueOf(duration1));			csvWriter.append(",");
+			csvWriter.append(String.valueOf(duration2));			csvWriter.append(",");
+			csvWriter.append(String.valueOf(duration3));			csvWriter.append(",");
+			csvWriter.append(String.valueOf(ans));					csvWriter.append("\n");
+			
+			csvWriter2.append(String.valueOf(i+"_"+j+"_"+k+"_"+l)); csvWriter2.append(",");
+			csvWriter2.append(String.valueOf(beforeTotMem1));		csvWriter2.append(",");
+			csvWriter2.append(String.valueOf(beforeFreeMem1));		csvWriter2.append(",");
+			csvWriter2.append(String.valueOf(afterTotMem1));		csvWriter2.append(",");
+			csvWriter2.append(String.valueOf(afterFreeMem1));		csvWriter2.append(",");
+			csvWriter2.append(String.valueOf(beforeTotMem2));		csvWriter2.append(",");
+			csvWriter2.append(String.valueOf(beforeFreeMem2));		csvWriter2.append(",");
+			csvWriter2.append(String.valueOf(afterTotMem2));		csvWriter2.append(",");
+			csvWriter2.append(String.valueOf(afterFreeMem2));		csvWriter2.append(",");
+			csvWriter2.append(String.valueOf(maxMem));		csvWriter2.append("\n");
 		}}}}
-//		csvWriter.flush();		csvWriter.close();
-//		csvWriter2.flush();		csvWriter2.close();
+		csvWriter.flush();		csvWriter.close();
+		csvWriter2.flush();		csvWriter2.close();
 		System.out.println(size+" FINISHED");
 		size += 500000;
 		}
