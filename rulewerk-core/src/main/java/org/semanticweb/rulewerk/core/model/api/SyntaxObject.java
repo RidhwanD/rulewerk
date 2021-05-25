@@ -1,5 +1,9 @@
 package org.semanticweb.rulewerk.core.model.api;
 
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 /*-
  * #%L
  * Rulewerk Core Components
@@ -100,6 +104,31 @@ public interface SyntaxObject extends Entity {
 	 */
 	default Stream<NamedNull> getNamedNulls() {
 		return Terms.getNamedNulls(getTerms());
+	}
+	
+	/**
+	 * Return the stream of distinct named nulls in this object.
+	 * 
+	 * @return stream of named nulls
+	 */
+	default Stream<SetTerm> getSetTerms() {
+		return Terms.getSetTerms(getTerms());
+	}
+
+	/**
+	 * Return the stream of distinct set variables in this object.
+	 * 
+	 * @return stream of set variables
+	 */
+	default Stream<SetVariable> getSetVariables() {
+		Stream<SetVariable> setVars = Terms.getSetVariables(getTerms());
+		Set<SetUnion> setUnions = Terms.getSetUnions(getTerms()).collect(Collectors.toSet());
+		Set<SetVariable> setVarsUnions = new HashSet<SetVariable>();
+		for (SetUnion su : setUnions) {
+			setVarsUnions.addAll(su.getSetVariables());
+		}
+		Stream<SetVariable> setVars2 = setVarsUnions.stream();
+		return Stream.concat(setVars, setVars2);
 	}
 
 }

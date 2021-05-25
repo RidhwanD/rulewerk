@@ -64,6 +64,24 @@ public interface Term extends Entity {
 	}
 
 	/**
+	 * Returns true if the term represents some kind of variable.
+	 *
+	 * @return true if term is variable
+	 */
+	default boolean isSetVariable() {
+		return this.getType() == TermType.SET_VARIABLE;
+	}
+	
+	/**
+	 * Returns true if the term represents some kind of variable.
+	 *
+	 * @return true if term is variable
+	 */
+	default boolean isSetTerm() {
+		return this.getType() == TermType.SET_CONSTRUCT || this.getType() == TermType.SET_UNION || this.getType() == TermType.SET_VARIABLE;
+	}
+	
+	/**
 	 * Accept a {@link TermVisitor} and return its output.
 	 *
 	 * @param termVisitor the TermVisitor

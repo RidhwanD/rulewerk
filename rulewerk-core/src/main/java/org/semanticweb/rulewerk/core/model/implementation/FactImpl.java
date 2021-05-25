@@ -24,6 +24,8 @@ import java.util.List;
 
 import org.semanticweb.rulewerk.core.model.api.Fact;
 import org.semanticweb.rulewerk.core.model.api.Predicate;
+import org.semanticweb.rulewerk.core.model.api.SetPredicate;
+import org.semanticweb.rulewerk.core.model.api.SetPredicateType;
 import org.semanticweb.rulewerk.core.model.api.StatementVisitor;
 import org.semanticweb.rulewerk.core.model.api.Term;
 
@@ -38,9 +40,15 @@ public class FactImpl extends PositiveLiteralImpl implements Fact {
 	public FactImpl(final Predicate predicate, final List<Term> terms) {
 		super(predicate, terms);
 		for (final Term t : terms) {
-			if (t.isVariable()) {
+			if (t.isVariable() || t.isSetVariable()) {
 				throw new IllegalArgumentException("Facts cannot contain variables.");
 			}
+		}
+		
+		if (predicate instanceof SetPredicate) {
+			SetPredicate p = (SetPredicate) predicate;
+			if (p.getPredicateType() == SetPredicateType.IS_ELEMENT_OF || p.getPredicateType() == SetPredicateType.IS_SUBSET_OF) 
+				throw new IllegalArgumentException("Facts cannot use a special predicate.");
 		}
 	}
 

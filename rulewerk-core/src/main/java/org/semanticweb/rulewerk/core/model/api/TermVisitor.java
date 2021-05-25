@@ -76,4 +76,29 @@ public interface TermVisitor<T> {
 	 * @return some result
 	 */
 	T visit(NamedNull term);
+	
+	/**
+	 * Visits a {@link SetVariable} and returns a result
+	 * 
+	 * @param term the term to visit
+	 * @return some result
+	 */
+	T visit(SetVariable term);
+	
+	/**
+	 * Visits a {@link SetConstruct} and returns a result
+	 * 
+	 * @param term the term to visit
+	 * @return some result
+	 */
+	T visit(SetConstruct term);
+	
+	/**
+	 * Visits a {@link SetUnion} and returns a result
+	 * 
+	 * @param term the term to visit
+	 * @return some result
+	 */
+	T visit(SetUnion term);
+	
 }

@@ -208,4 +208,40 @@ public class Terms {
 				"Term " + term.toString() + " is not a datatype constant of a supported integer type.");
 	}
 
+	/**
+	 * Returns a stream of set variables found in the given stream of terms.
+	 * Ordering and duplicates are not affected.
+	 * 
+	 * @param terms stream of all terms
+	 * @return stream of results
+	 */
+	public static Stream<SetVariable> getSetVariables(Stream<? extends Term> terms) {
+		return terms.filter(term -> term.getType() == TermType.SET_VARIABLE)
+				.map(SetVariable.class::cast);
+	}
+	
+	/**
+	 * Returns a stream of set unions found in the given stream of terms.
+	 * Ordering and duplicates are not affected.
+	 * 
+	 * @param terms stream of all terms
+	 * @return stream of results
+	 */
+	public static Stream<SetUnion> getSetUnions(Stream<? extends Term> terms) {
+		return terms.filter(term -> term.getType() == TermType.SET_UNION)
+				.map(SetUnion.class::cast);
+	}
+	
+	/**
+	 * Returns a stream of set terms found in the given stream of terms.
+	 * Ordering and duplicates are not affected.
+	 * 
+	 * @param terms stream of all terms
+	 * @return stream of results
+	 */
+	public static Stream<SetTerm> getSetTerms(Stream<? extends Term> terms) {
+		return terms.filter(term -> term.getType() == TermType.SET_VARIABLE || term.getType() == TermType.SET_CONSTRUCT || term.getType() == TermType.SET_UNION)
+				.map(SetTerm.class::cast);
+	}
+	
 }

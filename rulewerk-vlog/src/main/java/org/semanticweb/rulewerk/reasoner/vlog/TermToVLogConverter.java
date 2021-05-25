@@ -28,10 +28,15 @@ import org.semanticweb.rulewerk.core.model.api.LanguageStringConstant;
  */
 
 import org.semanticweb.rulewerk.core.model.api.NamedNull;
+import org.semanticweb.rulewerk.core.model.api.SetConstruct;
+import org.semanticweb.rulewerk.core.model.api.SetUnion;
+import org.semanticweb.rulewerk.core.model.api.SetVariable;
 import org.semanticweb.rulewerk.core.model.api.TermType;
 import org.semanticweb.rulewerk.core.model.api.TermVisitor;
 import org.semanticweb.rulewerk.core.model.api.UniversalVariable;
 import org.semanticweb.rulewerk.core.reasoner.implementation.Skolemization;
+
+import karmaresearch.vlog.Term;
 
 /**
  * A visitor that converts {@link Term}s of different types to corresponding
@@ -147,6 +152,21 @@ class TermToVLogConverter implements TermVisitor<karmaresearch.vlog.Term> {
 	@Override
 	public karmaresearch.vlog.Term visit(final NamedNull term) {
 		return new karmaresearch.vlog.Term(karmaresearch.vlog.Term.TermType.BLANK, term.getName());
+	}
+
+	@Override
+	public Term visit(SetVariable term) {
+		return null;
+	}
+
+	@Override
+	public Term visit(SetConstruct term) {
+		return null;
+	}
+
+	@Override
+	public Term visit(SetUnion term) {
+		return null;
 	}
 
 }

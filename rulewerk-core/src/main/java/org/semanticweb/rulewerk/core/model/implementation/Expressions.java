@@ -35,8 +35,14 @@ import org.semanticweb.rulewerk.core.model.api.NegativeLiteral;
 import org.semanticweb.rulewerk.core.model.api.PositiveLiteral;
 import org.semanticweb.rulewerk.core.model.api.Predicate;
 import org.semanticweb.rulewerk.core.model.api.Rule;
+import org.semanticweb.rulewerk.core.model.api.SetConstruct;
+import org.semanticweb.rulewerk.core.model.api.SetTerm;
+import org.semanticweb.rulewerk.core.model.api.SetUnion;
+import org.semanticweb.rulewerk.core.model.api.SetVariable;
 import org.semanticweb.rulewerk.core.model.api.Term;
 import org.semanticweb.rulewerk.core.model.api.UniversalVariable;
+import org.semanticweb.rulewerk.core.model.api.SetPredicate;
+import org.semanticweb.rulewerk.core.model.api.SetPredicateType;
 
 /**
  * This utilities class provides static methods for creating terms and formulas
@@ -359,5 +365,218 @@ public final class Expressions {
 		return new RuleImpl(head, literalsBody);
 
 	}
+	
+	// ========================================= SET ============================================== //
+	
+	/**
+	 * Creates a {@link SetVariable}.
+	 *
+	 * @param name name of the variable
+	 * @return a {@link SetVariable} corresponding to the input.
+	 */
+	public static SetVariable makeSetVariable(String name) {
+		return new SetVariableImpl(name);
+	}
 
+	/**
+	 * Creates a {@link SetConstruct}.
+	 *
+	 * @return an empty {@link SetConstruct}.
+	 */
+	public static SetConstruct makeEmptySet() {
+		return new SetConstructImpl();
+	}
+
+	/**
+	 * Creates a {@link SetConstruct}.
+	 *
+	 * @param element an object term as the set element
+	 * @return a {@link SetConstruct} containing the input element.
+	 */
+	public static SetConstruct makeSetConstruct(Term element) {
+		return new SetConstructImpl(element);
+	}
+
+	/**
+	 * Creates a {@link SetUnion}.
+	 *
+	 * @param term1 a set term as the first term in union
+	 * @param term2 a set term as the second term in union
+	 * @return a {@link SetUnion} containing the input element.
+	 */
+	public static SetUnion makeSetUnion(SetTerm t1, SetTerm t2) {
+		return new SetUnionImpl(t1, t2);
+	}
+	
+	/**
+	 * Creates a {@link SetPredicate}.
+	 *
+	 * @param name  non-blank predicate name
+	 * @param arity predicate arity, strictly greater than 0
+	 * @param type	predicate type, choose one from {@link SetPredicateType}
+	 * @return a {@link SetPredicate} corresponding to the input.
+	 */
+	public static SetPredicate makeSetPredicate(String name, int arity, SetPredicateType type) {
+		return new SetPredicateImpl(name, arity, type);
+	}
+	
+	/**
+	 * Creates a {@link SetPredicate} from an existing normal {@link Predicate}.
+	 *
+	 * @param p	a {@link Predicate}.
+	 * @return a {@link SetPredicate} corresponding to the input.
+	 */
+	public static SetPredicate makeSetPredicate(Predicate p) {
+		return new SetPredicateImpl(p.getName(), p.getArity(), SetPredicateType.NORMAL);
+	}
+	
+//	/**
+//	 * Creates a {@code SetPositiveLiteral}.
+//	 *
+//	 * @param predicateName non-blank {@link SetPredicate} name
+//	 * @param type       	non-empty, {@link SetPredicateType}
+//	 * @param terms         non-empty, non-null list of non-null terms
+//	 * @return a {@link PositiveLiteral} with given {@code terms} and
+//	 *         {@link SetPredicate} constructed from name given {@code predicateName}
+//	 *         and {@code arity} given {@code terms} size.
+//	 */
+//	public static SetPositiveLiteral makeSetPositiveLiteral(final String predicateName, SetPredicateType type, final List<Term> terms) {
+//		final SetPredicate predicate = makeSetPredicate(predicateName, terms.size(), type);
+//
+//		return new SetPositiveLiteralImpl(predicate, terms);
+//	}
+//
+//	/**
+//	 * Creates a {@code SetPositiveLiteral}.
+//	 *
+//	 * @param predicateName non-blank {@link SetPredicate} name
+//	 * @param type       	non-empty, {@link SetPredicateType}
+//	 * @param terms         non-empty, non-null array of non-null terms
+//	 * @return a {@link SetPositiveLiteral} with given {@code terms} and
+//	 *         {@link SetPredicate} constructed from name given {@code predicateName}
+//	 *         and {@code arity} given {@code terms} length.
+//	 */
+//	public static SetPositiveLiteral makeSetPositiveLiteral(final String predicateName, SetPredicateType type, final Term... terms) {
+//		final SetPredicate predicate = makeSetPredicate(predicateName, terms.length, type);
+//
+//		return new SetPositiveLiteralImpl(predicate, Arrays.asList(terms));
+//	}
+//
+//	/**
+//	 * Creates a {@code SetPositiveLiteral}.
+//	 *
+//	 * @param predicate a non-null {@link SetPredicate}
+//	 * @param terms     non-empty, non-null list of non-null terms. List size must
+//	 *                  be the same as the given {@code predicate} arity.
+//	 * @return a {@link SetPositiveLiteral} corresponding to the input.
+//	 */
+//	public static SetPositiveLiteral makeSetPositiveLiteral(final SetPredicate predicate, final List<Term> terms) {
+//		return new SetPositiveLiteralImpl(predicate, terms);
+//	}
+//
+//	/**
+//	 * Creates a {@code SetPositiveLiteral}.
+//	 *
+//	 * @param predicate a non-null {@link SetPredicate}
+//	 * @param terms     non-empty, non-null array of non-null terms. Array size must
+//	 *                  be the same as the given {@code predicate} arity.
+//	 * @return a {@link SetPositiveLiteral} corresponding to the input
+//	 */
+//	public static SetPositiveLiteral makeSetPositiveLiteral(final SetPredicate predicate, final Term... terms) {
+//		return new SetPositiveLiteralImpl(predicate, Arrays.asList(terms));
+//	}
+//
+//	/**
+//	 * Creates a {@code SetNegativeLiteral}.
+//	 *
+//	 * @param predicateName non-blank {@link SetPredicate} name
+//	 * @param type       	non-empty, {@link SetPredicateType}
+//	 * @param terms         non-empty, non-null list of non-null terms
+//	 * @return a {@link SetNegativeLiteral} with given {@code terms} and
+//	 *         {@link SetPredicate} constructed from name given {@code predicateName}
+//	 *         and {@code arity} given {@code terms} size.
+//	 */
+//	public static SetNegativeLiteral makeSetNegativeLiteral(final String predicateName, final List<Term> terms, SetPredicateType type) {
+//		final SetPredicate predicate = makeSetPredicate(predicateName, terms.size(), type);
+//
+//		return new SetNegativeLiteralImpl(predicate, terms);
+//	}
+//
+//	/**
+//	 * Creates a {@code SetNegativeLiteral}.
+//	 *
+//	 * @param predicateName non-blank {@link SetPredicate} name
+//	 * @param type       	non-empty, {@link SetPredicateType}
+//	 * @param terms         non-empty, non-null array of non-null terms
+//	 * @return a {@link SetNegativeLiteral} with given {@code terms} and
+//	 *         {@link SetPredicate} constructed from name given {@code predicateName}
+//	 *         and {@code arity} given {@code terms} length.
+//	 */
+//	public static SetNegativeLiteral makeSetNegativeLiteral(final String predicateName, SetPredicateType type, final Term... terms) {
+//		final SetPredicate predicate = makeSetPredicate(predicateName, terms.length, type);
+//
+//		return new SetNegativeLiteralImpl(predicate, Arrays.asList(terms));
+//	}
+//
+//	/**
+//	 * Creates a {@code SetNegativeLiteral}.
+//	 *
+//	 * @param predicate a non-null {@link SetPredicate}
+//	 * @param terms     non-empty, non-null list of non-null terms. List size must
+//	 *                  be the same as the given {@code predicate} arity.
+//	 * @return a {@link SetNegativeLiteral} corresponding to the input.
+//	 */
+//	public static SetNegativeLiteral makeSetNegativeLiteral(final SetPredicate predicate, final List<Term> terms) {
+//		return new SetNegativeLiteralImpl(predicate, terms);
+//	}
+//
+//	/**
+//	 * Creates a {@code SetNegativeLiteral}.
+//	 *
+//	 * @param predicate a non-null {@link SetPredicate}
+//	 * @param terms     non-empty, non-null array of non-null terms. Array size must
+//	 *                  be the same as the given {@code predicate} arity.
+//	 * @return a {@link SetNegativeLiteral} corresponding to the input
+//	 */
+//	public static SetNegativeLiteral makeSetNegativeLiteral(final SetPredicate predicate, final Term... terms) {
+//		return new SetNegativeLiteralImpl(predicate, Arrays.asList(terms));
+//	}
+//	
+//	/**
+//	 * Creates a {@code Rule} with a single atom in its head.
+//	 *
+//	 * @param headLiteral  the single positive literal in the rule head
+//	 * @param bodyLiterals array of non-null literals
+//	 * @return a {@link Rule} corresponding to the input
+//	 */
+//	public static SetRule makeSetRule(final SetPositiveLiteral headLiteral, final SetLiteral... bodyLiterals) {
+//		return new SetRuleImpl(new ConjunctionImpl<>(Arrays.asList(headLiteral)),
+//				new ConjunctionImpl<>(Arrays.asList(bodyLiterals)));
+//	}
+//
+//	/**
+//	 * Creates a {@code Rule}.
+//	 *
+//	 * @param head conjunction of positive (non-negated) literals
+//	 * @param body conjunction of literals (negated or not)
+//	 * @return a {@link Rule} corresponding to the input
+//	 */
+//	public static SetRule makeSetRule(final Conjunction<SetPositiveLiteral> head, final Conjunction<SetLiteral> body) {
+//		return new SetRuleImpl(head, body);
+//	}
+//
+//	/**
+//	 * Creates a {@link Rule}.
+//	 *
+//	 * @param head conjunction of positive (non-negated) literals
+//	 * @param body conjunction of positive (non-negated) literals
+//	 * @return a {@link Rule} corresponding to the input
+//	 */
+//	public static SetRule makePositiveLiteralsSetRule(final Conjunction<SetPositiveLiteral> head,
+//			final Conjunction<SetPositiveLiteral> body) {
+//		final List<SetLiteral> bodyLiteralList = new ArrayList<>(body.getLiterals());
+//		final Conjunction<SetLiteral> literalsBody = Expressions.makeConjunction(bodyLiteralList);
+//		return new SetRuleImpl(head, literalsBody);
+//	}
+	
 }

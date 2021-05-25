@@ -43,6 +43,10 @@ import org.semanticweb.rulewerk.core.model.api.NamedNull;
 import org.semanticweb.rulewerk.core.model.api.Predicate;
 import org.semanticweb.rulewerk.core.model.api.PrefixDeclarationRegistry;
 import org.semanticweb.rulewerk.core.model.api.Rule;
+import org.semanticweb.rulewerk.core.model.api.SetConstruct;
+import org.semanticweb.rulewerk.core.model.api.SetTerm;
+import org.semanticweb.rulewerk.core.model.api.SetUnion;
+import org.semanticweb.rulewerk.core.model.api.SetVariable;
 import org.semanticweb.rulewerk.core.model.api.Statement;
 import org.semanticweb.rulewerk.core.model.api.StatementVisitor;
 import org.semanticweb.rulewerk.core.model.api.Term;
@@ -87,10 +91,10 @@ public class Serializer {
 		void write(final Serializer serializer) throws IOException;
 	}
 
-	final Writer writer;
-	final Function<String, String> iriTransformer;
-	final SerializerTermVisitor serializerTermVisitor = new SerializerTermVisitor();
-	final SerializerStatementVisitor serializerStatementVisitor = new SerializerStatementVisitor();
+	protected final Writer writer;
+	protected final Function<String, String> iriTransformer;
+	protected final SerializerTermVisitor serializerTermVisitor = new SerializerTermVisitor();
+	protected final SerializerStatementVisitor serializerStatementVisitor = new SerializerStatementVisitor();
 
 	/**
 	 * Runtime exception used to report errors that occurred in visitors that do not
@@ -175,6 +179,36 @@ public class Serializer {
 		public Void visit(NamedNull term) {
 			try {
 				Serializer.this.writeNamedNull(term);
+			} catch (IOException e) {
+				throw new RuntimeIoException(e);
+			}
+			return null;
+		}
+
+		@Override
+		public Void visit(SetVariable term) {
+			try {
+				Serializer.this.writeSetVariable(term);
+			} catch (IOException e) {
+				throw new RuntimeIoException(e);
+			}
+			return null;
+		}
+
+		@Override
+		public Void visit(SetConstruct term) {
+			try {
+				Serializer.this.writeSetConstruct(term);
+			} catch (IOException e) {
+				throw new RuntimeIoException(e);
+			}
+			return null;
+		}
+
+		@Override
+		public Void visit(SetUnion term) {
+			try {
+				Serializer.this.writeSetUnion(term);
 			} catch (IOException e) {
 				throw new RuntimeIoException(e);
 			}
@@ -465,7 +499,7 @@ public class Serializer {
 		writer.write("!");
 		writer.write(existentialVariable.getName());
 	}
-
+	
 	/**
 	 * Writes a serialization of the given {@link NamedNull}.
 	 *
@@ -477,6 +511,61 @@ public class Serializer {
 		writer.write(namedNull.getName());
 	}
 
+	/**
+	 * Writes a serialization of the given {@link UniversalVariable}.
+	 *
+	 * @param universalVariable a {@link UniversalVariable}
+	 * @throws IOException
+	 */
+	public void writeSetVariable(SetVariable setVariable) throws IOException {
+		writer.write("$");
+		writer.write(setVariable.getName());
+	}
+
+	/**
+	 * Writes a serialization of the given {@link UniversalVariable}.
+	 *
+	 * @param universalVariable a {@link UniversalVariable}
+	 * @throws IOException
+	 */
+	public void writeSetConstruct(SetConstruct setConstruct) throws IOException {
+		writer.write("{");
+		if (!setConstruct.isEmpty()) {
+			if (setConstruct.getElement() instanceof UniversalVariable) writer.write("?");
+			if (setConstruct.getElement() instanceof ExistentialVariable) writer.write("!");	
+			writer.write(setConstruct.getElement().getName());
+		}
+		writer.write("}");
+	}
+
+	/**
+	 * Writes a serialization of the given {@link UniversalVariable}.
+	 *
+	 * @param universalVariable a {@link UniversalVariable}
+	 * @throws IOException
+	 */
+	public void writeSetUnion(SetUnion setUnion) throws IOException {
+		if (setUnion.getSetTerm1() instanceof SetVariable) writer.write("$");
+		writer.write(setUnion.getSetTerm1().getName());
+		writer.write(" U ");
+		if (setUnion.getSetTerm2() instanceof SetVariable) writer.write("$");
+		writer.write(setUnion.getSetTerm2().getName());
+	}
+	
+	/**
+	 * Writes a serialization of the given {@link Term}.
+	 *
+	 * @param term a {@link Term}
+	 * @throws IOException
+	 */
+	public void writeSetTerm(SetTerm term) throws IOException {
+		try {
+			term.accept(this.serializerTermVisitor);
+		} catch (Serializer.RuntimeIoException e) {
+			throw e.getIoException();
+		}
+	}
+	
 	/**
 	 * Writes a serialization of the given {@link PrefixDeclarationRegistry}, and
 	 * returns true if anything has been written.

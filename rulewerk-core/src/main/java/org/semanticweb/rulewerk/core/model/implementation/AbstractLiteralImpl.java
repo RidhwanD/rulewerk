@@ -28,6 +28,8 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.Validate;
 import org.semanticweb.rulewerk.core.model.api.Literal;
 import org.semanticweb.rulewerk.core.model.api.Predicate;
+import org.semanticweb.rulewerk.core.model.api.SetPredicate;
+import org.semanticweb.rulewerk.core.model.api.SetPredicateType;
 import org.semanticweb.rulewerk.core.model.api.Term;
 
 /**
@@ -59,9 +61,24 @@ public abstract class AbstractLiteralImpl implements Literal {
 
 		Validate.isTrue(terms.size() == predicate.getArity(), "Terms size [%d] does not match predicate arity [%d].",
 				terms.size(), predicate.getArity());
-
+		if (!this.validateTerms(predicate, terms)) 
+			throw new IllegalArgumentException(
+					"Terms do not match the special predicate's sorts. Literal was: " + predicate + terms);
+		
 		this.predicate = predicate;
 		this.terms = terms;
+		
+	}
+	
+	private boolean validateTerms(final Predicate predicate, final List<Term> terms) {
+		if (predicate instanceof SetPredicate) {
+			if (terms.size() != 2) return false;
+			else if (!terms.get(1).isSetTerm()) return false;
+			SetPredicate p = (SetPredicate) predicate;
+			if (p.getPredicateType() == SetPredicateType.IS_ELEMENT_OF && terms.get(0).isSetTerm()) return false;
+			if (p.getPredicateType() == SetPredicateType.IS_SUBSET_OF && !terms.get(0).isSetTerm()) return false;
+		} 
+		return true;
 	}
 
 	@Override

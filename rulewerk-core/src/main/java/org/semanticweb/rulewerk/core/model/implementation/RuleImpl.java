@@ -30,6 +30,9 @@ import org.semanticweb.rulewerk.core.model.api.Conjunction;
 import org.semanticweb.rulewerk.core.model.api.Literal;
 import org.semanticweb.rulewerk.core.model.api.PositiveLiteral;
 import org.semanticweb.rulewerk.core.model.api.Rule;
+import org.semanticweb.rulewerk.core.model.api.SetPredicate;
+import org.semanticweb.rulewerk.core.model.api.SetPredicateType;
+import org.semanticweb.rulewerk.core.model.api.SetVariable;
 import org.semanticweb.rulewerk.core.model.api.StatementVisitor;
 import org.semanticweb.rulewerk.core.model.api.Term;
 import org.semanticweb.rulewerk.core.model.api.UniversalVariable;
@@ -73,10 +76,47 @@ public class RuleImpl implements Rule {
 					"Universally quantified variables in rule head must also occur in rule body. Rule was: " + head
 							+ " :- " + body);
 		}
-
+		this.validateSetRule(head, body);
+		
 		this.head = head;
 		this.body = body;
 
+	}
+	
+	private void validateSetRule(final Conjunction<PositiveLiteral> head, final Conjunction<Literal> body) {
+		for (PositiveLiteral h : head) {
+			if (h.getPredicate() instanceof SetPredicate) {
+				SetPredicate p = (SetPredicate) h.getPredicate();
+				if (p.getPredicateType() == SetPredicateType.IS_ELEMENT_OF || p.getPredicateType() == SetPredicateType.IS_SUBSET_OF)
+					throw new IllegalArgumentException(
+						"Rule head cannot contains special predicate. Rule was: " + head + " :- " + body);
+			}
+		}
+		
+		Set<SetVariable> setVars = head.getSetVariables().collect(Collectors.toSet());
+		setVars.addAll(body.getSetVariables().collect(Collectors.toSet()));
+		System.out.println(setVars);
+		
+		for (Term t : setVars) {
+			boolean appear = false;
+			for (Literal l : body) {
+				if (l.getPredicate() instanceof SetPredicate) {
+					SetPredicate p = (SetPredicate) l.getPredicate();
+					if (p.getPredicateType() == SetPredicateType.NORMAL && l.getTerms().collect(Collectors.toSet()).contains(t))
+						appear = true;
+				} else if (l.getTerms().collect(Collectors.toSet()).contains(t)) {
+					appear = true;
+				}
+			}
+			if (!appear) 
+				throw new IllegalArgumentException(
+					"Set variable in the rule must occurs in a body atom that uses some non-special predicate. Rule was: " + head + " :- " + body);
+		}
+		
+		if (head.getSetTerms().count() + body.getSetTerms().count() > 0 && head.getExistentialVariables().count() > 0) 
+			throw new IllegalArgumentException(
+				"Existential rules cannot contain set terms. Rule was: " + head + " :- " + body);
+		
 	}
 
 	@Override

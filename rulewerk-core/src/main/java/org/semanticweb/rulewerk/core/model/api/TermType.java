@@ -58,5 +58,20 @@ public enum TermType {
 	 * An existential variable is a variable that can only be used in positions
 	 * where it is existentially quantified, or implicitly assumed to be.
 	 */
-	EXISTENTIAL_VARIABLE
+	EXISTENTIAL_VARIABLE,
+	/**
+	 * A set variable is a variable that can only be initialized by
+	 * set objects.
+	 */
+	SET_VARIABLE,
+	/**
+	 * A set construct is a set term of the form {t} where t is an 
+	 * object term.
+	 */
+	SET_CONSTRUCT,
+	/**
+	 * A set union is a set term of the form T1 U T2
+	 * where T1 and T2 are set terms.
+	 */
+	SET_UNION
 }
