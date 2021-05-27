@@ -15,8 +15,8 @@ public interface SetUnion extends SetTerm {
 		return TermType.SET_UNION;
 	}
 	
-	public Term getSetTerm1();
-	public Term getSetTerm2();
+	public SetTerm getSetTerm1();
+	public SetTerm getSetTerm2();
 	public List<SetVariable> getSetVariables();
 	public boolean isSubTerm(SetTerm t);
 	public Set<SetTerm> getSubTerms();

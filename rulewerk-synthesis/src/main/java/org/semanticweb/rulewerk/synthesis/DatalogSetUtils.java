@@ -1,18 +1,22 @@
 package org.semanticweb.rulewerk.synthesis;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.semanticweb.rulewerk.core.model.api.AbstractConstant;
+import org.semanticweb.rulewerk.core.model.api.Conjunction;
 import org.semanticweb.rulewerk.core.model.api.ExistentialVariable;
 import org.semanticweb.rulewerk.core.model.api.Literal;
 import org.semanticweb.rulewerk.core.model.api.PositiveLiteral;
 import org.semanticweb.rulewerk.core.model.api.Predicate;
 import org.semanticweb.rulewerk.core.model.api.Rule;
 import org.semanticweb.rulewerk.core.model.api.SetConstruct;
+import org.semanticweb.rulewerk.core.model.api.SetPredicate;
+import org.semanticweb.rulewerk.core.model.api.SetPredicateType;
 import org.semanticweb.rulewerk.core.model.api.SetTerm;
 import org.semanticweb.rulewerk.core.model.api.SetUnion;
 import org.semanticweb.rulewerk.core.model.api.SetVariable;
@@ -232,5 +236,76 @@ public class DatalogSetUtils {
 			}
 		}
 		return order;
+	}
+	
+	private static UniversalVariable getVariable(SetTerm t) {
+		return Expressions.makeUniversalVariable("v_("+t.getName()+")");
+	}
+	
+	private static Literal replaceLiteral(Literal l) {
+		List<Term> newTerms = new ArrayList<Term>();
+		for (Term t : l.getArguments()) {
+			if (t.isSetTerm())
+				newTerms.add(getVariable((SetTerm) t));
+			else
+				newTerms.add(t);
+		}
+		Predicate p = l.getPredicate();
+		if (p instanceof SetPredicate) {
+			if (((SetPredicate) p).getPredicateType() == SetPredicateType.IS_ELEMENT_OF)
+				p = in;
+			else if (((SetPredicate) p).getPredicateType() == SetPredicateType.IS_SUBSET_OF)
+				p = sub;
+			else
+				p = Expressions.makePredicate(p.getName(), p.getArity());
+		}
+		return Expressions.makePositiveLiteral(p, newTerms);
+	}
+	
+	public static Set<Rule> transform(Rule r) {
+		if (r.getSetTerms().count() == 0) return new HashSet<Rule>(Arrays.asList(r));
+		Set<Rule> results = new HashSet<Rule>();
+		Rule norm_r = normalize(r);
+		List<SetTerm> order = getOrder(norm_r);
+		List<PositiveLiteral> alpha = new ArrayList<PositiveLiteral>();
+		List<Literal> beta = new ArrayList<Literal>();
+		List<Conjunction<Literal>> gamma = new ArrayList<Conjunction<Literal>>();
+		UniversalVariable empVar = Expressions.makeUniversalVariable("v_({})");
+		for (SetTerm Si : order) {
+			UniversalVariable siVar = getVariable(Si);
+			if (Si instanceof SetConstruct) {
+				Term t = ((SetConstruct) Si).getElement();
+				alpha.add(Expressions.makePositiveLiteral(getSU, t, empVar));
+				beta.add(Expressions.makePositiveLiteral(SU, t, empVar, siVar));
+			} else if (Si instanceof SetUnion) {
+				UniversalVariable t1Var = getVariable(((SetUnion) Si).getSetTerm1());
+				UniversalVariable t2Var = getVariable(((SetUnion) Si).getSetTerm2());
+				alpha.add(Expressions.makePositiveLiteral(getU, t1Var, t2Var));
+				beta.add(Expressions.makePositiveLiteral(U, t1Var, t2Var, siVar));
+			}
+		}
+		gamma.add(Expressions.makeConjunction(Expressions.makePositiveLiteral(emp, empVar)));
+		for (Literal l : beta) {
+			List<Literal> end = new ArrayList<Literal>(gamma.get(gamma.size()-1).getLiterals());
+			end.add(l);
+			gamma.add(Expressions.makeConjunction(end));
+		}
+		List<Literal> body = new ArrayList<Literal>();
+		for (Literal l : norm_r.getBody()) {
+			body.add(replaceLiteral(l));
+		}
+		for (int idx = 0; idx < order.size(); idx++) {
+			List<Literal> newBody = new ArrayList<Literal>(body);
+			newBody.addAll(gamma.get(idx).getLiterals());
+			results.add(Expressions.makeRule(Expressions.makePositiveConjunction(alpha.get(idx)), Expressions.makeConjunction(newBody)));
+		}
+		List<PositiveLiteral> head = new ArrayList<PositiveLiteral>();
+		for (Literal l : norm_r.getHead()) {
+			head.add((PositiveLiteral) replaceLiteral(l));
+		}
+		List<Literal> newBody = new ArrayList<Literal>(body);
+		newBody.addAll(gamma.get(gamma.size()-1).getLiterals());
+		results.add(Expressions.makeRule(Expressions.makePositiveConjunction(head), Expressions.makeConjunction(newBody)));
+		return results;
 	}
 }

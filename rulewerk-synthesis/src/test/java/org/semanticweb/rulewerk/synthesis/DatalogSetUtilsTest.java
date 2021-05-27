@@ -85,31 +85,48 @@ public class DatalogSetUtilsTest {
 		System.out.println(un4.isSubTerm(w));
 		System.out.println(un4.getSubTerms());
 		
-		System.out.println(" ===== Test ===== ");
+		System.out.println("\n ===== Test ===== ");
 		
+		System.out.println();
 		System.out.println(r1);
 		Rule nr1 = DatalogSetUtils.normalize(r1);
 		System.out.println(nr1);
 		System.out.println(DatalogSetUtils.getOrder(nr1));
-
+		
+		System.out.println();
 		System.out.println(r2);
 		Rule nr2 = DatalogSetUtils.normalize(r2);
 		System.out.println(nr2);
 		System.out.println(DatalogSetUtils.getOrder(nr2));
 		
+		System.out.println();
 		System.out.println(r3);
 		Rule nr3 = DatalogSetUtils.normalize(r3);
 		System.out.println(nr3);
 		System.out.println(DatalogSetUtils.getOrder(nr3));
 		
+		System.out.println();
 		System.out.println(r4);
 		Rule nr4 = DatalogSetUtils.normalize(r4);
 		System.out.println(nr4);
 		System.out.println(DatalogSetUtils.getOrder(nr4));
-
+		System.out.println("Result of transformation: ");
+		for (Rule rule : DatalogSetUtils.transform(r4))
+			System.out.println("- "+rule);
+		
+		System.out.println();
 		System.out.println(r5);
 		Rule nr5 = DatalogSetUtils.normalize(r5);
 		System.out.println(nr5);
 		System.out.println(DatalogSetUtils.getOrder(nr5));
+		
+		Rule r6 = Expressions.makeRule(Expressions.makePositiveLiteral(q, x, y), Expressions.makePositiveLiteral(s, x, y));System.out.println();
+		System.out.println(r6);
+		Rule nr6 = DatalogSetUtils.normalize(r6);
+		System.out.println(nr6);
+		System.out.println(DatalogSetUtils.getOrder(nr6));
+		System.out.println("Result of transformation: ");
+		for (Rule rule : DatalogSetUtils.transform(r6))
+			System.out.println("- "+rule);
 	}
 }
