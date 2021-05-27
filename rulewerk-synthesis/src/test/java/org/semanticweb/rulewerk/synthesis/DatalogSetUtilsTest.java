@@ -32,14 +32,14 @@ public class DatalogSetUtilsTest {
 		
 		UniversalVariable x = Expressions.makeUniversalVariable("x");
 		UniversalVariable y = Expressions.makeUniversalVariable("y");
-		ExistentialVariable z = Expressions.makeExistentialVariable("z");
-		
-		Constant const1 = Expressions.makeAbstractConstant("1");
 		
 		SetConstruct empSet = Expressions.makeEmptySet();
 		SetConstruct set2 = Expressions.makeSetConstruct(x);
 		SetConstruct set3 = Expressions.makeSetConstruct(y);
 		SetUnion un1 = Expressions.makeSetUnion(set2, ws);
+		SetUnion un2 = Expressions.makeSetUnion(empSet, set3);
+		SetUnion un3 = Expressions.makeSetUnion(un1, un2);
+		SetUnion un4 = Expressions.makeSetUnion(u, un3);
 		
 		Predicate p = Expressions.makePredicate("full", 1);
 		Predicate q = Expressions.makePredicate("n", 2);
@@ -67,13 +67,49 @@ public class DatalogSetUtilsTest {
 		Rule r2 = Expressions.makeRule(Expressions.makePositiveConjunction(l12, l13, l14), Expressions.makeConjunction(l3, l4, l10, l11));
 		Rule r3 = Expressions.makeRule(Expressions.makePositiveConjunction(l1), Expressions.makeConjunction(l3, l6));
 		
-		System.out.println(" ===== Test Normalization ===== ");
+		SetVariable sv = Expressions.makeSetVariable("S");
+		SetVariable tv = Expressions.makeSetVariable("T");
+		Constant a = Expressions.makeAbstractConstant("a");
+		SetConstruct sa = Expressions.makeSetConstruct(a);
+		SetUnion aus = Expressions.makeSetUnion(sa, sv);
+		SetUnion sut = Expressions.makeSetUnion(sv, tv);
+		
+		Predicate pp = Expressions.makePredicate("p", 4);
+		Predicate qq = Expressions.makePredicate("q", 1);
+		PositiveLiteral body = Expressions.makePositiveLiteral(pp, a, sv, tv, aus);
+		PositiveLiteral head = Expressions.makePositiveLiteral(qq, sut);
+		Rule r4 = Expressions.makeRule(head, body);
+		
+		Rule r5 = Expressions.makeRule(Expressions.makePositiveLiteral(qq, u), Expressions.makePositiveLiteral(qq, un4));
+		
+		System.out.println(un4.isSubTerm(w));
+		System.out.println(un4.getSubTerms());
+		
+		System.out.println(" ===== Test ===== ");
 		
 		System.out.println(r1);
-		System.out.println(DatalogSetUtils.normalize(r1));
+		Rule nr1 = DatalogSetUtils.normalize(r1);
+		System.out.println(nr1);
+		System.out.println(DatalogSetUtils.getOrder(nr1));
+
+		System.out.println(r2);
+		Rule nr2 = DatalogSetUtils.normalize(r2);
+		System.out.println(nr2);
+		System.out.println(DatalogSetUtils.getOrder(nr2));
 		
 		System.out.println(r3);
-		System.out.println(DatalogSetUtils.normalize(r3));
+		Rule nr3 = DatalogSetUtils.normalize(r3);
+		System.out.println(nr3);
+		System.out.println(DatalogSetUtils.getOrder(nr3));
 		
+		System.out.println(r4);
+		Rule nr4 = DatalogSetUtils.normalize(r4);
+		System.out.println(nr4);
+		System.out.println(DatalogSetUtils.getOrder(nr4));
+
+		System.out.println(r5);
+		Rule nr5 = DatalogSetUtils.normalize(r5);
+		System.out.println(nr5);
+		System.out.println(DatalogSetUtils.getOrder(nr5));
 	}
 }
