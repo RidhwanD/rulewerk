@@ -12,6 +12,7 @@ import org.semanticweb.rulewerk.core.model.api.Literal;
 import org.semanticweb.rulewerk.core.model.api.PositiveLiteral;
 import org.semanticweb.rulewerk.core.model.api.Predicate;
 import org.semanticweb.rulewerk.core.model.api.Rule;
+import org.semanticweb.rulewerk.core.model.api.SetConstruct;
 import org.semanticweb.rulewerk.core.model.api.SetTerm;
 import org.semanticweb.rulewerk.core.model.api.SetUnion;
 import org.semanticweb.rulewerk.core.model.api.SetVariable;
@@ -215,17 +216,19 @@ public class DatalogSetUtils {
 		List<SetTerm> order = new ArrayList<SetTerm>();
 		for (SetTerm t : terms) {
 			if (!t.isSetVariable()) {
-				boolean insert = false; int idx = 0;
-				while (!insert && idx < order.size()) {
-					if (order.get(idx) instanceof SetUnion) {
-						if (((SetUnion) order.get(idx)).isSubTerm(t)) {
-							insert = true;
-							order.add(idx, t);
+				if ((t instanceof SetConstruct && ((SetConstruct) t).getElement() != null) || t instanceof SetUnion) {
+					boolean insert = false; int idx = 0;
+					while (!insert && idx < order.size()) {
+						if (order.get(idx) instanceof SetUnion) {
+							if (((SetUnion) order.get(idx)).isSubTerm(t)) {
+								insert = true;
+								order.add(idx, t);
+							}
 						}
+						idx++;
 					}
-					idx++;
+					if (!insert) order.add(t);
 				}
-				if (!insert) order.add(t);
 			}
 		}
 		return order;
