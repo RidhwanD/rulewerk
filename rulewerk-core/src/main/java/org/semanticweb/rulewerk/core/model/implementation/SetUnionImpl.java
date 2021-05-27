@@ -1,7 +1,10 @@
 package org.semanticweb.rulewerk.core.model.implementation;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.semanticweb.rulewerk.core.model.api.SetTerm;
 import org.semanticweb.rulewerk.core.model.api.SetUnion;
@@ -64,6 +67,32 @@ public class SetUnionImpl implements SetUnion {
 		}
 		
 		return setVars;
+	}
+	
+	public boolean isSubTerm(SetTerm t) {
+		if (this.setTerm1.equals(t) || this.setTerm2.equals(t)) return true;
+		if (this.setTerm1 instanceof SetUnion) {
+			SetUnion su = (SetUnion) this.setTerm1;
+			if (su.isSubTerm(t)) return true;
+		} 
+		if (this.setTerm2 instanceof SetUnion) {
+			SetUnion su = (SetUnion) this.setTerm2;
+			if (su.isSubTerm(t)) return true;
+		}
+		return false;
+	}
+	
+	public Set<SetTerm> getSubTerms() {
+		Set<SetTerm> subTerms = new HashSet<SetTerm>(Arrays.asList(this.setTerm1, this.setTerm2));
+		if (this.setTerm1 instanceof SetUnion) {
+			SetUnion su = (SetUnion) this.setTerm1;
+			subTerms.addAll(su.getSubTerms());
+		} 
+		if (this.setTerm2 instanceof SetUnion) {
+			SetUnion su = (SetUnion) this.setTerm2;
+			subTerms.addAll(su.getSubTerms());
+		}
+		return subTerms;
 	}
 	
 	@Override
