@@ -42,15 +42,10 @@ public class RpqNFAConverterTest {
 	private final Predicate triple = Expressions.makePredicate("TRIPLE", 3);
 	private final Predicate cek = Expressions.makePredicate("Check", 1);
 	
-	private final Predicate sTop = Expressions.makePredicate("S_Top", 2);
 	private final State q0 = RPQExpressions.makeState("q0");
-	private final Predicate sq0 = Expressions.makePredicate("S_q0", 2);
 	private final State q1 = RPQExpressions.makeState("q1");
-	private final Predicate sq1 = Expressions.makePredicate("S_q1", 2);
 	private final State q2 = RPQExpressions.makeState("q2");
-	private final Predicate sq2 = Expressions.makePredicate("S_q2", 2);
 	private final State q3 = RPQExpressions.makeState("q3");
-	private final Predicate sq3 = Expressions.makePredicate("S_q3", 2);
 	private final State q4 = RPQExpressions.makeState("q4");
 	private final State q5 = RPQExpressions.makeState("q5");
 	private final State q6 = RPQExpressions.makeState("q6");
@@ -90,57 +85,119 @@ public class RpqNFAConverterTest {
 	private final Constant cn8 = Expressions.makeAbstractConstant("n8");
 	private final KStarRegExpression n8s = RPQExpressions.makeKStarRegExpression(n8);
 	private final ConcatRegExpression c6 = RPQExpressions.makeConcatRegExpression(n8, n8s);
+	private final KStarRegExpression dbs = RPQExpressions.makeKStarRegExpression(db);
 	
-	private final Rule r101 = Expressions.makeRule(Expressions.makePositiveLiteral(sq0, xs, xs), 
+	private final Rule r101 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q0", xs, xs), 
 			Expressions.makePositiveLiteral(triple, xs, ys, zs));
-	private final Rule r102 = Expressions.makeRule(Expressions.makePositiveLiteral(sq0, xs, xs), 
+	private final Rule r102 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q0", xs, xs), 
 			Expressions.makePositiveLiteral(triple, zs, ys, xs));
-	private final Rule r103 = Expressions.makeRule(Expressions.makePositiveLiteral(sq0, xs, zs), 
-			Expressions.makePositiveLiteral(sq0, xs, ys), Expressions.makePositiveLiteral(triple, ys, ca, zs));
-	private final Rule r104 = Expressions.makeRule(Expressions.makePositiveLiteral(sq1, xs, zs), 
-			Expressions.makePositiveLiteral(sq0, xs, ys), Expressions.makePositiveLiteral(triple, ys, cb, zs));
-	private final Rule r105 = Expressions.makeRule(Expressions.makePositiveLiteral(sq1, xs, zs), 
-			Expressions.makePositiveLiteral(sq0, xs, ys), Expressions.makePositiveLiteral(triple, ys, cd, zs));
-	private final Rule r106 = Expressions.makeRule(Expressions.makePositiveLiteral(sq2, xs, zs), 
-			Expressions.makePositiveLiteral(sq1, xs, ys), Expressions.makePositiveLiteral(triple, ys, ca, zs));
-	private final Rule r107 = Expressions.makeRule(Expressions.makePositiveLiteral(sq2, xs, zs), 
-			Expressions.makePositiveLiteral(sq2, xs, ys), Expressions.makePositiveLiteral(triple, ys, cb, zs));
-	private final Rule r108 = Expressions.makeRule(Expressions.makePositiveLiteral(Expressions.makePredicate("Q_((((a)* / (d | b)) / a) / (b)*)", 2), x, y), 
-			Expressions.makePositiveLiteral(sq2, x, y));
+	private final Rule r103 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q0", xs, zs), 
+			Expressions.makePositiveLiteral("S_q0", xs, ys), Expressions.makePositiveLiteral(triple, ys, ca, zs));
+	private final Rule r104 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q1", xs, zs), 
+			Expressions.makePositiveLiteral("S_q0", xs, ys), Expressions.makePositiveLiteral(triple, ys, cb, zs));
+	private final Rule r105 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q1", xs, zs), 
+			Expressions.makePositiveLiteral("S_q0", xs, ys), Expressions.makePositiveLiteral(triple, ys, cd, zs));
+	private final Rule r106 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q2", xs, zs), 
+			Expressions.makePositiveLiteral("S_q1", xs, ys), Expressions.makePositiveLiteral(triple, ys, ca, zs));
+	private final Rule r107 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q2", xs, zs), 
+			Expressions.makePositiveLiteral("S_q2", xs, ys), Expressions.makePositiveLiteral(triple, ys, cb, zs));
+	private final Rule r108 = Expressions.makeRule(Expressions.makePositiveLiteral("Q_((((a)* / (d | b)) / a) / (b)*)", x, y), 
+			Expressions.makePositiveLiteral("S_q2", x, y));
 	
-	private final Rule r201 = Expressions.makeRule(Expressions.makePositiveLiteral(sq0, xs, ys), 
-			Expressions.makePositiveLiteral(sq2, xs, ys));
-	private final Rule r202 = Expressions.makeRule(Expressions.makePositiveLiteral(sq1, xs, zs), 
-			Expressions.makePositiveLiteral(sq0, xs, ys), Expressions.makePositiveLiteral(triple, ys, ca, zs));
-	private final Rule r203 = Expressions.makeRule(Expressions.makePositiveLiteral(sq2, xs, zs), 
-			Expressions.makePositiveLiteral(sq1, xs, ys), Expressions.makePositiveLiteral(triple, zs, ca, ys));
-	private final Rule r204 = Expressions.makeRule(Expressions.makePositiveLiteral(Expressions.makePredicate("Q_((a / ^a))+", 2), x, const2), 
-			Expressions.makePositiveLiteral(sq2, x, const2));
+	private final Rule r201 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q0", xs, ys), 
+			Expressions.makePositiveLiteral("S_q2", xs, ys));
+	private final Rule r202 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q1", xs, zs), 
+			Expressions.makePositiveLiteral("S_q0", xs, ys), Expressions.makePositiveLiteral(triple, ys, ca, zs));
+	private final Rule r203 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q2", xs, zs), 
+			Expressions.makePositiveLiteral("S_q1", xs, ys), Expressions.makePositiveLiteral(triple, zs, ca, ys));
+	private final Rule r204 = Expressions.makeRule(Expressions.makePositiveLiteral("Q_((a / ^a))+", x, const2), 
+			Expressions.makePositiveLiteral("S_q2", x, const2));
 	
-	private final Rule r301 = Expressions.makeRule(Expressions.makePositiveLiteral(sTop, xs, xs), 
+	private final Rule r301 = Expressions.makeRule(Expressions.makePositiveLiteral("S_Top", xs, xs), 
 			Expressions.makePositiveLiteral(triple, xs, ys, zs));
-	private final Rule r302 = Expressions.makeRule(Expressions.makePositiveLiteral(sTop, xs, xs), 
+	private final Rule r302 = Expressions.makeRule(Expressions.makePositiveLiteral("S_Top", xs, xs), 
 			Expressions.makePositiveLiteral(triple, zs, ys, xs));
-	private final Rule r303 = Expressions.makeRule(Expressions.makePositiveLiteral(sq0, xs, ys), 
-			Expressions.makePositiveLiteral(sTop, xs, ys));
-	private final Rule r304 = Expressions.makeRule(Expressions.makePositiveLiteral(sq1, xs, zs), 
-			Expressions.makePositiveLiteral(sq0, xs, ys), Expressions.makePositiveLiteral(triple, ys, cn3, zs));
-	private final Rule r305 = Expressions.makeRule(Expressions.makePositiveLiteral(sq1, xs, zs), 
-			Expressions.makePositiveLiteral(sq1, xs, ys), Expressions.makePositiveLiteral(triple, ys, cn3, zs));
-	private final Rule r306 = Expressions.makeRule(Expressions.makePositiveLiteral(Expressions.makePredicate("Q_(n3 / (n3)*)", 2), x, y), 
-			Expressions.makePositiveLiteral(sq0, x, y));
-	private final Rule r307 = Expressions.makeRule(Expressions.makePositiveLiteral(sq2, xs, ys), 
-			Expressions.makePositiveLiteral(sTop, xs, ys));
-	private final Rule r308 = Expressions.makeRule(Expressions.makePositiveLiteral(sq3, xs, zs), 
-			Expressions.makePositiveLiteral(sq2, xs, ys), Expressions.makePositiveLiteral(triple, ys, cn8, zs));
-	private final Rule r309 = Expressions.makeRule(Expressions.makePositiveLiteral(sq3, xs, zs), 
-			Expressions.makePositiveLiteral(sq3, xs, ys), Expressions.makePositiveLiteral(triple, ys, cn8, zs));
-	private final Rule r310 = Expressions.makeRule(Expressions.makePositiveLiteral(Expressions.makePredicate("Q_(n8 / (n8)*)", 2), x, y), 
-			Expressions.makePositiveLiteral(sq2, x, y));
-	private final Rule r311 = Expressions.makeRule(Expressions.makePositiveLiteral(Expressions.makePredicate("Ans", 2), x, y), 
-			Expressions.makePositiveLiteral(Expressions.makePredicate("Q_(n3 / (n3)*)", 2), x, y), 
-			Expressions.makePositiveLiteral(Expressions.makePredicate("Q_(n8 / (n8)*)", 2), x, y), 
+	private final Rule r303 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q0", xs, ys), 
+			Expressions.makePositiveLiteral("S_Top", xs, ys));
+	private final Rule r304 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q1", xs, zs), 
+			Expressions.makePositiveLiteral("S_q0", xs, ys), Expressions.makePositiveLiteral(triple, ys, cn3, zs));
+	private final Rule r305 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q1", xs, zs), 
+			Expressions.makePositiveLiteral("S_q1", xs, ys), Expressions.makePositiveLiteral(triple, ys, cn3, zs));
+	private final Rule r306 = Expressions.makeRule(Expressions.makePositiveLiteral("Q_(n3 / (n3)*)", x, y), 
+			Expressions.makePositiveLiteral("S_q0", x, y));
+	private final Rule r307 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q2", xs, ys), 
+			Expressions.makePositiveLiteral("S_Top", xs, ys));
+	private final Rule r308 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q3", xs, zs), 
+			Expressions.makePositiveLiteral("S_q2", xs, ys), Expressions.makePositiveLiteral(triple, ys, cn8, zs));
+	private final Rule r309 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q3", xs, zs), 
+			Expressions.makePositiveLiteral("S_q3", xs, ys), Expressions.makePositiveLiteral(triple, ys, cn8, zs));
+	private final Rule r310 = Expressions.makeRule(Expressions.makePositiveLiteral("Q_(n8 / (n8)*)", x, y), 
+			Expressions.makePositiveLiteral("S_q2", x, y));
+	private final Rule r311 = Expressions.makeRule(Expressions.makePositiveLiteral("Ans", x, y), 
+			Expressions.makePositiveLiteral("Q_(n3 / (n3)*)", x, y), 
+			Expressions.makePositiveLiteral("Q_(n8 / (n8)*)", x, y), 
 			Expressions.makePositiveLiteral(cek, x));
+	
+	private final Rule r401 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q0", xs, ys), 
+			Expressions.makePositiveLiteral("S_Top", xs, ys));
+	private final Rule r402 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q10", xs, zs), 
+			Expressions.makePositiveLiteral("S_q9", xs, ys), Expressions.makePositiveLiteral("TRIPLE", ys, cn3, zs));
+	private final Rule r403 = Expressions.makeRule(Expressions.makePositiveLiteral("Q_n3", x, y), 
+			Expressions.makePositiveLiteral("S_q10", x, y));
+	private final Rule r404 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q9", xs, ys), 
+			Expressions.makePositiveLiteral("S_Top", xs, ys));
+	private final Rule r405 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q0", xs, ys), 
+			Expressions.makePositiveLiteral("S_q1", xs, ys));
+	private final Rule r406 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q5", xs, ys), 
+			Expressions.makePositiveLiteral("S_q3", xs, ys));
+	private final Rule r407 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q4", xs, ys), 
+			Expressions.makePositiveLiteral("S_q6", xs, ys));
+	private final Rule r408 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q1", xs, ys), 
+			Expressions.makePositiveLiteral("S_q4", xs, ys));
+	private final Rule r409 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q3", xs, ys), 
+			Expressions.makePositiveLiteral("S_q0", xs, ys));
+	private final Rule r410 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q2", xs, ys), 
+			Expressions.makePositiveLiteral("S_q1", xs, ys));
+	private final Rule r411 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q7", xs, ys), 
+			Expressions.makePositiveLiteral("S_q3", xs, ys));
+	private final Rule r412 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q6", xs, zs), 
+			Expressions.makePositiveLiteral("S_q5", xs, ys), Expressions.makePositiveLiteral("TRIPLE", ys, cd, zs));
+	private final Rule r413 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q1", xs, ys), 
+			Expressions.makePositiveLiteral("S_q0", xs, ys));
+	private final Rule r414 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q4", xs, ys), 
+			Expressions.makePositiveLiteral("S_q8", xs, ys));
+	private final Rule r415 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q8", xs, zs), 
+			Expressions.makePositiveLiteral("S_q7", xs, ys), Expressions.makePositiveLiteral("TRIPLE", ys, cb, zs));
+	private final Rule r416 = Expressions.makeRule(Expressions.makePositiveLiteral("S_Top", xs, xs), 
+			Expressions.makePositiveLiteral("TRIPLE", xs, ys, zs));
+	private final Rule r417 = Expressions.makeRule(Expressions.makePositiveLiteral("S_Top", xs, xs), 
+			Expressions.makePositiveLiteral("TRIPLE", zs, ys, xs));
+	private final Rule r418 = Expressions.makeRule(Expressions.makePositiveLiteral("Q_((d | b))*", x, y), 
+			Expressions.makePositiveLiteral("S_q2", x, y));
+	private final Rule r419 = Expressions.makeRule(Expressions.makePositiveLiteral("Ans", x, y), 
+			Expressions.makePositiveLiteral("Q_((d | b))*", x, y), Expressions.makePositiveLiteral("Q_n3", x, y), Expressions.makePositiveLiteral("Check", x));
+	
+	private final Rule r420 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q5", xs, ys), 
+			Expressions.makePositiveLiteral("S_q0", xs, ys));
+	private final Rule r421 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q0", xs, ys), 
+			Expressions.makePositiveLiteral("S_q8", xs, ys));
+	private final Rule r422 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q0", xs, ys), 
+			Expressions.makePositiveLiteral("S_q6", xs, ys));
+	private final Rule r423 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q7", xs, ys), 
+			Expressions.makePositiveLiteral("S_q0", xs, ys));
+	private final Rule r424 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q2", xs, ys), 
+			Expressions.makePositiveLiteral("S_q6", xs, ys));
+	private final Rule r425 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q2", xs, ys), 
+			Expressions.makePositiveLiteral("S_q0", xs, ys));
+	private final Rule r426 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q0", xs, ys), 
+			Expressions.makePositiveLiteral("S_q0", xs, ys));
+	private final Rule r427 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q2", xs, ys), 
+			Expressions.makePositiveLiteral("S_q8", xs, ys));
+
+	private final Rule r428 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q0", xs, xs), 
+			Expressions.makePositiveLiteral("TRIPLE", xs, ys, zs));
+	private final Rule r429 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q0", xs, xs), 
+			Expressions.makePositiveLiteral("TRIPLE", zs, ys, xs));
 	
 	// -------------------------------------- Begin Test ---------------------------------- //
 	
@@ -278,81 +335,69 @@ public class RpqNFAConverterTest {
 	}
 	
 	@Test
-	public void testCRPQTranslate() {
-		final Set<State> states1 = new HashSet<State>(Arrays.asList(q0,q1));
-		final Set<State> finStates1 = new HashSet<State>(Arrays.asList(q0));
-		final Set<EdgeLabel> alphabet1 = new HashSet<EdgeLabel>(Arrays.asList(n3));
-		final Set<Transition> transition1 = new HashSet<Transition>();
-		transition1.add(RPQExpressions.makeTransition(q0, q1, n3));
-		transition1.add(RPQExpressions.makeTransition(q1, q1, n3));
-		final Set<ConverseTransition> convTransition = new HashSet<ConverseTransition>();
-		final NDFiniteAutomata ndfa1 = RPQExpressions.makeNDFiniteAutomata(c5, states1, alphabet1, q0, finStates1, transition1, convTransition);
-		final NDFAQuery ndfaq1 = RPQExpressions.makeNDFAQuery(ndfa1, x, y);
+	public void testRPQTranslate() {
+		RegPathQuery rpq = RPQExpressions.makeRegPathQuery(dbs, x, y);
+		final List<Statement> datalogResult = RpqNFAConverter.RPQTranslate(rpq);
 		
-		final Set<State> states2 = new HashSet<State>(Arrays.asList(q2,q3));
-		final Set<State> finStates2 = new HashSet<State>(Arrays.asList(q2));
-		final Set<EdgeLabel> alphabet2 = new HashSet<EdgeLabel>(Arrays.asList(n8));
-		final Set<Transition> transition2 = new HashSet<Transition>();
-		transition2.add(RPQExpressions.makeTransition(q2, q3, n8));
-		transition2.add(RPQExpressions.makeTransition(q3, q3, n8));
-		final NDFiniteAutomata ndfa2 = RPQExpressions.makeNDFiniteAutomata(c6, states2, alphabet2, q2, finStates2, transition2, convTransition);
-		final NDFAQuery ndfaq2 = RPQExpressions.makeNDFAQuery(ndfa2, x, y);
-		final List<NDFAQuery> queries = new ArrayList<NDFAQuery>(Arrays.asList(ndfaq1, ndfaq2));
+		final List<Statement> comparator = new ArrayList<Statement>();
+		comparator.add(r405);	comparator.add(r406);	comparator.add(r407);	comparator.add(r408);
+		comparator.add(r409);	comparator.add(r410);	comparator.add(r411);	comparator.add(r412);
+		comparator.add(r413);	comparator.add(r414);	comparator.add(r415);	comparator.add(r418);
+		comparator.add(r428);	comparator.add(r429);
+		
+		assertEquals(new HashSet<Statement>(comparator), new HashSet<Statement>(datalogResult));
+	}
+	
+	@Test
+	public void testRPQTranslateAlt() {
+		RegPathQuery rpq = RPQExpressions.makeRegPathQuery(dbs, x, y);
+		final List<Statement> datalogResult = RpqNFAConverter.RPQTranslateAlt(rpq);
+		
+		final List<Statement> comparator = new ArrayList<Statement>();
+		comparator.add(r412);	comparator.add(r415);	comparator.add(r418);	comparator.add(r420);	
+		comparator.add(r421);	comparator.add(r422);	comparator.add(r423);	comparator.add(r424);	
+		comparator.add(r425);	comparator.add(r426);	comparator.add(r427);	comparator.add(r428);	
+		comparator.add(r429);
+		
+		assertEquals(new HashSet<Statement>(comparator), new HashSet<Statement>(datalogResult));
+	}
+	
+	@Test
+	public void testCRPQTranslate() {
 		final Conjunction<Literal> conjunct = Expressions.makeConjunction(Expressions.makePositiveLiteral(cek, Arrays.asList(x)));
 		final List<Term> uvars = new ArrayList<Term>(Arrays.asList(x, y));
 		
 		List<RegPathQuery> qs = new ArrayList<RegPathQuery>();
-		qs.add(RPQExpressions.makeRegPathQuery(c5, x, y));
-		qs.add(RPQExpressions.makeRegPathQuery(c6, x, y));
+		qs.add(RPQExpressions.makeRegPathQuery(dbs, x, y));
+		qs.add(RPQExpressions.makeRegPathQuery(n3, x, y));
 		final List<Statement> datalogResult = RpqNFAConverter.CRPQTranslate(uvars, RPQExpressions.makeRPQConjunction(qs, uvars), conjunct);
-		for (Statement r: datalogResult) {
-			System.out.println(r);
-		}
 		
 		final List<Statement> comparator = new ArrayList<Statement>();
-		comparator.add(r301);	comparator.add(r302);	comparator.add(r303);	comparator.add(r304);
-		comparator.add(r305);	comparator.add(r306);	comparator.add(r307);	comparator.add(r308);
-		comparator.add(r309);	comparator.add(r310);	comparator.add(r311);
+		comparator.add(r401);	comparator.add(r402);	comparator.add(r403);	comparator.add(r404);
+		comparator.add(r405);	comparator.add(r406);	comparator.add(r407);	comparator.add(r408);
+		comparator.add(r409);	comparator.add(r410);	comparator.add(r411);	comparator.add(r412);
+		comparator.add(r413);	comparator.add(r414);	comparator.add(r415);	comparator.add(r416);
+		comparator.add(r417);	comparator.add(r418);	comparator.add(r419);
 		
 		assertEquals(new HashSet<Statement>(comparator), new HashSet<Statement>(datalogResult));
 	}
 	
 	@Test
 	public void testCRPQTranslateAlt() {
-		final Set<State> states1 = new HashSet<State>(Arrays.asList(q0,q1));
-		final Set<State> finStates1 = new HashSet<State>(Arrays.asList(q0));
-		final Set<EdgeLabel> alphabet1 = new HashSet<EdgeLabel>(Arrays.asList(n3));
-		final Set<Transition> transition1 = new HashSet<Transition>();
-		transition1.add(RPQExpressions.makeTransition(q0, q1, n3));
-		transition1.add(RPQExpressions.makeTransition(q1, q1, n3));
-		final Set<ConverseTransition> convTransition = new HashSet<ConverseTransition>();
-		final NDFiniteAutomata ndfa1 = RPQExpressions.makeNDFiniteAutomata(c5, states1, alphabet1, q0, finStates1, transition1, convTransition);
-		final NDFAQuery ndfaq1 = RPQExpressions.makeNDFAQuery(ndfa1, x, y);
-		
-		final Set<State> states2 = new HashSet<State>(Arrays.asList(q2,q3));
-		final Set<State> finStates2 = new HashSet<State>(Arrays.asList(q2));
-		final Set<EdgeLabel> alphabet2 = new HashSet<EdgeLabel>(Arrays.asList(n8));
-		final Set<Transition> transition2 = new HashSet<Transition>();
-		transition2.add(RPQExpressions.makeTransition(q2, q3, n8));
-		transition2.add(RPQExpressions.makeTransition(q3, q3, n8));
-		final NDFiniteAutomata ndfa2 = RPQExpressions.makeNDFiniteAutomata(c6, states2, alphabet2, q2, finStates2, transition2, convTransition);
-		final NDFAQuery ndfaq2 = RPQExpressions.makeNDFAQuery(ndfa2, x, y);
-		final List<NDFAQuery> queries = new ArrayList<NDFAQuery>(Arrays.asList(ndfaq1, ndfaq2));
 		final Conjunction<Literal> conjunct = Expressions.makeConjunction(Expressions.makePositiveLiteral(cek, Arrays.asList(x)));
 		final List<Term> uvars = new ArrayList<Term>(Arrays.asList(x, y));
 		
 		List<RegPathQuery> qs = new ArrayList<RegPathQuery>();
-		qs.add(RPQExpressions.makeRegPathQuery(c5, x, y));
-		qs.add(RPQExpressions.makeRegPathQuery(c6, x, y));
-		final List<Statement> datalogResult = RpqNFAConverter.CRPQTranslate(uvars, RPQExpressions.makeRPQConjunction(qs, uvars), conjunct);
-		for (Statement r: datalogResult) {
-			System.out.println(r);
-		}
-		
+		qs.add(RPQExpressions.makeRegPathQuery(dbs, x, y));
+		qs.add(RPQExpressions.makeRegPathQuery(n3, x, y));
+		final List<Statement> datalogResult = RpqNFAConverter.CRPQTranslateAlt(uvars, RPQExpressions.makeRPQConjunction(qs, uvars), conjunct);
+
 		final List<Statement> comparator = new ArrayList<Statement>();
-		comparator.add(r301);	comparator.add(r302);	comparator.add(r303);	comparator.add(r304);
-		comparator.add(r305);	comparator.add(r306);	comparator.add(r307);	comparator.add(r308);
-		comparator.add(r309);	comparator.add(r310);	comparator.add(r311);
+		comparator.add(r401);	comparator.add(r402);	comparator.add(r403);	comparator.add(r404);
+		comparator.add(r412);	comparator.add(r415);	comparator.add(r416);	comparator.add(r417);
+		comparator.add(r418);	comparator.add(r419);	comparator.add(r420);	comparator.add(r421);	
+		comparator.add(r422);	comparator.add(r423);	comparator.add(r424);	comparator.add(r425);	
+		comparator.add(r426);	comparator.add(r427);
 		
 		assertEquals(new HashSet<Statement>(comparator), new HashSet<Statement>(datalogResult));
 	}
