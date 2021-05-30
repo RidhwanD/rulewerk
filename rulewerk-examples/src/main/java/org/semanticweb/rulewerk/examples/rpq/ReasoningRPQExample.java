@@ -65,20 +65,20 @@ public class ReasoningRPQExample {
 		
 		final List<Term> uvars = new ArrayList<Term>(Arrays.asList(x));
 		final RPQConjunction<RegPathQuery> conj = RPQExpressions.makeRPQConjunction(Arrays.asList(Q4, Q7), uvars);
-		final Conjunction<Literal> conjunct = Expressions.makeConjunction(Expressions.makePositiveLiteral(Expressions.makePredicate("Check", 1), Arrays.asList(z)));
+		final Conjunction<Literal> conjunct = Expressions.makeConjunction(Expressions.makePositiveLiteral("Check", z));
 		
 		final KnowledgeBase kb = new KnowledgeBase();
-		kb.addStatement(Expressions.makeFact(Expressions.makePredicate("TRIPLE", 3), Arrays.asList(const1,Expressions.makeAbstractConstant("a"),const2)));
-		kb.addStatement(Expressions.makeFact(Expressions.makePredicate("TRIPLE", 3), Arrays.asList(const1,Expressions.makeAbstractConstant("d"),const3)));
-		kb.addStatement(Expressions.makeFact(Expressions.makePredicate("TRIPLE", 3), Arrays.asList(const2,Expressions.makeAbstractConstant("a"),const4)));
-		kb.addStatement(Expressions.makeFact(Expressions.makePredicate("TRIPLE", 3), Arrays.asList(const2,Expressions.makeAbstractConstant("d"),c)));
-		kb.addStatement(Expressions.makeFact(Expressions.makePredicate("TRIPLE", 3), Arrays.asList(const2,Expressions.makeAbstractConstant("b"),c)));
-		kb.addStatement(Expressions.makeFact(Expressions.makePredicate("TRIPLE", 3), Arrays.asList(const3,Expressions.makeAbstractConstant("b"),const2)));
-		kb.addStatement(Expressions.makeFact(Expressions.makePredicate("TRIPLE", 3), Arrays.asList(const4,Expressions.makeAbstractConstant("d"),const2)));
-		kb.addStatement(Expressions.makeFact(Expressions.makePredicate("TRIPLE", 3), Arrays.asList(c,Expressions.makeAbstractConstant("d"),const4)));
-		kb.addStatement(Expressions.makeFact(Expressions.makePredicate("Check", 1), const1));
-		kb.addStatement(Expressions.makeFact(Expressions.makePredicate("Check", 1), const2));
-		kb.addStatement(Expressions.makeFact(Expressions.makePredicate("Check", 1), const4));
+		kb.addStatement(Expressions.makeFact("TRIPLE", const1, Expressions.makeAbstractConstant("a"), const2));
+		kb.addStatement(Expressions.makeFact("TRIPLE", const1, Expressions.makeAbstractConstant("d"), const3));
+		kb.addStatement(Expressions.makeFact("TRIPLE", const2, Expressions.makeAbstractConstant("a"), const4));
+		kb.addStatement(Expressions.makeFact("TRIPLE", const2, Expressions.makeAbstractConstant("d"), c));
+		kb.addStatement(Expressions.makeFact("TRIPLE", const2, Expressions.makeAbstractConstant("b"), c));
+		kb.addStatement(Expressions.makeFact("TRIPLE", const3, Expressions.makeAbstractConstant("b"), const2));
+		kb.addStatement(Expressions.makeFact("TRIPLE", const4, Expressions.makeAbstractConstant("d"), const2));
+		kb.addStatement(Expressions.makeFact("TRIPLE", c, Expressions.makeAbstractConstant("d"), const4));
+		kb.addStatement(Expressions.makeFact("Check", const1));
+		kb.addStatement(Expressions.makeFact("Check", const2));
+		kb.addStatement(Expressions.makeFact("Check", const4));
 		
 		/////////////////////////////////////////////////
 		
@@ -91,11 +91,11 @@ public class ReasoningRPQExample {
 		final RegPathQuery Q8 = RPQExpressions.makeRegPathQuery(c3, x, y);	
 		
 		final KnowledgeBase kb1 = new KnowledgeBase();
-		kb1.addStatement(Expressions.makeFact(Expressions.makePredicate("TRIPLE", 3), Arrays.asList(const1,Expressions.makeAbstractConstant("a"),const2)));
-		kb1.addStatement(Expressions.makeFact(Expressions.makePredicate("TRIPLE", 3), Arrays.asList(const2,Expressions.makeAbstractConstant("a"),const4)));
-		kb1.addStatement(Expressions.makeFact(Expressions.makePredicate("TRIPLE", 3), Arrays.asList(const3,Expressions.makeAbstractConstant("b"),const2)));
-		kb1.addStatement(Expressions.makeFact(Expressions.makePredicate("TRIPLE", 3), Arrays.asList(const1,Expressions.makeAbstractConstant("d"),const3)));
-		kb1.addStatement(Expressions.makeFact(Expressions.makePredicate("TRIPLE", 3), Arrays.asList(const4,Expressions.makeAbstractConstant("d"),const2)));
+		kb1.addStatement(Expressions.makeFact("TRIPLE", const1, Expressions.makeAbstractConstant("a"), const2));
+		kb1.addStatement(Expressions.makeFact("TRIPLE", const2, Expressions.makeAbstractConstant("a"), const4));
+		kb1.addStatement(Expressions.makeFact("TRIPLE", const3, Expressions.makeAbstractConstant("b"), const2));
+		kb1.addStatement(Expressions.makeFact("TRIPLE", const1, Expressions.makeAbstractConstant("d"), const3));
+		kb1.addStatement(Expressions.makeFact("TRIPLE", const4, Expressions.makeAbstractConstant("d"), const2));
 		
 		/////////////////////////////////////////////////
 		
@@ -105,9 +105,9 @@ public class ReasoningRPQExample {
 		final RegPathQuery Q9 = RPQExpressions.makeRegPathQuery(c4s, x, const2);
 		
 		final KnowledgeBase kb2 = new KnowledgeBase();
-		kb2.addStatement(Expressions.makeFact(Expressions.makePredicate("TRIPLE", 3), Arrays.asList(const1,Expressions.makeAbstractConstant("a"),const3)));
-		kb2.addStatement(Expressions.makeFact(Expressions.makePredicate("TRIPLE", 3), Arrays.asList(const2,Expressions.makeAbstractConstant("a"),const3)));
-		kb2.addStatement(Expressions.makeFact(Expressions.makePredicate("TRIPLE", 3), Arrays.asList(const5,Expressions.makeAbstractConstant("a"),const4)));
+		kb2.addStatement(Expressions.makeFact("TRIPLE", const1, Expressions.makeAbstractConstant("a"), const3));
+		kb2.addStatement(Expressions.makeFact("TRIPLE", const2, Expressions.makeAbstractConstant("a"), const3));
+		kb2.addStatement(Expressions.makeFact("TRIPLE", const5, Expressions.makeAbstractConstant("a"), const4));
 		
 		/////////////////////////////////////////////////
 		
@@ -122,106 +122,89 @@ public class ReasoningRPQExample {
 		final RegPathQuery Q11 = RPQExpressions.makeRegPathQuery(c6, x, y);
 		
 		final KnowledgeBase kb3 = new KnowledgeBase();
-		kb3.addStatement(Expressions.makeFact(Expressions.makePredicate("TRIPLE", 3), Arrays.asList(const1,Expressions.makeAbstractConstant("n3"),const3)));
-		kb3.addStatement(Expressions.makeFact(Expressions.makePredicate("TRIPLE", 3), Arrays.asList(const2,Expressions.makeAbstractConstant("n3"),const3)));
-		kb3.addStatement(Expressions.makeFact(Expressions.makePredicate("TRIPLE", 3), Arrays.asList(const1,Expressions.makeAbstractConstant("n8"),const3)));
-		kb3.addStatement(Expressions.makeFact(Expressions.makePredicate("TRIPLE", 3), Arrays.asList(const2,Expressions.makeAbstractConstant("n8"),const4)));
-		kb3.addStatement(Expressions.makeFact(Expressions.makePredicate("TRIPLE", 3), Arrays.asList(const3,Expressions.makeAbstractConstant("n3"),const4)));
-		kb3.addStatement(Expressions.makeFact(Expressions.makePredicate("TRIPLE", 3), Arrays.asList(const3,Expressions.makeAbstractConstant("n8"),const4)));
-		kb3.addStatement(Expressions.makeFact(Expressions.makePredicate("Check", 1), const1));
+		kb3.addStatement(Expressions.makeFact("TRIPLE", const1, Expressions.makeAbstractConstant("n3"), const3));
+		kb3.addStatement(Expressions.makeFact("TRIPLE", const2, Expressions.makeAbstractConstant("n3"), const3));
+		kb3.addStatement(Expressions.makeFact("TRIPLE", const1, Expressions.makeAbstractConstant("n8"), const3));
+		kb3.addStatement(Expressions.makeFact("TRIPLE", const2, Expressions.makeAbstractConstant("n8"), const4));
+		kb3.addStatement(Expressions.makeFact("TRIPLE", const3, Expressions.makeAbstractConstant("n3"), const4));
+		kb3.addStatement(Expressions.makeFact("TRIPLE", const3, Expressions.makeAbstractConstant("n8"), const4));
+		kb3.addStatement(Expressions.makeFact("Check", const1));
 		
 		final List<Term> uvars2 = new ArrayList<Term>(Arrays.asList(x, y));
 		final RPQConjunction<RegPathQuery> conj2 = RPQExpressions.makeRPQConjunction(Arrays.asList(Q10, Q11), Arrays.asList(x, y));
-		final Conjunction<Literal> conjunct2 = Expressions.makeConjunction(Expressions.makePositiveLiteral(Expressions.makePredicate("Check", 1), Arrays.asList(x)));
+		final Conjunction<Literal> conjunct2 = Expressions.makeConjunction(Expressions.makePositiveLiteral("Check", x));
 		
 		/////////////////////////////////////////////////
 
-//		final List<Statement> datalogResult = RpqConverter.RPQTranslate(Q1, kb);
+		final List<Statement> datalogResult1 = RpqConverter.RPQTranslate(Q1);
+		final List<Statement> datalogResult2 = RpqConverter.RPQTranslate(Q2);
+		final List<Statement> datalogResult3 = RpqConverter.RPQTranslate(Q3);
+		final List<Statement> datalogResult4 = RpqConverter.RPQTranslate(Q4);
+		final List<Statement> datalogResult5 = RpqConverter.RPQTranslate(Q5);
+		final List<Statement> datalogResult6 = RpqConverter.RPQTranslate(Q6);
+		final List<Statement> datalogResult7 = RpqConverter.CRPQTranslate(uvars, conj, conjunct);
 		
-//		final List<Statement> datalogResult = RpqConverter.RPQTranslate(Q2, kb);
+		// Interchangeable
+		for (Statement r: datalogResult1) {
+			kb.addStatement(r);
+			System.out.println(r);
+		}
 		
-//		final List<Statement> datalogResult = RpqConverter.RPQTranslate(Q3, kb);
-		
-//		final List<Statement> datalogResult = RpqConverter.RPQTranslate(Q4, kb);
-		
-//		final List<Statement> datalogResult = RpqConverter.RPQTranslate(Q5, kb);
-		
-//		final List<Statement> datalogResult = RpqConverter.RPQTranslate(Q6, kb);
-//		
-//		for (Statement r: datalogResult) {
-//			kb.addStatement(r);
-//			System.out.println(r);
-//		}
-//		
-//		try (final Reasoner reasoner = new VLogReasoner(kb)) {
-//			reasoner.reason();
-//			/* Execute some queries */
-//			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(Expressions.makePredicate("Q_"+Q1.getExpression().getName(), 2), Arrays.asList(Q1.getTerm1(), Q1.getTerm2())), reasoner);
-//			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(Expressions.makePredicate("Q_"+Q2.getExpression().getName(), 2), Arrays.asList(Q2.getTerm1(), Q2.getTerm2())), reasoner);
-//			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(Expressions.makePredicate("Q_"+Q3.getExpression().getName(), 2), Arrays.asList(Q3.getTerm1(), Q3.getTerm2())), reasoner);
-//			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(Expressions.makePredicate("Q_"+Q4.getExpression().getName(), 2), Arrays.asList(Q4.getTerm1(), Q4.getTerm2())), reasoner);
-//			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(Expressions.makePredicate("Q_"+Q5.getExpression().getName(), 2), Arrays.asList(Q5.getTerm1(), Q5.getTerm2())), reasoner);
-//			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(Expressions.makePredicate("Q_"+Q6.getExpression().getName(), 2), Arrays.asList(Q6.getTerm1(), Q6.getTerm2())), reasoner);
-//		}
+		try (final Reasoner reasoner = new VLogReasoner(kb)) {
+			reasoner.reason();
+			/* Execute some queries */
+			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral("Q_"+Q1.getExpression().getName(), Arrays.asList(Q1.getTerm1(), Q1.getTerm2())), reasoner);
+			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral("Q_"+Q2.getExpression().getName(), Arrays.asList(Q2.getTerm1(), Q2.getTerm2())), reasoner);
+			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral("Q_"+Q3.getExpression().getName(), Arrays.asList(Q3.getTerm1(), Q3.getTerm2())), reasoner);
+			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral("Q_"+Q4.getExpression().getName(), Arrays.asList(Q4.getTerm1(), Q4.getTerm2())), reasoner);
+			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral("Q_"+Q5.getExpression().getName(), Arrays.asList(Q5.getTerm1(), Q5.getTerm2())), reasoner);
+			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral("Q_"+Q6.getExpression().getName(), Arrays.asList(Q6.getTerm1(), Q6.getTerm2())), reasoner);
+			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral("Ans", Arrays.asList(x)), reasoner);
+		}
 		
 		/////////////////////////////////////////////////
 		
-//		final List<Statement> datalogResult = RpqConverter.CRPQTranslate(uvars, conj, conjunct, kb);
-//		
-//		for (Statement r: datalogResult) {
-//			kb.addStatement(r);
-//			System.out.println(r);
-//		}
-//		
-//		try (final Reasoner reasoner = new VLogReasoner(kb)) {
-//			reasoner.reason();
-//			/* Execute some queries */
-//			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(Expressions.makePredicate("Ans", 1), Arrays.asList(x)), reasoner);
-//		}
+		final List<Statement> datalogResult8 = RpqConverter.RPQTranslate(Q8);
+		
+		for (Statement r: datalogResult8) {
+			kb1.addStatement(r);
+			System.out.println(r);
+		}
+		
+		try (final Reasoner reasoner = new VLogReasoner(kb1)) {
+			reasoner.reason();
+			/* Execute some queries */
+			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral("Q_"+c3.getName(), Arrays.asList(x, y)), reasoner);
+		}
 		
 		/////////////////////////////////////////////////
 		
-//		final List<Statement> datalogResult = RpqConverter.RPQTranslate(Q8, kb1);
-//		
-//		for (Statement r: datalogResult) {
-//			kb1.addStatement(r);
-//			System.out.println(r);
-//		}
-//		
-//		try (final Reasoner reasoner = new VLogReasoner(kb1)) {
-//			reasoner.reason();
-//			/* Execute some queries */
-//			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(Expressions.makePredicate("Q_"+c3.getName(), 2), Arrays.asList(x, y)), reasoner);
-//		}
+		final List<Statement> datalogResult9 = RpqConverter.RPQTranslate(Q9);
+		
+		for (Statement r: datalogResult9) {
+			kb2.addStatement(r);
+			System.out.println(r);
+		}
+		
+		try (final Reasoner reasoner = new VLogReasoner(kb2)) {
+			reasoner.reason();
+			/* Execute some queries */
+			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral("Q_"+c4s.getName(), Arrays.asList(x, const2)), reasoner);
+		}
 		
 		/////////////////////////////////////////////////
 		
-//		final List<Statement> datalogResult = RpqConverter.RPQTranslate(Q9, kb2);
-//		
-//		for (Statement r: datalogResult) {
-//			kb2.addStatement(r);
-//			System.out.println(r);
-//		}
-//		
-//		try (final Reasoner reasoner = new VLogReasoner(kb2)) {
-//			reasoner.reason();
-//			/* Execute some queries */
-//			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(Expressions.makePredicate("Q_"+c4s.getName(), 2), Arrays.asList(x, const2)), reasoner);
-//		}
+		final List<Statement> datalogResult = RpqConverter.CRPQTranslate(uvars2, conj2, conjunct2);
 		
-		/////////////////////////////////////////////////
+		for (Statement r: datalogResult) {
+			kb3.addStatement(r);
+			System.out.println(r);
+		}
 		
-//		final List<Statement> datalogResult = RpqConverter.CRPQTranslate(uvars2, conj2, conjunct2, kb3);
-//		
-//		for (Statement r: datalogResult) {
-//			kb3.addStatement(r);
-//			System.out.println(r);
-//		}
-//		
-//		try (final Reasoner reasoner = new VLogReasoner(kb3)) {
-//			reasoner.reason();
-//			/* Execute some queries */
-//			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(Expressions.makePredicate("Ans", 2), uvars2), reasoner);
-//		}
+		try (final Reasoner reasoner = new VLogReasoner(kb3)) {
+			reasoner.reason();
+			/* Execute some queries */
+			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral("Ans", uvars2), reasoner);
+		}
 	}
 }

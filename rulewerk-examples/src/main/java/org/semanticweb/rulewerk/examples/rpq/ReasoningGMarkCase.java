@@ -26,14 +26,14 @@ import org.semanticweb.rulewerk.rpq.parser.RPQParser;
 
 public class ReasoningGMarkCase {
 	public static void main(String[] arg) throws IOException, ParsingException {
-		int ver = 1;
+//		int ver = 1;
 		ReasoningUtils.configureLogging(); // use simple logger for the example
-		
+		for (int ver = 2; ver < 4; ver++) {
 		for (int iter = 1; iter < 4; iter++) {
 		int size = 500000;
 		while (size <= 2000000) {
 		
-		FileWriter csvWriter = new FileWriter(ExamplesUtils.OUTPUT_FOLDER + "rpq/new/new-"+ver+"-"+size+"-"+iter+"-nc_2.csv");
+		FileWriter csvWriter = new FileWriter(ExamplesUtils.OUTPUT_FOLDER + "rpq/new/new-"+ver+"-"+size+"-"+iter+".csv");
 		csvWriter.append("Query");	csvWriter.append(",");	
 		csvWriter.append("DS");		csvWriter.append(",");	
 		csvWriter.append("FQA");	csvWriter.append(",");	
@@ -42,7 +42,7 @@ public class ReasoningGMarkCase {
 		csvWriter.append("RT");		csvWriter.append(",");	
 		csvWriter.append("NR");		csvWriter.append("\n");	
 		
-		FileWriter csvWriter2 = new FileWriter(ExamplesUtils.OUTPUT_FOLDER + "rpq/new/new-"+ver+"-"+size+"-"+iter+"-nc_mem.csv");
+		FileWriter csvWriter2 = new FileWriter(ExamplesUtils.OUTPUT_FOLDER + "rpq/new/new-"+ver+"-"+size+"-"+iter+"_mem.csv");
 		csvWriter2.append("Query");	csvWriter2.append(",");	
 		csvWriter2.append("TTMB");	csvWriter2.append(",");
 		csvWriter2.append("TFMB");	csvWriter2.append(",");	
@@ -72,7 +72,7 @@ public class ReasoningGMarkCase {
 		for (int k = 1; k < 6; k += 2) {
 		for (int l = 0; l < 10; l++) {
 			System.out.println("Loading and Parsing Query["+i+"_"+j+"_"+k+"-"+(k+1)+"] "+l+" for size " + size + " in iteration " + iter);
-			File queryInput = new File(ExamplesUtils.INPUT_FOLDER + "rpq/newqueries/shop-a-["+i+"_"+j+"_"+k+"-"+(k+1)+"]-noconverse/query-"+l+".sparql");
+			File queryInput = new File(ExamplesUtils.INPUT_FOLDER + "rpq/newqueries/shop-a-["+i+"_"+j+"_"+k+"-"+(k+1)+"]/query-"+l+".sparql");
 			FileInputStream input = new FileInputStream(queryInput);
 			
 			// ============================== PARSING =============================== //
@@ -126,7 +126,7 @@ public class ReasoningGMarkCase {
 				reasoner.reason();
 				/* Execute some queries */
 				System.out.println("- Answering Query");
-				ans = ReasoningUtils.printOutQueryCount(Expressions.makePositiveLiteral(Expressions.makePredicate("Ans", uvars.size()), uvars), reasoner);
+				ans = ReasoningUtils.printOutQueryCount(Expressions.makePositiveLiteral("Ans", uvars), reasoner);
 				
 				long endTime3 = System.nanoTime();
 				afterTotMem2 = Runtime.getRuntime().totalMemory();
@@ -172,6 +172,7 @@ public class ReasoningGMarkCase {
 		csvWriter2.flush();		csvWriter2.close();
 		System.out.println(size+" FINISHED");
 		size += 500000;
+		}
 		}
 		}
 	}

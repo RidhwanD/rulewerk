@@ -2,31 +2,20 @@ package org.semanticweb.rulewerk.examples.rpq;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
-import org.semanticweb.rulewerk.core.model.api.Fact;
-import org.semanticweb.rulewerk.core.model.api.Literal;
-import org.semanticweb.rulewerk.core.model.api.Predicate;
-import org.semanticweb.rulewerk.core.model.api.Rule;
 import org.semanticweb.rulewerk.core.model.api.Statement;
 import org.semanticweb.rulewerk.core.model.api.Term;
-import org.semanticweb.rulewerk.core.model.api.Variable;
 import org.semanticweb.rulewerk.core.model.implementation.Expressions;
 import org.semanticweb.rulewerk.core.reasoner.KnowledgeBase;
 import org.semanticweb.rulewerk.core.reasoner.Reasoner;
 import org.semanticweb.rulewerk.examples.ExamplesUtils;
 import org.semanticweb.rulewerk.parser.RuleParser;
 import org.semanticweb.rulewerk.reasoner.vlog.VLogReasoner;
-import org.semanticweb.rulewerk.rpq.converter.RpqConverter;
 import org.semanticweb.rulewerk.rpq.converter.RpqNFAConverter;
 import org.semanticweb.rulewerk.rpq.model.api.RPQConjunction;
 import org.semanticweb.rulewerk.rpq.model.api.RegPathQuery;
-import org.semanticweb.rulewerk.rpq.model.implementation.RPQExpressions;
 import org.semanticweb.rulewerk.rpq.parser.ParsingException;
 import org.semanticweb.rulewerk.rpq.parser.RPQParser;
 
@@ -50,7 +39,6 @@ public class ReasoningGMarkSimple {
 		System.out.println("Loading and Parsing Query ");
 		File queryInput = new File(ExamplesUtils.INPUT_FOLDER + "rpq/newqueries/shop-a-[2_3_3-4]/query-1.sparql");
 		FileInputStream input = new FileInputStream(queryInput);
-//		String input = "@prefix g: <http://example.org/gmark/> . SELECT DISTINCT ?x0 ?x1 WHERE {  {  ?x0 (((^g:ptag)/g:ptitle)/(^g:pemail)) ?x1 . }}";
 		
 		// ============================== PARSING =============================== //
 		long startTime1 = System.currentTimeMillis();
@@ -78,36 +66,6 @@ public class ReasoningGMarkSimple {
 			System.out.println(r);
 			numRuleGenerated++;
 		}
-
-		Variable a = Expressions.makeUniversalVariable("a");
-		Variable b = Expressions.makeUniversalVariable("b");
-		Variable c = Expressions.makeUniversalVariable("c");
-		Variable d = Expressions.makeUniversalVariable("d");
-		Variable e = Expressions.makeUniversalVariable("e");
-		Variable f = Expressions.makeUniversalVariable("f");
-		Variable x = Expressions.makeUniversalVariable("x");
-		Variable y = Expressions.makeUniversalVariable("y");
-		Variable z = Expressions.makeUniversalVariable("z");
-		Rule rx = Expressions.makeRule(
-				Expressions.makePositiveLiteral(Expressions.makePredicate("Cek1", 2), a, b), 
-				Expressions.makePositiveLiteral(Expressions.makePredicate("Q_(^http://example.org/gmark/ptag / http://example.org/gmark/ptitle)", 2), a, b));
-		Rule ry = Expressions.makeRule(
-				Expressions.makePositiveLiteral(Expressions.makePredicate("Cek2", 2), c, d), 
-				Expressions.makePositiveLiteral(Expressions.makePredicate("TRIPLE", 3), d, Expressions.makeAbstractConstant("http://example.org/gmark/pemail"), c));
-//		Rule ry = Expressions.makeRule(
-//				Expressions.makePositiveLiteral(Expressions.makePredicate("Cek2", 2), x, y), 
-//				Expressions.makePositiveLiteral(Expressions.makePredicate("Q_^http://example.org/gmark/pemail", 2), x, y));
-		Rule rz = Expressions.makeRule(
-				Expressions.makePositiveLiteral(Expressions.makePredicate("Cek", 2), e, x), 
-				Expressions.makePositiveLiteral(Expressions.makePredicate("Cek1", 2), e, f), 
-				Expressions.makePositiveLiteral(Expressions.makePredicate("Cek2", 2), f, x));
-		kb.addStatement(rx);
-		kb.addStatement(ry);
-		kb.addStatement(rz);
-		
-		System.out.println(rx);
-		System.out.println(ry);
-		System.out.println(rz);
 		
 		System.out.println("Reasoning");
 		long duration3 = 0;
@@ -120,10 +78,7 @@ public class ReasoningGMarkSimple {
 			reasoner.reason();
 			/* Execute some queries */
 			System.out.println("- Answering Query");
-			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(Expressions.makePredicate("Ans", uvars.size()), uvars), reasoner);
-//			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(Expressions.makePredicate("Cek1", 2), x, y), reasoner);
-//			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(Expressions.makePredicate("Cek2", 2), y, z), reasoner);
-//			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(Expressions.makePredicate("Cek", 2), x, z), reasoner);
+			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral("Ans", uvars), reasoner);
 			
 			long endTime3 = System.currentTimeMillis();
 			long afterUsedMem3 = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();

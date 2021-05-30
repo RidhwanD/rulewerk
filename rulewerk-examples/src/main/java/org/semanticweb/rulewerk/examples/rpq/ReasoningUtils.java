@@ -30,8 +30,6 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.semanticweb.rulewerk.core.exceptions.ReasonerStateException;
-import org.semanticweb.rulewerk.core.exceptions.RulewerkRuntimeException;
-import org.semanticweb.rulewerk.core.model.api.Literal;
 import org.semanticweb.rulewerk.core.model.api.PositiveLiteral;
 import org.semanticweb.rulewerk.core.model.api.Predicate;
 import org.semanticweb.rulewerk.core.model.api.Term;

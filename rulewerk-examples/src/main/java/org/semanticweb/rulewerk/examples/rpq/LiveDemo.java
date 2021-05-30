@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.semanticweb.rulewerk.core.model.api.Predicate;
@@ -94,10 +93,10 @@ public class LiveDemo {
 			reasoner.reason();
 			/* Execute some queries */
 			System.out.println("- Answering Query");
-			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(Expressions.makePredicate("Ans", uvars.size()), uvars), reasoner);			
-//			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(Expressions.makePredicate("Q_hasProfession", uvars.size()), uvars.get(0),Expressions.makeAbstractConstant("Illustrator")), reasoner);			
-//			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(Expressions.makePredicate("Q_((friendOf | ^friendOf))+", uvars.size()), uvars), reasoner);		
-//			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(Expressions.makePredicate("Q_hasProfession", uvars.size()), Arrays.asList(uvars.get(0),Expressions.makeAbstractConstant("Archaeologist"))), reasoner);		
+			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral("Ans", uvars), reasoner);			
+//			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral("Q_hasProfession", uvars.get(0),Expressions.makeAbstractConstant("Illustrator")), reasoner);			
+//			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral("Q_((friendOf | ^friendOf))+", uvars), reasoner);		
+//			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral("Q_hasProfession", Arrays.asList(uvars.get(0),Expressions.makeAbstractConstant("Archaeologist"))), reasoner);		
 			long endTime3 = System.currentTimeMillis();
 			duration3 = (endTime3 - startTime3);
 			

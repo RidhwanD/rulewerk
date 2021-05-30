@@ -3,11 +3,8 @@ package org.semanticweb.rulewerk.examples.rpq;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Hashtable;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.semanticweb.rulewerk.core.model.api.Conjunction;
@@ -78,11 +75,11 @@ public class ReasoningNDFAExample {
 		final NDFAQuery ndfaq1 = RPQExpressions.makeNDFAQuery(ndfa1, x, y);
 		
 		final KnowledgeBase kb1 = new KnowledgeBase();
-		kb1.addStatement(Expressions.makeFact(Expressions.makePredicate("TRIPLE", 3), Arrays.asList(const1,Expressions.makeAbstractConstant("a"),const2)));
-		kb1.addStatement(Expressions.makeFact(Expressions.makePredicate("TRIPLE", 3), Arrays.asList(const2,Expressions.makeAbstractConstant("a"),const4)));
-		kb1.addStatement(Expressions.makeFact(Expressions.makePredicate("TRIPLE", 3), Arrays.asList(const3,Expressions.makeAbstractConstant("b"),const2)));
-		kb1.addStatement(Expressions.makeFact(Expressions.makePredicate("TRIPLE", 3), Arrays.asList(const1,Expressions.makeAbstractConstant("d"),const3)));
-		kb1.addStatement(Expressions.makeFact(Expressions.makePredicate("TRIPLE", 3), Arrays.asList(const4,Expressions.makeAbstractConstant("d"),const2)));
+		kb1.addStatement(Expressions.makeFact("TRIPLE", Arrays.asList(const1,Expressions.makeAbstractConstant("a"),const2)));
+		kb1.addStatement(Expressions.makeFact("TRIPLE", Arrays.asList(const2,Expressions.makeAbstractConstant("a"),const4)));
+		kb1.addStatement(Expressions.makeFact("TRIPLE", Arrays.asList(const3,Expressions.makeAbstractConstant("b"),const2)));
+		kb1.addStatement(Expressions.makeFact("TRIPLE", Arrays.asList(const1,Expressions.makeAbstractConstant("d"),const3)));
+		kb1.addStatement(Expressions.makeFact("TRIPLE", Arrays.asList(const4,Expressions.makeAbstractConstant("d"),const2)));
 		
 		/////////////////////////////////////////////////
 		
@@ -106,9 +103,9 @@ public class ReasoningNDFAExample {
 		final NDFAQuery ndfaq2 = RPQExpressions.makeNDFAQuery(ndfa2, x, const2);
 		
 		final KnowledgeBase kb2 = new KnowledgeBase();
-		kb2.addStatement(Expressions.makeFact(Expressions.makePredicate("TRIPLE", 3), Arrays.asList(const1,Expressions.makeAbstractConstant("a"),const3)));
-		kb2.addStatement(Expressions.makeFact(Expressions.makePredicate("TRIPLE", 3), Arrays.asList(const2,Expressions.makeAbstractConstant("a"),const3)));
-		kb2.addStatement(Expressions.makeFact(Expressions.makePredicate("TRIPLE", 3), Arrays.asList(const1,Expressions.makeAbstractConstant("a"),const4)));
+		kb2.addStatement(Expressions.makeFact("TRIPLE", Arrays.asList(const1,Expressions.makeAbstractConstant("a"),const3)));
+		kb2.addStatement(Expressions.makeFact("TRIPLE", Arrays.asList(const2,Expressions.makeAbstractConstant("a"),const3)));
+		kb2.addStatement(Expressions.makeFact("TRIPLE", Arrays.asList(const1,Expressions.makeAbstractConstant("a"),const4)));
 		
 		/////////////////////////////////////////////////
 		
@@ -149,57 +146,59 @@ public class ReasoningNDFAExample {
 		final NDFAQuery ndfaq4 = RPQExpressions.makeNDFAQuery(ndfa4, x, y);
 		
 		final KnowledgeBase kb3 = new KnowledgeBase();
-		kb3.addStatement(Expressions.makeFact(Expressions.makePredicate("TRIPLE", 3), Arrays.asList(const1,Expressions.makeAbstractConstant("n3"),const3)));
-		kb3.addStatement(Expressions.makeFact(Expressions.makePredicate("TRIPLE", 3), Arrays.asList(const2,Expressions.makeAbstractConstant("n3"),const3)));
-		kb3.addStatement(Expressions.makeFact(Expressions.makePredicate("TRIPLE", 3), Arrays.asList(const1,Expressions.makeAbstractConstant("n8"),const3)));
-		kb3.addStatement(Expressions.makeFact(Expressions.makePredicate("TRIPLE", 3), Arrays.asList(const2,Expressions.makeAbstractConstant("n8"),const4)));
-		kb3.addStatement(Expressions.makeFact(Expressions.makePredicate("TRIPLE", 3), Arrays.asList(const3,Expressions.makeAbstractConstant("n3"),const4)));
-		kb3.addStatement(Expressions.makeFact(Expressions.makePredicate("TRIPLE", 3), Arrays.asList(const3,Expressions.makeAbstractConstant("n8"),const4)));
-		kb3.addStatement(Expressions.makeFact(Expressions.makePredicate("Check", 1), const1));
+		kb3.addStatement(Expressions.makeFact("TRIPLE", Arrays.asList(const1,Expressions.makeAbstractConstant("n3"),const3)));
+		kb3.addStatement(Expressions.makeFact("TRIPLE", Arrays.asList(const2,Expressions.makeAbstractConstant("n3"),const3)));
+		kb3.addStatement(Expressions.makeFact("TRIPLE", Arrays.asList(const1,Expressions.makeAbstractConstant("n8"),const3)));
+		kb3.addStatement(Expressions.makeFact("TRIPLE", Arrays.asList(const2,Expressions.makeAbstractConstant("n8"),const4)));
+		kb3.addStatement(Expressions.makeFact("TRIPLE", Arrays.asList(const3,Expressions.makeAbstractConstant("n3"),const4)));
+		kb3.addStatement(Expressions.makeFact("TRIPLE", Arrays.asList(const3,Expressions.makeAbstractConstant("n8"),const4)));
+		kb3.addStatement(Expressions.makeFact("Check", const1));
 		
 		final List<NDFAQuery> queries = new ArrayList<NDFAQuery>(Arrays.asList(ndfaq3, ndfaq4));
-		final Conjunction<Literal> conjunct = Expressions.makeConjunction(Expressions.makePositiveLiteral(Expressions.makePredicate("Check", 1), Arrays.asList(x)));
+		final Conjunction<Literal> conjunct = Expressions.makeConjunction(Expressions.makePositiveLiteral("Check", x));
 		final List<Term> uvars = new ArrayList<Term>(Arrays.asList(x, y));
 		
 		/////////////////////////////////////////////////
 
-//		final List<Statement> datalogResult = RpqNFAConverter.NDFAQueryTranslate(ndfaq1);
-//		final List<Statement> datalogResult = RpqNFAConverter.RPQTranslate(RPQExpressions.makeRegPathQuery(ndfaq1.getNDFA().getRegex(), ndfaq1.getTerm1(), ndfaq1.getTerm2()));
-//		
-//		for (Statement r: datalogResult) {
-//			kb1.addStatement(r);
-//			System.out.println(r);
-//		}
-//		
-//		try (final Reasoner reasoner = new VLogReasoner(kb1)) {
-//			reasoner.reason();
-//			/* Execute some queries */
-//			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(Expressions.makePredicate("Q_"+c3.getName(), 2), Arrays.asList(x, y)), reasoner);
-//		}
+		final List<Statement> datalogResult1 = RpqNFAConverter.NDFAQueryTranslate(ndfaq1);
+		final List<Statement> datalogResult2 = RpqNFAConverter.RPQTranslate(RPQExpressions.makeRegPathQuery(ndfaq1.getNDFA().getRegex(), ndfaq1.getTerm1(), ndfaq1.getTerm2()));
+
+		// Interchangeable
+		for (Statement r: datalogResult1) {
+			kb1.addStatement(r);
+			System.out.println(r);
+		}
 		
-//		final List<Statement> datalogResult = RpqNFAConverter.NDFAQueryTranslate(ndfaq2);
-//		final List<Statement> datalogResult = RpqNFAConverter.RPQTranslate(RPQExpressions.makeRegPathQuery(ndfaq2.getNDFA().getRegex(), ndfaq2.getTerm1(), ndfaq2.getTerm2()));
-//		
-//		for (Statement r: datalogResult) {
-//			kb2.addStatement(r);
-//			System.out.println(r);
-//		}
-//		
-//		try (final Reasoner reasoner = new VLogReasoner(kb2)) {
-//			reasoner.reason();
-//			/* Execute some queries */
-//			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(Expressions.makePredicate("Q_"+c4s.getName(), 2), Arrays.asList(x, const2)), reasoner);
-//		}
+		try (final Reasoner reasoner = new VLogReasoner(kb1)) {
+			reasoner.reason();
+			/* Execute some queries */
+			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral("Q_"+c3.getName(), x, y), reasoner);
+		}
 		
-		final List<Statement> datalogResult = RpqNFAConverter.CNDFATranslate(uvars, queries, conjunct);
-//		List<RegPathQuery> qs = new ArrayList<RegPathQuery>();
-//		for (NDFAQuery nfa : queries) {
-//			qs.add(RPQExpressions.makeRegPathQuery(nfa.getNDFA().getRegex(), nfa.getTerm1(), nfa.getTerm2()));
-//		}
-//		final Set<Statement> datalogResult = RpqNFAConverter.CRPQTranslate(uvars, RPQExpressions.makeRPQConjunction(qs, uvars), conjunct);
+		final List<Statement> datalogResult3 = RpqNFAConverter.NDFAQueryTranslate(ndfaq2);
+		final List<Statement> datalogResult4 = RpqNFAConverter.RPQTranslate(RPQExpressions.makeRegPathQuery(ndfaq2.getNDFA().getRegex(), ndfaq2.getTerm1(), ndfaq2.getTerm2()));
+
+		// Interchangeable
+		for (Statement r: datalogResult3) {
+			kb2.addStatement(r);
+			System.out.println(r);
+		}
 		
+		try (final Reasoner reasoner = new VLogReasoner(kb2)) {
+			reasoner.reason();
+			/* Execute some queries */
+			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral("Q_"+c4s.getName(), x, const2), reasoner);
+		}
 		
-		for (Statement r: datalogResult) {
+		final List<Statement> datalogResult5 = RpqNFAConverter.CNDFATranslate(uvars, queries, conjunct);
+		List<RegPathQuery> qs = new ArrayList<RegPathQuery>();
+		for (NDFAQuery nfa : queries) {
+			qs.add(RPQExpressions.makeRegPathQuery(nfa.getNDFA().getRegex(), nfa.getTerm1(), nfa.getTerm2()));
+		}
+		final List<Statement> datalogResult6 = RpqNFAConverter.CRPQTranslate(uvars, RPQExpressions.makeRPQConjunction(qs, uvars), conjunct);
+
+		// Interchangeable
+		for (Statement r: datalogResult5) {
 			kb3.addStatement(r);
 			System.out.println(r);
 		}
@@ -207,7 +206,7 @@ public class ReasoningNDFAExample {
 		try (final Reasoner reasoner = new VLogReasoner(kb3)) {
 			reasoner.reason();
 			/* Execute some queries */
-			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(Expressions.makePredicate("Ans", 2), uvars), reasoner);
+			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral("Ans", uvars), reasoner);
 		}
 	}
 }
