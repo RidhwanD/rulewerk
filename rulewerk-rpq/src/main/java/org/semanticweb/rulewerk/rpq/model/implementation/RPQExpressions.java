@@ -102,9 +102,9 @@ public class RPQExpressions {
 	/**
 	 * Creates a {@link RegPathQuery}.
 	 *
-	 * @param exp non-null {@link RegExpression}
-	 * @param t1 non-null {@link Term}
-	 * @param t2 non-null {@link Term}
+	 * @param exp 	non-null {@link RegExpression}
+	 * @param t1 	non-null {@link Term}
+	 * @param t2 	non-null {@link Term}
 	 * @return a {@link RegPathQuery} corresponding to the input
 	 */
 	public static RegPathQuery makeRegPathQuery(final RegExpression exp, final Term t1, final Term t2) {
@@ -123,22 +123,64 @@ public class RPQExpressions {
 		
 	}
 	
+	/**
+	 * Creates an {@link State}.
+	 *
+	 * @param name non-blank {@link State} name
+	 * @return a {@link State} corresponding to the input
+	 */
 	public static State makeState(String name) {
 		return new StateImpl(name);
 	}
 	
+	/**
+	 * Creates an {@link Transition}.
+	 *
+	 * @param origin 		non-null {@link State} as origin
+	 * @param destination 	non-null {@link State} as destination
+	 * @param label 		non-null {@link EdgeLabel} as transition label
+	 * @return a {@link Transition} corresponding to the input
+	 */
 	public static Transition makeTransition(State origin, State destination, EdgeLabel label) {
 		return new TransitionImpl(origin, destination, label);
 	}
 	
+	/**
+	 * Creates an {@link ConverseTransition}.
+	 *
+	 * @param origin 		non-null {@link State} as origin
+	 * @param destination 	non-null {@link State} as destination
+	 * @param label 		non-null {@link ConverseEdgeLabel} as transition label
+	 * @return a {@link ConverseTransition} corresponding to the input
+	 */
 	public static ConverseTransition makeConverseTransition(State origin, State destination, ConverseEdgeLabel label) {
 		return new ConverseTransitionImpl(origin, destination, label);
 	}
 	
+	/**
+	 * Creates an {@link NDFiniteAutomata}.
+	 *
+	 * @param regex 			non-null {@link RegExpression} as the expression represented
+	 * @param states 			non-null set of {@link State}
+	 * @param alphabet 			non-null set of {@link EdgeLabel} as the alphabet
+	 * @param initState 		non-null {@link State} as initial state
+	 * @param finState 			non-null set of {@link State} as set of final states
+	 * @param transition 		non-null set of {@link Transition} between states
+	 * @param convTransition 	non-null set of {@link ConverseTransition} between states
+	 * @return a {@link NDFiniteAutomata} corresponding to the input
+	 */
 	public static NDFiniteAutomata makeNDFiniteAutomata(RegExpression regex, Set<State> states, Set<EdgeLabel> alphabet, State initState, Set<State> finState, Set<Transition> transition, Set<ConverseTransition> convTransition) {
 		return new NDFiniteAutomataImpl(regex, states, alphabet, initState, finState, transition, convTransition);
 	}
 	
+	/**
+	 * Creates an {@link NDFAQuery}.
+	 *
+	 * @param ndfa 	non-null {@link NDFiniteAutomata} as the NDFA of the regular expression represented
+	 * @param t1 	non-null {@link Term} as the first term
+	 * @param t2 	non-null {@link Term} as the second term
+	 * @return a {@link NDFAQuery} corresponding to the input
+	 */
 	public static NDFAQuery makeNDFAQuery(NDFiniteAutomata ndfa, Term t1, Term t2) {
 		return new NDFAQueryImpl(ndfa, t1, t2);
 	}

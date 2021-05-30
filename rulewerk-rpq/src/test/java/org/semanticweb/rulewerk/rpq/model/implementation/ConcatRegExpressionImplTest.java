@@ -93,7 +93,7 @@ public class ConcatRegExpressionImplTest {
 	}
 
 	@Test
-	public void positiveLiteralTostringTest() {
+	public void concatTostringTest() {
 		final EdgeLabel x = RPQExpressions.makeEdgeLabel("X");
 		final EdgeLabel y = RPQExpressions.makeEdgeLabel("Y");
 		

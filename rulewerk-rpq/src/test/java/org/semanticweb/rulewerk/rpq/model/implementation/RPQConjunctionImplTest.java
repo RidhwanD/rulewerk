@@ -80,6 +80,7 @@ public class RPQConjunctionImplTest {
 		assertNotEquals(conjunction5, conjunction1);
 		assertNotEquals(conjunction5.hashCode(), conjunction1.hashCode());
 		assertNotEquals(conjunction6, conjunction1);
+		assertNotEquals(conjunction6.hashCode(), conjunction1.hashCode());
 		assertFalse(conjunction1.equals(null));
 		assertFalse(conjunction1.equals(c));
 	}

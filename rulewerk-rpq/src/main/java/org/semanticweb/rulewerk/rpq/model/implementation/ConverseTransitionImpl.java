@@ -1,5 +1,6 @@
 package org.semanticweb.rulewerk.rpq.model.implementation;
 
+import org.apache.commons.lang3.Validate;
 import org.semanticweb.rulewerk.rpq.model.api.ConverseEdgeLabel;
 import org.semanticweb.rulewerk.rpq.model.api.ConverseTransition;
 import org.semanticweb.rulewerk.rpq.model.api.State;
@@ -10,6 +11,9 @@ public class ConverseTransitionImpl implements ConverseTransition {
 	private ConverseEdgeLabel label;
 	
 	public ConverseTransitionImpl(State orig, State dest, ConverseEdgeLabel label) {
+		Validate.notNull(orig);
+		Validate.notNull(dest);
+		Validate.notNull(label);
 		this.origin = orig;
 		this.destination = dest;
 		this.label = label;

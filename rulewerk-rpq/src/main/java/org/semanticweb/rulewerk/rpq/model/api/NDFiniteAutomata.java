@@ -13,6 +13,4 @@ public interface NDFiniteAutomata extends Entity  {
 	public Set<ConverseTransition> getConvTransition();
 	public RegExpression getRegex();
 	public int hashCode();
-	public boolean isAuxiliary(State s);
-	public boolean isTMFA();
 }

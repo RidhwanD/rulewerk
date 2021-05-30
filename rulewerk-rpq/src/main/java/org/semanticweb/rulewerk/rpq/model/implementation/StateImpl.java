@@ -1,11 +1,13 @@
 package org.semanticweb.rulewerk.rpq.model.implementation;
 
+import org.apache.commons.lang3.Validate;
 import org.semanticweb.rulewerk.rpq.model.api.State;
 
 public class StateImpl implements State {
 	private final String name;
 	
 	public StateImpl(String name) {
+		Validate.notNull(name);
 		this.name = name;
 	}
 	

@@ -61,7 +61,7 @@ public class KPlusRegExpressionImplTest {
 	}
 
 	@Test
-	public void positiveLiteralTostringTest() {
+	public void kplusTostringTest() {
 		final EdgeLabel x = RPQExpressions.makeEdgeLabel("X");
 		
 		final KPlusRegExpression kp1 = RPQExpressions.makeKPlusRegExpression(x);

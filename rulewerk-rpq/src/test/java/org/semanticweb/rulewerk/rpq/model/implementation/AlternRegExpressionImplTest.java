@@ -93,7 +93,7 @@ public class AlternRegExpressionImplTest {
 	}
 
 	@Test
-	public void positiveLiteralTostringTest() {
+	public void alternTostringTest() {
 		final EdgeLabel x = RPQExpressions.makeEdgeLabel("X");
 		final EdgeLabel y = RPQExpressions.makeEdgeLabel("Y");
 		

@@ -45,7 +45,8 @@ public class RegPathQueryImplTest {
 		final RegPathQuery rpq1 = RPQExpressions.makeRegPathQuery(p, x, c);
 		final RegPathQuery rpq2 = new RegPathQueryImpl(p, x, c);
 		final RegPathQuery rpq3 = new RegPathQueryImpl(q, x, c);
-		final RegPathQuery rpq4 = new RegPathQueryImpl(p, c, x);
+		final RegPathQuery rpq4 = new RegPathQueryImpl(p, x, x);
+		final RegPathQuery rpq5 = new RegPathQueryImpl(p, c, c);
 
 		assertEquals(rpq1, rpq1);
 		assertEquals(rpq1, rpq2);
@@ -54,6 +55,8 @@ public class RegPathQueryImplTest {
 		assertNotEquals(rpq3.hashCode(), rpq1.hashCode());
 		assertNotEquals(rpq4, rpq1);
 		assertNotEquals(rpq4.hashCode(), rpq1.hashCode());
+		assertNotEquals(rpq5, rpq1);
+		assertNotEquals(rpq5.hashCode(), rpq1.hashCode());
 		assertFalse(rpq1.equals(null));
 		assertFalse(rpq1.equals(c));
 	}
@@ -80,7 +83,7 @@ public class RegPathQueryImplTest {
 	}
 
 	@Test
-	public void positiveLiteralTostringTest() {
+	public void rpqTostringTest() {
 		final Variable x = Expressions.makeUniversalVariable("X");
 		final Constant c = Expressions.makeAbstractConstant("c");
 

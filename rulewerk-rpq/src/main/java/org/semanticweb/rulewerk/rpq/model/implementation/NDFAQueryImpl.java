@@ -1,5 +1,6 @@
 package org.semanticweb.rulewerk.rpq.model.implementation;
 
+import org.apache.commons.lang3.Validate;
 import org.semanticweb.rulewerk.core.model.api.Term;
 import org.semanticweb.rulewerk.rpq.model.api.NDFAQuery;
 import org.semanticweb.rulewerk.rpq.model.api.NDFiniteAutomata;
@@ -10,26 +11,29 @@ public class NDFAQueryImpl implements NDFAQuery {
 	private Term t2;
 	
 	public NDFAQueryImpl(NDFiniteAutomata ndfa, Term t1, Term t2) {
+		Validate.notNull(ndfa);
+		Validate.notNull(t1);
+		Validate.notNull(t2);
 		this.ndfa = ndfa;
 		this.t1 = t1;
 		this.t2 = t2;
 	}
 	
 	public Term getTerm1() {
-		return t1;
+		return this.t1;
 	}
 	
 	public Term getTerm2() {
-		return t2;
+		return this.t2;
 	}
 	
 	public NDFiniteAutomata getNDFA() {
-		return ndfa;
+		return this.ndfa;
 	}
 	
 	@Override
 	public String toString() {
-		return t1 + " " + ndfa.getRegex() + " " + t2 +" .";
+		return t1 + " " + this.ndfa + " " + t2 +" .";
 	}
 	
 	@Override

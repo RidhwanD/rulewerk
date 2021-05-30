@@ -61,7 +61,12 @@ public class RPQConjunctionImpl <T extends RegPathQuery> implements RPQConjuncti
 
 	@Override
 	public int hashCode() {
-		return this.rpqs.hashCode();
+		Set<Term> varSet = new HashSet<>(this.projVars);
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + this.rpqs.hashCode();
+		result = prime * result + varSet.hashCode();
+		return result;
 	}
 	
 	@Override

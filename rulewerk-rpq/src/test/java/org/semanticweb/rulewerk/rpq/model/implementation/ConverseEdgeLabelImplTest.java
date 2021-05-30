@@ -76,7 +76,7 @@ public class ConverseEdgeLabelImplTest {
 	}
 
 	@Test
-	public void positiveLiteralTostringTest() {
+	public void converseTostringTest() {
 		final EdgeLabel x = RPQExpressions.makeEdgeLabel("X");
 		
 		final ConverseEdgeLabel cel1 = RPQExpressions.makeConverseEdgeLabel(x);

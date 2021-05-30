@@ -1,5 +1,6 @@
 package org.semanticweb.rulewerk.rpq.model.implementation;
 
+import org.apache.commons.lang3.Validate;
 import org.semanticweb.rulewerk.rpq.model.api.EdgeLabel;
 import org.semanticweb.rulewerk.rpq.model.api.State;
 import org.semanticweb.rulewerk.rpq.model.api.Transition;
@@ -10,6 +11,9 @@ public class TransitionImpl implements Transition {
 	private EdgeLabel label;
 	
 	public TransitionImpl(State orig, State dest, EdgeLabel label) {
+		Validate.notNull(orig);
+		Validate.notNull(dest);
+		Validate.notNull(label);
 		this.origin = orig;
 		this.destination = dest;
 		this.label = label;

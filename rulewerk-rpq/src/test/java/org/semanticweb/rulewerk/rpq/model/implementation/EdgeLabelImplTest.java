@@ -42,7 +42,7 @@ public class EdgeLabelImplTest {
 	}
 	
 	@Test(expected = NullPointerException.class)
-	public void elNotNull() {
+	public void edgeLabelNotNull() {
 		new EdgeLabelImpl(null);
 	}
 
@@ -53,7 +53,7 @@ public class EdgeLabelImplTest {
 	}
 
 	@Test
-	public void positiveLiteralTostringTest() {
+	public void edgeLabelTostringTest() {
 		final EdgeLabel el1 = RPQExpressions.makeEdgeLabel("X");
 		final EdgeLabel el2 = new EdgeLabelImpl("X");
 		

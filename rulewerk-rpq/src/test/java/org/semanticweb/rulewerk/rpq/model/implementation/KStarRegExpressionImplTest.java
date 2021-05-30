@@ -61,7 +61,7 @@ public class KStarRegExpressionImplTest {
 	}
 
 	@Test
-	public void positiveLiteralTostringTest() {
+	public void KstarTostringTest() {
 		final EdgeLabel x = RPQExpressions.makeEdgeLabel("X");
 		
 		final KStarRegExpression ks1 = RPQExpressions.makeKStarRegExpression(x);

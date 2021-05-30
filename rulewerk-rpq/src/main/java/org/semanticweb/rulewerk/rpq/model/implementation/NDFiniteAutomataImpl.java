@@ -2,6 +2,7 @@ package org.semanticweb.rulewerk.rpq.model.implementation;
 
 import java.util.Set;
 
+import org.apache.commons.lang3.Validate;
 import org.semanticweb.rulewerk.rpq.model.api.ConverseTransition;
 import org.semanticweb.rulewerk.rpq.model.api.EdgeLabel;
 import org.semanticweb.rulewerk.rpq.model.api.NDFiniteAutomata;
@@ -19,6 +20,13 @@ public class NDFiniteAutomataImpl implements NDFiniteAutomata {
 	private Set<ConverseTransition> convTransition;
 	
 	public NDFiniteAutomataImpl(RegExpression regex, Set<State> states, Set<EdgeLabel> alphabet, State initState, Set<State> finState, Set<Transition> transition, Set<ConverseTransition> convTransition) {
+		Validate.notNull(regex);
+		Validate.notNull(states);
+		Validate.notNull(alphabet);
+		Validate.notNull(initState);
+		Validate.notNull(finState);
+		Validate.notNull(transition);
+		Validate.notNull(convTransition);
 		this.regex = regex;
 		this.states = states;
 		this.alphabet = alphabet;
@@ -90,18 +98,6 @@ public class NDFiniteAutomataImpl implements NDFiniteAutomata {
 	public RegExpression getRegex() {
 		return regex;
 	}
-
-	@Override
-	public boolean isAuxiliary(State s) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public boolean isTMFA() {
-		// TODO Auto-generated method stub
-		return false;
-	}
 	
 	@Override
 	public boolean equals(Object obj) { 
@@ -123,7 +119,16 @@ public class NDFiniteAutomataImpl implements NDFiniteAutomata {
 	
 	@Override
 	public int hashCode() {
-		return this.transition.hashCode();
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + this.regex.hashCode();
+		result = prime * result + this.states.hashCode();
+		result = prime * result + this.alphabet.hashCode();
+		result = prime * result + this.initState.hashCode();
+		result = prime * result + this.finState.hashCode();
+		result = prime * result + this.transition.hashCode();
+		result = prime * result + this.convTransition.hashCode();
+		return result;
 	}
 	
 	@Override
