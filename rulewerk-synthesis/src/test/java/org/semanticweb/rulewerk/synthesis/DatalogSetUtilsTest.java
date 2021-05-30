@@ -1,9 +1,12 @@
 package org.semanticweb.rulewerk.synthesis;
 
+import java.io.IOException;
 import java.util.Set;
 
+import org.semanticweb.rulewerk.core.model.api.AbstractConstant;
 import org.semanticweb.rulewerk.core.model.api.Constant;
 import org.semanticweb.rulewerk.core.model.api.ExistentialVariable;
+import org.semanticweb.rulewerk.core.model.api.Fact;
 import org.semanticweb.rulewerk.core.model.api.PositiveLiteral;
 import org.semanticweb.rulewerk.core.model.api.Predicate;
 import org.semanticweb.rulewerk.core.model.api.Rule;
@@ -15,9 +18,13 @@ import org.semanticweb.rulewerk.core.model.api.SetVariable;
 import org.semanticweb.rulewerk.core.model.api.Statement;
 import org.semanticweb.rulewerk.core.model.api.UniversalVariable;
 import org.semanticweb.rulewerk.core.model.implementation.Expressions;
+import org.semanticweb.rulewerk.core.reasoner.KnowledgeBase;
+import org.semanticweb.rulewerk.core.reasoner.Reasoner;
+import org.semanticweb.rulewerk.reasoner.vlog.VLogReasoner;
 
 public class DatalogSetUtilsTest {
-	public static void main(String[] arg) {
+	public static void main(String[] arg) throws IOException {
+		ReasoningUtils.configureLoggingAll(); // use simple logger for the example
 		Set<Statement> r_su = DatalogSetUtils.getR_SU();
 		
 		for (Statement s : r_su) {
@@ -32,8 +39,11 @@ public class DatalogSetUtilsTest {
 		
 		UniversalVariable x = Expressions.makeUniversalVariable("x");
 		UniversalVariable y = Expressions.makeUniversalVariable("y");
+		ExistentialVariable z = Expressions.makeExistentialVariable("z");
+		AbstractConstant const1 = Expressions.makeAbstractConstant("1");
 		
 		SetConstruct empSet = Expressions.makeEmptySet();
+		SetConstruct set1 = Expressions.makeSetConstruct(const1);
 		SetConstruct set2 = Expressions.makeSetConstruct(x);
 		SetConstruct set3 = Expressions.makeSetConstruct(y);
 		SetUnion un1 = Expressions.makeSetUnion(set2, ws);
@@ -82,6 +92,13 @@ public class DatalogSetUtilsTest {
 		
 		Rule r5 = Expressions.makeRule(Expressions.makePositiveLiteral(qq, u), Expressions.makePositiveLiteral(qq, un4));
 		
+		Fact f1 = Expressions.makeFact(p, empSet);
+		Fact f2 = Expressions.makeFact(q, empSet, set1);
+		Fact f3 = Expressions.makeFact(r, set1, const1, empSet);
+		
+		KnowledgeBase kb = new KnowledgeBase();
+		kb.addStatements(DatalogSetUtils.getR_SU());
+		
 		System.out.println(un4.isSubTerm(w));
 		System.out.println(un4.getSubTerms());
 		
@@ -92,12 +109,22 @@ public class DatalogSetUtilsTest {
 		Rule nr1 = DatalogSetUtils.normalize(r1);
 		System.out.println(nr1);
 		System.out.println(DatalogSetUtils.getOrder(nr1));
+		System.out.println("Result of transformation: ");
+		for (Rule rule : DatalogSetUtils.transformRule(r1)) {
+			kb.addStatement(rule);
+			System.out.println("- "+rule);
+		}
 		
 		System.out.println();
 		System.out.println(r2);
 		Rule nr2 = DatalogSetUtils.normalize(r2);
 		System.out.println(nr2);
 		System.out.println(DatalogSetUtils.getOrder(nr2));
+		System.out.println("Result of transformation: ");
+		for (Rule rule : DatalogSetUtils.transformRule(r2)) {
+			kb.addStatement(rule);
+			System.out.println("- "+rule);
+		}
 		
 		System.out.println();
 		System.out.println(r3);
@@ -111,7 +138,7 @@ public class DatalogSetUtilsTest {
 		System.out.println(nr4);
 		System.out.println(DatalogSetUtils.getOrder(nr4));
 		System.out.println("Result of transformation: ");
-		for (Rule rule : DatalogSetUtils.transform(r4))
+		for (Rule rule : DatalogSetUtils.transformRule(r4))
 			System.out.println("- "+rule);
 		
 		System.out.println();
@@ -120,13 +147,55 @@ public class DatalogSetUtilsTest {
 		System.out.println(nr5);
 		System.out.println(DatalogSetUtils.getOrder(nr5));
 		
-		Rule r6 = Expressions.makeRule(Expressions.makePositiveLiteral(q, x, y), Expressions.makePositiveLiteral(s, x, y));System.out.println();
+		Rule r6 = Expressions.makeRule(Expressions.makePositiveLiteral(q, x, y), Expressions.makePositiveLiteral(s, x, y));
+		System.out.println();
 		System.out.println(r6);
 		Rule nr6 = DatalogSetUtils.normalize(r6);
 		System.out.println(nr6);
 		System.out.println(DatalogSetUtils.getOrder(nr6));
 		System.out.println("Result of transformation: ");
-		for (Rule rule : DatalogSetUtils.transform(r6))
+		for (Rule rule : DatalogSetUtils.transformRule(r6))
 			System.out.println("- "+rule);
+		
+		System.out.println();
+		System.out.println(f1);
+		System.out.println(DatalogSetUtils.getOrder(f1));
+		System.out.println("Result of transformation: ");
+		for (Statement rule : DatalogSetUtils.transformFact(f1)) {
+			kb.addStatement(rule);
+			System.out.println("- "+rule);
+		}
+		
+		System.out.println();
+		System.out.println(f2);
+		System.out.println(DatalogSetUtils.getOrder(f2));
+		System.out.println("Result of transformation: ");
+		for (Statement rule : DatalogSetUtils.transformFact(f2)) {
+			kb.addStatement(rule);
+			System.out.println("- "+rule);
+		}
+		
+		System.out.println();
+		System.out.println(f3);
+		System.out.println(DatalogSetUtils.getOrder(f3));
+		System.out.println("Result of transformation: ");
+		for (Statement rule : DatalogSetUtils.transformFact(f3)) {
+			kb.addStatement(rule);
+			System.out.println("- "+rule);
+		}
+		
+		for (Rule rule : kb.getRules()) {
+			System.out.println(rule);
+		}
+		
+		System.out.println();
+		System.out.println(" === Start Reasoning === ");
+		try (final Reasoner reasoner = new VLogReasoner(kb)) {
+			reasoner.reason();
+			/* Execute some queries */
+			System.out.println("- Answering Query");
+			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(q, x, y), reasoner);
+			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(Expressions.makePredicate("empty", 1), const1), reasoner);
+		}
 	}
 }

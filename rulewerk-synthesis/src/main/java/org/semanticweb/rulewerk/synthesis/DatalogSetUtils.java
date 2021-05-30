@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import org.semanticweb.rulewerk.core.model.api.AbstractConstant;
 import org.semanticweb.rulewerk.core.model.api.Conjunction;
 import org.semanticweb.rulewerk.core.model.api.ExistentialVariable;
+import org.semanticweb.rulewerk.core.model.api.Fact;
 import org.semanticweb.rulewerk.core.model.api.Literal;
 import org.semanticweb.rulewerk.core.model.api.PositiveLiteral;
 import org.semanticweb.rulewerk.core.model.api.Predicate;
@@ -208,8 +209,15 @@ public class DatalogSetUtils {
 			return r;
 	}
 	
-	public static List<SetTerm> getOrder(Rule r) {
-		Set<SetTerm> terms = r.getSetTerms().collect(Collectors.toSet());
+	public static List<SetTerm> getOrder(Statement s) {
+		Set<SetTerm> terms = new HashSet<SetTerm>();
+		if (s instanceof Rule) {
+			Rule r = (Rule) s;
+			terms = r.getSetTerms().collect(Collectors.toSet());
+		} else if (s instanceof Fact) {
+			Fact r = (Fact) s;
+			terms = r.getSetTerms().collect(Collectors.toSet());
+		} else return null;
 		Set<SetTerm> newTerms = new HashSet<SetTerm>();
 		for (SetTerm t : terms) {
 			if (t instanceof SetUnion) {
@@ -262,7 +270,58 @@ public class DatalogSetUtils {
 		return Expressions.makePositiveLiteral(p, newTerms);
 	}
 	
-	public static Set<Rule> transform(Rule r) {
+	public static Set<Statement> transform(Statement s) {
+		Set<Statement> results = new HashSet<Statement>();
+		if (s instanceof Rule) {
+			for (Rule r : transformRule((Rule) s))
+				results.add(r);
+		} else if (s instanceof Fact) {
+			return transformFact((Fact) s);
+		}
+		return results;
+	}
+	
+	public static Set<Statement> transformFact(Fact f) {
+		if (f.getSetTerms().count() == 0) return new HashSet<Statement>(Arrays.asList(f));
+		Set<Statement> results = new HashSet<Statement>();
+		List<SetTerm> order = getOrder(f);
+		List<PositiveLiteral> alpha = new ArrayList<PositiveLiteral>();
+		List<Literal> beta = new ArrayList<Literal>();
+		List<Conjunction<Literal>> gamma = new ArrayList<Conjunction<Literal>>();
+		UniversalVariable empVar = Expressions.makeUniversalVariable("v_({})");
+		for (SetTerm Si : order) {
+			UniversalVariable siVar = getVariable(Si);
+			if (Si instanceof SetConstruct) {
+				Term t = ((SetConstruct) Si).getElement();
+				alpha.add(Expressions.makePositiveLiteral(getSU, t, empVar));
+				beta.add(Expressions.makePositiveLiteral(SU, t, empVar, siVar));
+			} else if (Si instanceof SetUnion) {
+				UniversalVariable t1Var = getVariable(((SetUnion) Si).getSetTerm1());
+				UniversalVariable t2Var = getVariable(((SetUnion) Si).getSetTerm2());
+				alpha.add(Expressions.makePositiveLiteral(getU, t1Var, t2Var));
+				beta.add(Expressions.makePositiveLiteral(U, t1Var, t2Var, siVar));
+			}
+		}
+		gamma.add(Expressions.makeConjunction(Expressions.makePositiveLiteral(emp, empVar)));
+		for (Literal l : beta) {
+			List<Literal> end = new ArrayList<Literal>(gamma.get(gamma.size()-1).getLiterals());
+			end.add(l);
+			gamma.add(Expressions.makeConjunction(end));
+		}
+		for (int idx = 0; idx < order.size(); idx++) {
+			List<Literal> newBody = new ArrayList<Literal>();
+			newBody.addAll(gamma.get(idx).getLiterals());
+			results.add(Expressions.makeRule(Expressions.makePositiveConjunction(alpha.get(idx)), Expressions.makeConjunction(newBody)));
+		}
+		List<Literal> newBody = new ArrayList<Literal>();
+		newBody.addAll(gamma.get(gamma.size()-1).getLiterals());
+		List<PositiveLiteral> head = new ArrayList<PositiveLiteral>(Arrays.asList((PositiveLiteral) replaceLiteral(f)));
+		results.add(Expressions.makeRule(Expressions.makePositiveConjunction(head), Expressions.makeConjunction(newBody)));
+		return results;
+	}
+	
+	public static Set<Rule> transformRule(Rule r) {
+		// if not Datalog(S) rule, return r as is.
 		if (r.getSetTerms().count() == 0) return new HashSet<Rule>(Arrays.asList(r));
 		Set<Rule> results = new HashSet<Rule>();
 		Rule norm_r = normalize(r);

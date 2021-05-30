@@ -161,4 +161,29 @@ public final class ReasoningUtils {
 		consoleAppender.activateOptions();
 		Logger.getRootLogger().addAppender(consoleAppender);
 	}
+	
+	/**
+	 * Defines how messages should be logged. This method can be modified to
+	 * restrict the logging messages that are shown on the console or to change
+	 * their formatting. See the documentation of Log4J for details on how to do
+	 * this.
+	 *
+	 * Note: The VLog C++ backend performs its own logging. The log-level for this
+	 * can be configured using
+	 * {@link Reasoner#setLogLevel(org.semanticweb.rulewerk.core.reasoner.LogLevel)}.
+	 * It is also possible to specify a separate log file for this part of the logs.
+	 */
+	public static void configureLoggingAll() {
+		// Create the appender that will write log messages to the console.
+		final ConsoleAppender consoleAppender = new ConsoleAppender();
+		// Define the pattern of log messages.
+		// Insert the string "%c{1}:%L" to also show class name and line.
+		final String pattern = "%d{yyyy-MM-dd HH:mm:ss} %-5p - %m%n";
+		consoleAppender.setLayout(new PatternLayout(pattern));
+		// Change to Level.ERROR for fewer messages:
+		consoleAppender.setThreshold(Level.ALL);
+
+		consoleAppender.activateOptions();
+		Logger.getRootLogger().addAppender(consoleAppender);
+	}
 }
