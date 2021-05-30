@@ -1,5 +1,6 @@
 package org.semanticweb.rulewerk.rpq.model.implementation;
 
+import org.apache.commons.lang3.Validate;
 import org.semanticweb.rulewerk.core.model.api.Term;
 import org.semanticweb.rulewerk.rpq.model.api.RegExpression;
 import org.semanticweb.rulewerk.rpq.model.api.RegPathQuery;
@@ -16,6 +17,9 @@ public class RegPathQueryImpl implements RegPathQuery{
 	private Term t2;
 	
 	public RegPathQueryImpl(RegExpression regex, Term t1, Term t2) {
+		Validate.notNull(regex);
+		Validate.notNull(t1);
+		Validate.notNull(t2);
 		this.regex = regex;
 		this.t1 = t1;
 		this.t2 = t2;

@@ -1,5 +1,6 @@
 package org.semanticweb.rulewerk.rpq.model.implementation;
 
+import org.apache.commons.lang3.Validate;
 import org.semanticweb.rulewerk.rpq.model.api.KPlusRegExpression;
 import org.semanticweb.rulewerk.rpq.model.api.RegExpression;
 
@@ -7,6 +8,7 @@ public class KPlusRegExpressionImpl implements KPlusRegExpression {
 private RegExpression exp;
 	
 	public KPlusRegExpressionImpl(RegExpression exp) {
+		Validate.notNull(exp);
 		this.exp = exp;
 	}
 	
@@ -20,7 +22,7 @@ private RegExpression exp;
 	
 	@Override
 	public String getName() {
-		return String.format("(%s)+", this.exp.getName());
+		return String.format("(%s+)", this.exp.getName());
 	}
 
 	@Override

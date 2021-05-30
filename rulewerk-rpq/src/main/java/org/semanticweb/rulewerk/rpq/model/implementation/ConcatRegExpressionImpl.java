@@ -1,5 +1,6 @@
 package org.semanticweb.rulewerk.rpq.model.implementation;
 
+import org.apache.commons.lang3.Validate;
 import org.semanticweb.rulewerk.rpq.model.api.ConcatRegExpression;
 import org.semanticweb.rulewerk.rpq.model.api.RegExpression;
 
@@ -14,6 +15,8 @@ public class ConcatRegExpressionImpl implements ConcatRegExpression {
 	private RegExpression exp2;
 	
 	public ConcatRegExpressionImpl(RegExpression exp1, RegExpression exp2) {
+		Validate.notNull(exp1);
+		Validate.notNull(exp2);
 		this.exp1 = exp1;
 		this.exp2 = exp2;
 	}
@@ -52,7 +55,8 @@ public class ConcatRegExpressionImpl implements ConcatRegExpression {
 		}
 		final ConcatRegExpression other = (ConcatRegExpression) obj;
 
-		return this.exp1.equals(other.getExp1()) && this.exp2.equals(other.getExp2());
+		return (this.exp1.equals(other.getExp1()) && this.exp2.equals(other.getExp2())) ||
+				this.exp1.equals(other.getExp2()) && this.exp2.equals(other.getExp1());
 	}
 	
 	@Override

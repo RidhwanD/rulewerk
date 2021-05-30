@@ -101,7 +101,7 @@ public class RpqNFAConverterTest {
 			Expressions.makePositiveLiteral("S_q1", xs, ys), Expressions.makePositiveLiteral(triple, ys, ca, zs));
 	private final Rule r107 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q2", xs, zs), 
 			Expressions.makePositiveLiteral("S_q2", xs, ys), Expressions.makePositiveLiteral(triple, ys, cb, zs));
-	private final Rule r108 = Expressions.makeRule(Expressions.makePositiveLiteral("Q_((((a)* / (d | b)) / a) / (b)*)", x, y), 
+	private final Rule r108 = Expressions.makeRule(Expressions.makePositiveLiteral("Q_((((a*) / (d | b)) / a) / (b*))", x, y), 
 			Expressions.makePositiveLiteral("S_q2", x, y));
 	
 	private final Rule r201 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q0", xs, ys), 
@@ -110,7 +110,7 @@ public class RpqNFAConverterTest {
 			Expressions.makePositiveLiteral("S_q0", xs, ys), Expressions.makePositiveLiteral(triple, ys, ca, zs));
 	private final Rule r203 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q2", xs, zs), 
 			Expressions.makePositiveLiteral("S_q1", xs, ys), Expressions.makePositiveLiteral(triple, zs, ca, ys));
-	private final Rule r204 = Expressions.makeRule(Expressions.makePositiveLiteral("Q_((a / ^a))+", x, const2), 
+	private final Rule r204 = Expressions.makeRule(Expressions.makePositiveLiteral("Q_((a / (^a))+)", x, const2), 
 			Expressions.makePositiveLiteral("S_q2", x, const2));
 	
 	private final Rule r301 = Expressions.makeRule(Expressions.makePositiveLiteral("S_Top", xs, xs), 
@@ -123,7 +123,7 @@ public class RpqNFAConverterTest {
 			Expressions.makePositiveLiteral("S_q0", xs, ys), Expressions.makePositiveLiteral(triple, ys, cn3, zs));
 	private final Rule r305 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q1", xs, zs), 
 			Expressions.makePositiveLiteral("S_q1", xs, ys), Expressions.makePositiveLiteral(triple, ys, cn3, zs));
-	private final Rule r306 = Expressions.makeRule(Expressions.makePositiveLiteral("Q_(n3 / (n3)*)", x, y), 
+	private final Rule r306 = Expressions.makeRule(Expressions.makePositiveLiteral("Q_(n3 / (n3*))", x, y), 
 			Expressions.makePositiveLiteral("S_q0", x, y));
 	private final Rule r307 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q2", xs, ys), 
 			Expressions.makePositiveLiteral("S_Top", xs, ys));
@@ -131,11 +131,11 @@ public class RpqNFAConverterTest {
 			Expressions.makePositiveLiteral("S_q2", xs, ys), Expressions.makePositiveLiteral(triple, ys, cn8, zs));
 	private final Rule r309 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q3", xs, zs), 
 			Expressions.makePositiveLiteral("S_q3", xs, ys), Expressions.makePositiveLiteral(triple, ys, cn8, zs));
-	private final Rule r310 = Expressions.makeRule(Expressions.makePositiveLiteral("Q_(n8 / (n8)*)", x, y), 
+	private final Rule r310 = Expressions.makeRule(Expressions.makePositiveLiteral("Q_(n8 / (n8*))", x, y), 
 			Expressions.makePositiveLiteral("S_q2", x, y));
 	private final Rule r311 = Expressions.makeRule(Expressions.makePositiveLiteral("Ans", x, y), 
-			Expressions.makePositiveLiteral("Q_(n3 / (n3)*)", x, y), 
-			Expressions.makePositiveLiteral("Q_(n8 / (n8)*)", x, y), 
+			Expressions.makePositiveLiteral("Q_(n3 / (n3*))", x, y), 
+			Expressions.makePositiveLiteral("Q_(n8 / (n8*))", x, y), 
 			Expressions.makePositiveLiteral(cek, x));
 	
 	private final Rule r401 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q0", xs, ys), 
@@ -172,10 +172,10 @@ public class RpqNFAConverterTest {
 			Expressions.makePositiveLiteral("TRIPLE", xs, ys, zs));
 	private final Rule r417 = Expressions.makeRule(Expressions.makePositiveLiteral("S_Top", xs, xs), 
 			Expressions.makePositiveLiteral("TRIPLE", zs, ys, xs));
-	private final Rule r418 = Expressions.makeRule(Expressions.makePositiveLiteral("Q_((d | b))*", x, y), 
+	private final Rule r418 = Expressions.makeRule(Expressions.makePositiveLiteral("Q_((d | b)*)", x, y), 
 			Expressions.makePositiveLiteral("S_q2", x, y));
 	private final Rule r419 = Expressions.makeRule(Expressions.makePositiveLiteral("Ans", x, y), 
-			Expressions.makePositiveLiteral("Q_((d | b))*", x, y), Expressions.makePositiveLiteral("Q_n3", x, y), Expressions.makePositiveLiteral("Check", x));
+			Expressions.makePositiveLiteral("Q_((d | b)*)", x, y), Expressions.makePositiveLiteral("Q_n3", x, y), Expressions.makePositiveLiteral("Check", x));
 	
 	private final Rule r420 = Expressions.makeRule(Expressions.makePositiveLiteral("S_q5", xs, ys), 
 			Expressions.makePositiveLiteral("S_q0", xs, ys));
@@ -267,7 +267,7 @@ public class RpqNFAConverterTest {
 		final NDFAQuery ndfaq2 = RPQExpressions.makeNDFAQuery(ndfa2, x, y);
 		final List<NDFAQuery> queries = new ArrayList<NDFAQuery>(Arrays.asList(ndfaq1, ndfaq2));
 		final Conjunction<Literal> conjunct = Expressions.makeConjunction(Expressions.makePositiveLiteral(cek, Arrays.asList(x)));
-		final List<Term> uvars = new ArrayList<Term>(Arrays.asList(x, y));
+		final List<Term> uvars = Arrays.asList(x, y);
 		
 		final List<Statement> datalogResult = RpqNFAConverter.CNDFATranslate(uvars, queries, conjunct);
 		
@@ -365,7 +365,7 @@ public class RpqNFAConverterTest {
 	@Test
 	public void testCRPQTranslate() {
 		final Conjunction<Literal> conjunct = Expressions.makeConjunction(Expressions.makePositiveLiteral(cek, Arrays.asList(x)));
-		final List<Term> uvars = new ArrayList<Term>(Arrays.asList(x, y));
+		final List<Term> uvars = Arrays.asList(x, y);
 		
 		List<RegPathQuery> qs = new ArrayList<RegPathQuery>();
 		qs.add(RPQExpressions.makeRegPathQuery(dbs, x, y));
@@ -385,7 +385,7 @@ public class RpqNFAConverterTest {
 	@Test
 	public void testCRPQTranslateAlt() {
 		final Conjunction<Literal> conjunct = Expressions.makeConjunction(Expressions.makePositiveLiteral(cek, Arrays.asList(x)));
-		final List<Term> uvars = new ArrayList<Term>(Arrays.asList(x, y));
+		final List<Term> uvars = Arrays.asList(x, y);
 		
 		List<RegPathQuery> qs = new ArrayList<RegPathQuery>();
 		qs.add(RPQExpressions.makeRegPathQuery(dbs, x, y));
@@ -401,41 +401,4 @@ public class RpqNFAConverterTest {
 		
 		assertEquals(new HashSet<Statement>(comparator), new HashSet<Statement>(datalogResult));
 	}
-	
-//	public static void main(String[] arg) throws ParsingException {
-//		////////////////////////////////////////////////////
-//		
-//		String input = "@prefix g: <http://example.org/gmark/> . SELECT DISTINCT ?x0 ?x1 WHERE {  {  ?x0 ((((^g:ptag)/g:ptitle)/(^g:pemail))/(g:plike*)) ?x1 . }}";
-////		String input = "select ?X where {{ ?X ( ( <http://example.org/m> | <http://example.org/n> ) / (( ^<http://example.org/l> )* ) ) <http://example.org/c> . }}";
-////		String input = "select ?X where {{ ?X ( ( <http://example.org/o> / <http://example.org/p> ) | ( ( <http://example.org/o> / <http://example.org/p> )* ) ) <http://example.org/c> .}}";
-////		String input = "select ?X where {{ ?X ( ( ( <http://example.org/m> | <http://example.org/n> ) / ( (^<http://example.org/l>)* ) )* ) <http://example.org/c> .}}";
-//		
-//		RPQConjunction<RegPathQuery> rpqs = RPQParser.parse(input);
-//		
-//		NDFiniteAutomata nfa = RpqNFAConverter.regex2NFAConverter(rpqs.getRPQs().get(0).getExpression(), 0);
-//		System.out.println(nfa.getState());
-//		System.out.println(nfa.getInitState());
-//		System.out.println(nfa.getFinState());
-//		System.out.println(nfa.getTransition());
-//		System.out.println(nfa.getConvTransition());
-//		
-//		System.out.println("Initial Translation");
-//		final List<Statement> datalogResult = RpqNFAConverter.RPQTranslate(rpqs.getRPQs().get(0), kb1);
-//		for (Statement r:datalogResult) System.out.println(r);
-//
-//		System.out.println();
-//		NDFiniteAutomataAlt nnfa = RpqConverterUtils.convertToAlt(nfa);
-//		System.out.println(nnfa.getTransition());
-//		System.out.println(nnfa.getConvTransition());
-//		
-//		System.out.println();
-//		System.out.println("Simplified Translation");
-//		final List<Statement> datalogResult2 = RpqNFAConverter.RPQTranslateAlt(rpqs.getRPQs().get(0), kb1);
-//		for (Statement r:datalogResult2) System.out.println(r);
-//		
-//		System.out.println();
-//		NDFiniteAutomataAlt nnfas = RpqConverterUtils.simplify(nnfa);
-//		System.out.println(nnfas.getTransition());
-//		System.out.println(nnfas.getConvTransition());
-//	}
 }

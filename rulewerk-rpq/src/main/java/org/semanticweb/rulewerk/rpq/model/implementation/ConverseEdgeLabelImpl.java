@@ -1,5 +1,6 @@
 package org.semanticweb.rulewerk.rpq.model.implementation;
 
+import org.apache.commons.lang3.Validate;
 import org.semanticweb.rulewerk.rpq.model.api.ConverseEdgeLabel;
 import org.semanticweb.rulewerk.rpq.model.api.EdgeLabel;
 
@@ -13,6 +14,8 @@ public class ConverseEdgeLabelImpl implements ConverseEdgeLabel {
 	private EdgeLabel converseOf;
 	
 	public ConverseEdgeLabelImpl(EdgeLabel label) {
+		Validate.notNull(label);
+		Validate.notBlank(label.getName());
 		this.converseOf = label;
 	}
 	
@@ -22,7 +25,7 @@ public class ConverseEdgeLabelImpl implements ConverseEdgeLabel {
 	
 	@Override
 	public String getName() {
-		return String.format("^%s", this.converseOf.getName());
+		return String.format("(^%s)", this.converseOf.getName());
 	}
 	
 	@Override

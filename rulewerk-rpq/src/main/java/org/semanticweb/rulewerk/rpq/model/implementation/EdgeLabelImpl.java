@@ -1,5 +1,6 @@
 package org.semanticweb.rulewerk.rpq.model.implementation;
 
+import org.apache.commons.lang3.Validate;
 import org.semanticweb.rulewerk.rpq.model.api.EdgeLabel;
 
 /**
@@ -12,6 +13,7 @@ public class EdgeLabelImpl implements EdgeLabel {
 	private String edgeName;
 	
 	public EdgeLabelImpl(String edgeName) {
+		Validate.notNull(edgeName);
 		this.edgeName = edgeName;
 	}
 	

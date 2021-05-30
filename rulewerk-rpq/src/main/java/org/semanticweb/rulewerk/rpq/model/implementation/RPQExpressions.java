@@ -31,7 +31,6 @@ public class RPQExpressions {
 	public static Object[] makeEdgeLabelAndConverse(final String name) {
 		EdgeLabelImpl el = new EdgeLabelImpl(name);
 		return new Object[]{el, new ConverseEdgeLabelImpl(el)};
-
 	}
 	
 	/**
@@ -110,7 +109,7 @@ public class RPQExpressions {
 	 */
 	public static RegPathQuery makeRegPathQuery(final RegExpression exp, final Term t1, final Term t2) {
 		return new RegPathQueryImpl(exp, t1, t2);
-
+		
 	}
 	
 	/**
@@ -121,6 +120,7 @@ public class RPQExpressions {
 	 */
 	public static <T extends RegPathQuery> RPQConjunction<T> makeRPQConjunction(final List<T> rpqs, final List<Term> vars) {
 		return new RPQConjunctionImpl<>(rpqs, vars);
+		
 	}
 	
 	public static State makeState(String name) {

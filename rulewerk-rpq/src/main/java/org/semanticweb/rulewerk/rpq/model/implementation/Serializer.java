@@ -105,7 +105,7 @@ public class Serializer {
 			if (first) {
 				first = false;
 			} else {
-				writer.write(", ");
+				writer.write(" ");
 			}
 			writer.write(rpq.toString());
 		}

@@ -1,5 +1,6 @@
 package org.semanticweb.rulewerk.rpq.model.implementation;
 
+import org.apache.commons.lang3.Validate;
 import org.semanticweb.rulewerk.rpq.model.api.KStarRegExpression;
 import org.semanticweb.rulewerk.rpq.model.api.RegExpression;
 
@@ -13,6 +14,7 @@ public class KStarRegExpressionImpl implements KStarRegExpression {
 	private RegExpression exp;
 	
 	public KStarRegExpressionImpl(RegExpression exp) {
+		Validate.notNull(exp);
 		this.exp = exp;
 	}
 	
@@ -26,7 +28,7 @@ public class KStarRegExpressionImpl implements KStarRegExpression {
 	
 	@Override
 	public String getName() {
-		return String.format("(%s)*", this.exp.getName());
+		return String.format("(%s*)", this.exp.getName());
 	}
 
 	@Override
