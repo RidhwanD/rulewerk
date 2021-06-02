@@ -2,6 +2,7 @@ package org.semanticweb.rulewerk.synthesis;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -40,7 +41,7 @@ public class DatalogSetUtils {
 	static UniversalVariable y		= tf.makeUniversalVariable("y");
 	static ExistentialVariable z 	= tf.makeExistentialVariable("z");
 	
-	static AbstractConstant emptySet = tf.makeAbstractConstant((new HashSet<Term>()).toString());
+	static AbstractConstant emptySet = tf.makeAbstractConstant(Collections.EMPTY_SET.toString());
 
 	static Predicate truth 	= Expressions.makePredicate("true", 1);
 	static Predicate emp 	= Expressions.makePredicate("empty", 1);
@@ -57,13 +58,6 @@ public class DatalogSetUtils {
 	public static Set<Statement> getR_SU() {
 		Set<Statement> r_su = new HashSet<Statement>();
 
-//		r_su.add(Expressions.makeFact(truth, c));
-//		r_su.add(Expressions.makeRule(
-//			Expressions.makePositiveConjunction(
-//				Expressions.makePositiveLiteral(emp, z),
-//				Expressions.makePositiveLiteral(set, z)),
-//			Expressions.makeConjunction(
-//				Expressions.makePositiveLiteral(truth, c))));
 		r_su.add(Expressions.makeFact(emp, emptySet));
 		r_su.add(Expressions.makeFact(set, emptySet));
 		r_su.add(Expressions.makeRule(
@@ -159,7 +153,6 @@ public class DatalogSetUtils {
 	}
 	
 	public static Rule normalize(Rule r) {
-		// TODO: Add code to normalize Datalog(S) rule r.
 		// Replace every set term of the form S1 U S2 in a non-special predicate in the body with a fresh set variable S
 		// and add body atoms S = S1 U S2.
 		if (r.getSetTerms().count() > 0) {
