@@ -40,7 +40,7 @@ public class DatalogSetUtils {
 	static UniversalVariable y		= tf.makeUniversalVariable("y");
 	static ExistentialVariable z 	= tf.makeExistentialVariable("z");
 	
-	static AbstractConstant c = tf.makeAbstractConstant("c");
+	static AbstractConstant emptySet = tf.makeAbstractConstant((new HashSet<Term>()).toString());
 
 	static Predicate truth 	= Expressions.makePredicate("true", 1);
 	static Predicate emp 	= Expressions.makePredicate("empty", 1);
@@ -57,13 +57,15 @@ public class DatalogSetUtils {
 	public static Set<Statement> getR_SU() {
 		Set<Statement> r_su = new HashSet<Statement>();
 
-		r_su.add(Expressions.makeFact(truth, c));
-		r_su.add(Expressions.makeRule(
-			Expressions.makePositiveConjunction(
-				Expressions.makePositiveLiteral(emp, z),
-				Expressions.makePositiveLiteral(set, z)),
-			Expressions.makeConjunction(
-				Expressions.makePositiveLiteral(truth, c))));
+//		r_su.add(Expressions.makeFact(truth, c));
+//		r_su.add(Expressions.makeRule(
+//			Expressions.makePositiveConjunction(
+//				Expressions.makePositiveLiteral(emp, z),
+//				Expressions.makePositiveLiteral(set, z)),
+//			Expressions.makeConjunction(
+//				Expressions.makePositiveLiteral(truth, c))));
+		r_su.add(Expressions.makeFact(emp, emptySet));
+		r_su.add(Expressions.makeFact(set, emptySet));
 		r_su.add(Expressions.makeRule(
 			Expressions.makePositiveConjunction(
 				Expressions.makePositiveLiteral(SU, x, u, z),

@@ -29,40 +29,40 @@ public class DatalogSynthesisTest {
 		final Constant ch2 = Expressions.makeAbstractConstant("Charles 2");
 		final Constant ctr = Expressions.makeAbstractConstant("Catherine");
 		
-		final Fact i1 = Expressions.makeFact(Expressions.makePredicate("parent", 2), ch1, jm1);
-		final Fact i2 = Expressions.makeFact(Expressions.makePredicate("parent", 2), ezb, jm1);
-		final Fact i3 = Expressions.makeFact(Expressions.makePredicate("parent", 2), ch2, ch1);
-		final Fact i4 = Expressions.makeFact(Expressions.makePredicate("parent", 2), ctr, ch2);
+		final Fact i1 = Expressions.makeFact("parent", ch1, jm1);
+		final Fact i2 = Expressions.makeFact("parent", ezb, jm1);
+		final Fact i3 = Expressions.makeFact("parent", ch2, ch1);
+		final Fact i4 = Expressions.makeFact("parent", ctr, ch2);
 		it.add(i1); it.add(i2); it.add(i3); it.add(i4);
 
-		final Fact op1 = Expressions.makeFact(Expressions.makePredicate("Ancestor", 2), ch1, jm1);
-		final Fact op2 = Expressions.makeFact(Expressions.makePredicate("Ancestor", 2), ch2, ch1);
-		final Fact op3 = Expressions.makeFact(Expressions.makePredicate("Ancestor", 2), ch2, jm1);
-		final Fact op4 = Expressions.makeFact(Expressions.makePredicate("Ancestor", 2), ctr, jm1);
+		final Fact op1 = Expressions.makeFact("Ancestor", ch1, jm1);
+		final Fact op2 = Expressions.makeFact("Ancestor", ch2, ch1);
+		final Fact op3 = Expressions.makeFact("Ancestor", ch2, jm1);
+		final Fact op4 = Expressions.makeFact("Ancestor", ctr, jm1);
 		otp.add(op1); otp.add(op2); otp.add(op3); otp.add(op4);
 
-		final Fact om1 = Expressions.makeFact(Expressions.makePredicate("Ancestor", 2), ch1, ezb);
-		final Fact om2 = Expressions.makeFact(Expressions.makePredicate("Ancestor", 2), ch2, ctr);
+		final Fact om1 = Expressions.makeFact("Ancestor", ch1, ezb);
+		final Fact om2 = Expressions.makeFact("Ancestor", ch2, ctr);
 		otm.add(om1); otm.add(om2);
 		
 		final Rule r1 = Expressions.makeRule(
-				Expressions.makePositiveLiteral(Expressions.makePredicate("Ancestor", 2), x, y), 
-				Expressions.makePositiveLiteral(Expressions.makePredicate("Ancestor", 2), x, z), 
-				Expressions.makePositiveLiteral(Expressions.makePredicate("parent", 2), z, y));
+				Expressions.makePositiveLiteral("Ancestor", x, y), 
+				Expressions.makePositiveLiteral("Ancestor", x, z), 
+				Expressions.makePositiveLiteral("parent", z, y));
 
 		final Rule r2 = Expressions.makeRule(
-				Expressions.makePositiveLiteral(Expressions.makePredicate("Ancestor", 2), x, y), 
-				Expressions.makePositiveLiteral(Expressions.makePredicate("Ancestor", 2), x, z), 
-				Expressions.makePositiveLiteral(Expressions.makePredicate("Ancestor", 2), y, z));
+				Expressions.makePositiveLiteral("Ancestor", x, y), 
+				Expressions.makePositiveLiteral("Ancestor", x, z), 
+				Expressions.makePositiveLiteral("Ancestor", y, z));
 
 		final Rule r3 = Expressions.makeRule(
-				Expressions.makePositiveLiteral(Expressions.makePredicate("Ancestor", 2), x, y), 
-				Expressions.makePositiveLiteral(Expressions.makePredicate("parent", 2), x, y));
+				Expressions.makePositiveLiteral("Ancestor", x, y), 
+				Expressions.makePositiveLiteral("parent", x, y));
 
 		final Rule r4 = Expressions.makeRule(
-				Expressions.makePositiveLiteral(Expressions.makePredicate("Ancestor", 2), x, y), 
-				Expressions.makePositiveLiteral(Expressions.makePredicate("parent", 2), x, z), 
-				Expressions.makePositiveLiteral(Expressions.makePredicate("parent", 2), z, y));
+				Expressions.makePositiveLiteral("Ancestor", x, y), 
+				Expressions.makePositiveLiteral("parent", x, z), 
+				Expressions.makePositiveLiteral("parent", z, y));
 		
 		rs.add(r1); rs.add(r2); rs.add(r3); rs.add(r4);
 		
