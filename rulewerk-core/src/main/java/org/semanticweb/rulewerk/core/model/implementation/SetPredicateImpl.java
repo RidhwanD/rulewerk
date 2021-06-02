@@ -17,8 +17,7 @@ public class SetPredicateImpl extends PredicateImpl implements SetPredicate {
 	 */
 	public SetPredicateImpl(final String name, final int arity, SetPredicateType type) {
 		super(name, arity);
-		Validate.notBlank(name, "Predicates cannot be named by blank Strings.");
-		Validate.isTrue(arity > 0, "Predicate arity must be greater than zero: %d", arity);
+		Validate.notNull(type);
 		if (type != SetPredicateType.NORMAL && type != SetPredicateType.IS_SUBSET_OF && type != SetPredicateType.IS_ELEMENT_OF)
 			throw new IllegalArgumentException(
 					"Invalid predicate type. Type was: " + type);

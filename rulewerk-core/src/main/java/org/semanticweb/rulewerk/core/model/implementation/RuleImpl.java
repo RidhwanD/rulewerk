@@ -33,7 +33,6 @@ import org.semanticweb.rulewerk.core.model.api.PositiveLiteral;
 import org.semanticweb.rulewerk.core.model.api.Rule;
 import org.semanticweb.rulewerk.core.model.api.SetPredicate;
 import org.semanticweb.rulewerk.core.model.api.SetPredicateType;
-import org.semanticweb.rulewerk.core.model.api.SetTerm;
 import org.semanticweb.rulewerk.core.model.api.SetUnion;
 import org.semanticweb.rulewerk.core.model.api.SetVariable;
 import org.semanticweb.rulewerk.core.model.api.StatementVisitor;
@@ -101,10 +100,11 @@ public class RuleImpl implements Rule {
 		
 		for (Term t : setVars) {
 			boolean appear = false;
+					
 			for (Literal l : body) {
-				Set<SetTerm> terms = l.getSetTerms().collect(Collectors.toSet());
-				Set<SetTerm> newTerms = new HashSet<SetTerm>();
-				for (SetTerm ts : terms) {
+				Set<Term> terms = l.getSetTerms().collect(Collectors.toSet());
+				Set<Term> newTerms = new HashSet<Term>();
+				for (Term ts : terms) {
 					if (ts instanceof SetUnion) {
 						newTerms.addAll(((SetUnion) ts).getSubTerms());
 					}
@@ -112,9 +112,10 @@ public class RuleImpl implements Rule {
 				terms.addAll(newTerms);
 				if (l.getPredicate() instanceof SetPredicate) {
 					SetPredicate p = (SetPredicate) l.getPredicate();
-					if (p.getPredicateType() == SetPredicateType.NORMAL && terms.contains(t))
+					if (p.getPredicateType() == SetPredicateType.NORMAL && terms.contains(t)) {
 						appear = true;
-				} else if (terms.contains(t)) {
+					}
+				} else if (!(l.getPredicate() instanceof SetPredicate) && terms.contains(t)) {
 					appear = true;
 				}
 			}

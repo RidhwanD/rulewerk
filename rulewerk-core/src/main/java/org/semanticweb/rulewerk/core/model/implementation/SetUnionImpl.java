@@ -9,16 +9,17 @@ import java.util.Set;
 import org.semanticweb.rulewerk.core.model.api.SetTerm;
 import org.semanticweb.rulewerk.core.model.api.SetUnion;
 import org.semanticweb.rulewerk.core.model.api.SetVariable;
+import org.semanticweb.rulewerk.core.model.api.Term;
 import org.semanticweb.rulewerk.core.model.api.TermType;
 import org.semanticweb.rulewerk.core.model.api.TermVisitor;
 
 public class SetUnionImpl implements SetUnion {
 
 	private final String name;
-	private final SetTerm setTerm1;
-	private final SetTerm setTerm2;
+	private final Term setTerm1;
+	private final Term setTerm2;
 	
-	public SetUnionImpl(final SetTerm term1, final SetTerm term2) {
+	public SetUnionImpl(final Term term1, final Term term2) {
 		this.name = term1 + " U " + term2;
 		if (!isValidTerm(term1) || !isValidTerm(term2)) {
 			throw new IllegalArgumentException(
@@ -28,7 +29,7 @@ public class SetUnionImpl implements SetUnion {
 		this.setTerm2 = term2;
 	}
 	
-	private boolean isValidTerm(SetTerm t) {
+	private boolean isValidTerm(Term t) {
 		return t.getType().equals(TermType.SET_VARIABLE) || t.getType().equals(TermType.SET_CONSTRUCT) || t.getType().equals(TermType.SET_UNION);
 	}
 	
@@ -38,12 +39,12 @@ public class SetUnionImpl implements SetUnion {
 	}
 
 	@Override
-	public SetTerm getSetTerm1() {
+	public Term getSetTerm1() {
 		return this.setTerm1;
 	}
 
 	@Override
-	public SetTerm getSetTerm2() {
+	public Term getSetTerm2() {
 		return this.setTerm2;
 	}
 
@@ -82,8 +83,8 @@ public class SetUnionImpl implements SetUnion {
 		return false;
 	}
 	
-	public Set<SetTerm> getSubTerms() {
-		Set<SetTerm> subTerms = new HashSet<SetTerm>(Arrays.asList(this.setTerm1, this.setTerm2));
+	public Set<Term> getSubTerms() {
+		Set<Term> subTerms = new HashSet<Term>(Arrays.asList(this.setTerm1, this.setTerm2));
 		if (this.setTerm1 instanceof SetUnion) {
 			SetUnion su = (SetUnion) this.setTerm1;
 			subTerms.addAll(su.getSubTerms());
@@ -99,5 +100,27 @@ public class SetUnionImpl implements SetUnion {
 	public String toString() {
 		return Serializer.getSerialization(serializer -> serializer.writeSetUnion(this));
 	}
+	
+	public int hashCode() {
+		int prime = 31;
+		return this.setTerm1.hashCode() + prime + this.setTerm2.hashCode();
+	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (!(obj instanceof SetUnion)) {
+			return false;
+		}
+		final SetUnion other = (SetUnion) obj;
+
+		return (this.setTerm1.equals(other.getSetTerm1()) && this.setTerm2.equals(other.getSetTerm2())) ||
+				(this.setTerm1.equals(other.getSetTerm2()) && this.setTerm2.equals(other.getSetTerm1()));
+	}
+	
 }

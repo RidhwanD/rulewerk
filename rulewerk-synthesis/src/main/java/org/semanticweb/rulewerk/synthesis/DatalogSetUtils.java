@@ -216,7 +216,8 @@ public class DatalogSetUtils {
 		Set<SetTerm> newTerms = new HashSet<SetTerm>();
 		for (SetTerm t : terms) {
 			if (t instanceof SetUnion) {
-				newTerms.addAll(((SetUnion) t).getSubTerms());
+				for (Term c : ((SetUnion) t).getSubTerms())
+				newTerms.add((SetTerm) c);
 			}
 		}
 		terms.addAll(newTerms);
@@ -241,7 +242,7 @@ public class DatalogSetUtils {
 		return order;
 	}
 	
-	private static UniversalVariable getVariable(SetTerm t) {
+	private static UniversalVariable getVariable(Term t) {
 		return Expressions.makeUniversalVariable("v_("+t.getName()+")");
 	}
 	

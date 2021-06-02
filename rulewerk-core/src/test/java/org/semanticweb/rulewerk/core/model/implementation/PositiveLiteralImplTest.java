@@ -43,7 +43,7 @@ public class PositiveLiteralImplTest {
 		final Variable x = Expressions.makeUniversalVariable("X");
 		final Variable y = Expressions.makeUniversalVariable("Y");
 		final Constant c = Expressions.makeAbstractConstant("c");
-		final Constant d = Expressions.makeAbstractConstant("d");
+		final Constant d = Expressions.makeAbstractConstant("d");	
 		final PositiveLiteral atomP = Expressions.makePositiveLiteral("p", x, c, d, y);
 		final PositiveLiteral atomQ = Expressions.makePositiveLiteral("q", c, d);
 
