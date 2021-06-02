@@ -143,7 +143,7 @@ public class RPQConjunctionImplTest {
 		final List<Term> projVars = Arrays.asList(x, y);
 		
 		final RPQConjunction<RegPathQuery> conjunction1 = new RPQConjunctionImpl<>(rpqList, projVars);
-		assertEquals("?X p c . ?Y (p*) ?X . ?X (p / q) d .", conjunction1.toString());
+		assertEquals("select ?X ?Y where {{ ?X p c . ?Y (p*) ?X . ?X (p / q) d . }}", conjunction1.toString());
 	}
 	
 }

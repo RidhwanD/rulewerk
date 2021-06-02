@@ -1,0 +1,3 @@
+@prefix ex: <http://example.org/> .
+
+select ?x {{ ?x ex:p ex:a . ?x ex:q ex:b }}

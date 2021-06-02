@@ -6,6 +6,7 @@ import java.io.Writer;
 import java.util.function.Function;
 
 import org.semanticweb.rulewerk.core.model.api.PrefixDeclarationRegistry;
+import org.semanticweb.rulewerk.core.model.api.Term;
 import org.semanticweb.rulewerk.core.model.implementation.AbstractPrefixDeclarationRegistry;
 import org.semanticweb.rulewerk.rpq.model.api.RPQConjunction;
 import org.semanticweb.rulewerk.rpq.model.api.RegPathQuery;
@@ -100,6 +101,11 @@ public class Serializer {
 	 * @throws IOException
 	 */
 	public void writeRPQConjunction(final RPQConjunction<? extends RegPathQuery> rpqs) throws IOException {
+		writer.write("select ");
+		for (final Term v : rpqs.getProjVars()) {
+			writer.write(v + " ");
+		}
+		writer.write("where {{ ");
 		boolean first = true;
 		for (final RegPathQuery rpq : rpqs.getRPQs()) {
 			if (first) {
@@ -109,5 +115,6 @@ public class Serializer {
 			}
 			writer.write(rpq.toString());
 		}
+		writer.write(" }}");
 	}
 }

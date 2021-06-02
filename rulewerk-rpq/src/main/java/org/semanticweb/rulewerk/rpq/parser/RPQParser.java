@@ -55,9 +55,9 @@ public class RPQParser {
 		if (parserConfiguration != null) {
 			localParser.setParserConfiguration(parserConfiguration);
 		}
+		
 		T result;
 		try {
-			System.out.println(input);
 			result = parserAction.parse(localParser);
 			localParser.ensureEndOfInput();
 		} catch (ParseException | PrefixDeclarationException | TokenMgrError | RuntimeException e) {
@@ -66,15 +66,6 @@ public class RPQParser {
 		}
 		return result;
 	}
-	
-//	public static RPQConjunction parse(final String input, final ParserConfiguration parserConfiguration)
-//			throws ParsingException {
-//		return parseSyntaxFragment(input, JavaCCRPQParser::parse, "RPQ", parserConfiguration);
-//	}
-//
-//	public static RPQConjunction parse(final String input) throws ParsingException {
-//		return parseQuery(input, null);
-//	}
 	
 	public static RPQConjunction<RegPathQuery> parse(final InputStream stream, final String encoding) throws ParsingException {
 		return doParse(new JavaCCRPQParser(stream, encoding));

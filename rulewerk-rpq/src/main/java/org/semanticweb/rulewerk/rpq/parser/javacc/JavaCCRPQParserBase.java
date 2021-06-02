@@ -1,17 +1,14 @@
 package org.semanticweb.rulewerk.rpq.parser.javacc;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 
 import org.semanticweb.rulewerk.core.exceptions.PrefixDeclarationException;
 import org.semanticweb.rulewerk.core.model.api.DataSource;
 import org.semanticweb.rulewerk.core.model.api.AbstractConstant;
-import org.semanticweb.rulewerk.core.model.api.Argument;
 import org.semanticweb.rulewerk.core.model.api.Constant;
 import org.semanticweb.rulewerk.core.model.api.ExistentialVariable;
 import org.semanticweb.rulewerk.core.model.api.LanguageStringConstant;
-import org.semanticweb.rulewerk.core.model.api.NamedNull;
 import org.semanticweb.rulewerk.core.model.api.Predicate;
 import org.semanticweb.rulewerk.core.model.api.PrefixDeclarationRegistry;
 import org.semanticweb.rulewerk.core.model.api.Statement;
@@ -20,18 +17,11 @@ import org.semanticweb.rulewerk.core.model.api.UniversalVariable;
 import org.semanticweb.rulewerk.core.model.implementation.DataSourceDeclarationImpl;
 import org.semanticweb.rulewerk.core.model.implementation.TermFactory;
 import org.semanticweb.rulewerk.core.reasoner.KnowledgeBase;
-import org.semanticweb.rulewerk.rpq.model.api.AlternRegExpression;
-import org.semanticweb.rulewerk.rpq.model.api.ConcatRegExpression;
-import org.semanticweb.rulewerk.rpq.model.api.ConverseEdgeLabel;
-import org.semanticweb.rulewerk.rpq.model.api.EdgeLabel;
-import org.semanticweb.rulewerk.rpq.model.api.KStarRegExpression;
-import org.semanticweb.rulewerk.rpq.model.api.RegExpression;
 import org.semanticweb.rulewerk.rpq.model.api.RegPathQuery;
 import org.semanticweb.rulewerk.rpq.parser.DefaultParserConfiguration;
 import org.semanticweb.rulewerk.rpq.parser.LocalPrefixDeclarationRegistry;
 import org.semanticweb.rulewerk.rpq.parser.ParserConfiguration;
 import org.semanticweb.rulewerk.rpq.parser.ParsingException;
-import org.semanticweb.rulewerk.rpq.parser.javacc.ParseException;
 
 /**
  * Basic methods used in the JavaCC-generated parser.

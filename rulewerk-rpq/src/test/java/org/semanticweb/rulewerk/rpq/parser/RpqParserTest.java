@@ -53,7 +53,6 @@ public class RpqParserTest {
 	private final RPQConjunction<RegPathQuery> rpq10 = RPQExpressions.makeRPQConjunction(Arrays.asList(RPQExpressions.makeRegPathQuery(kp1, x, c)), Arrays.asList(x));
 	private final RPQConjunction<RegPathQuery> rpq11 = RPQExpressions.makeRPQConjunction(Arrays.asList(RPQExpressions.makeRegPathQuery(l6, x, bb)), Arrays.asList());
 	
-	// GMARK test RPQ
 	private final Variable x0 = Expressions.makeUniversalVariable("x0");
 	private final Variable x1 = Expressions.makeUniversalVariable("x1");
 	private final Variable x2 = Expressions.makeUniversalVariable("x2");
