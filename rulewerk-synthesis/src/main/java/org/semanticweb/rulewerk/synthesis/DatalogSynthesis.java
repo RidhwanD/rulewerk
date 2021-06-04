@@ -154,7 +154,7 @@ public class DatalogSynthesis {
 						System.out.println("- "+s);
 					}
 					reasoner.reason();
-					long generate = ReasoningUtils.printOutQueryCount(t, reasoner);
+					long generate = ReasoningUtils.isDerived(t, reasoner);
 					if (generate == 1) {
 						deltabuggy = true;
 						iddbuggy = idx;
@@ -172,7 +172,7 @@ public class DatalogSynthesis {
 							System.out.println("- "+s);
 						}
 						reasoner2.reason();
-						long generate = ReasoningUtils.printOutQueryCount(t, reasoner2);
+						long generate = ReasoningUtils.isDerived(t, reasoner2);
 						if (generate == 1) {
 							revdeltabuggy = true;
 							idrbuggy = idx;
@@ -238,7 +238,7 @@ public class DatalogSynthesis {
 				kb.addStatements(this.inputTuple);
 				try (final Reasoner reasoner = new VLogReasoner(kb)) {
 					reasoner.reason();
-					long generate = ReasoningUtils.printOutQueryCount(t, reasoner);
+					long generate = ReasoningUtils.isDerived(t, reasoner);
 					if (generate == 0) {
 						deltabuggy = true;
 						iddbuggy = idx;
@@ -253,7 +253,7 @@ public class DatalogSynthesis {
 				kb2.addStatements(this.inputTuple);
 				try (final Reasoner reasoner2 = new VLogReasoner(kb2)) {
 					reasoner2.reason();
-					long generate = ReasoningUtils.printOutQueryCount(t, reasoner2);
+					long generate = ReasoningUtils.isDerived(t, reasoner2);
 					if (generate == 0) {
 						revdeltabuggy = true;
 						idrbuggy = idx;
@@ -306,7 +306,7 @@ public class DatalogSynthesis {
 			kb.addStatements(this.inputTuple);
 			try (final Reasoner reasoner = new VLogReasoner(kb)) {
 				reasoner.reason();
-				long generate = ReasoningUtils.printOutQueryCount(newt, reasoner);
+				long generate = ReasoningUtils.isDerived(newt, reasoner);
 				if (generate == 1) coprovIn.add(r);
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -376,6 +376,7 @@ public class DatalogSynthesis {
 	}
 	
 	public List<Rule> synthesis() {
+		int wp = 0; int wnp = 0; int cp = 0;
 		BoolExpr phi = this.ctx.mkTrue();
 		List<Rule> pPlus = this.ruleSet;
 		List<Rule> pMin = new ArrayList<Rule>();
@@ -397,12 +398,13 @@ public class DatalogSynthesis {
 			try (final Reasoner reasoner = new VLogReasoner(kb)) {
 				reasoner.reason();
 				for (Fact t : this.outputPTuple) {
-					long generate = ReasoningUtils.printOutQueryCount(t, reasoner);
+					long generate = ReasoningUtils.isDerived(t, reasoner);
 					if (generate == 0) {
 						loop = true;
 						if (pMin.size() > 0) {
 							System.out.println("============= Perform Why Not Provenance ==============");
 							phi = this.ctx.mkAnd(phi, this.whyNotProvExpr(this.whyNotProv(t, pMin)));
+							wnp++;
 							System.out.println("=============== Why Not Provenance End ================");
 						}
 					} else if (generate == 1) {
@@ -412,18 +414,20 @@ public class DatalogSynthesis {
 							if (pMin.size() > 0 && pPlus.size() > 0) {
 								System.out.println("============= Perform Co-Provenance ==============");
 								phi = this.ctx.mkAnd(phi, this.whyNotCoProvExpr(pMin, this.coprovInv(t, pPlus)));
+								cp++;
 								System.out.println("=============== Co-Provenance End ================");
 							}
 						}
 					}
 				}
 				for (Fact t : this.outputNTuple) {
-					long generate = ReasoningUtils.printOutQueryCount(t, reasoner);
+					long generate = ReasoningUtils.isDerived(t, reasoner);
 					if (generate == 1) {
 						loop = true;
 						if (pPlus.size() > 0) {
 							System.out.println("============= Perform Why Provenance ==============");
 							phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvAlt(t, pPlus)));
+							wp++;
 							System.out.println("=============== Why Provenance End ================");
 						}
 					}
@@ -438,7 +442,10 @@ public class DatalogSynthesis {
 			}
 		}
 		if (result != null) {
-			System.out.println("Synthesis finished in "+iter+" iteration(s)");
+			System.out.println("Synthesis finished in "+iter+" iteration(s):");
+			System.out.println("- "+wp+" call of why-provenance");
+			System.out.println("- "+wnp+" call of why-not-provenance");
+			System.out.println("- "+cp+" call of co-provenance");
 			return pPlus;
 		} else {
 			System.out.println("No solutions found.");

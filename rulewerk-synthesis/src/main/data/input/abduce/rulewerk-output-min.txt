@@ -1,0 +1,10 @@
+grandparent(bob, joe).
+grandparent(joe, bob).
+grandparent(bob, ddbob).
+grandparent(dbob, bob).
+grandparent(mbob, bob).
+grandparent(ddbob, dbob).
+grandparent(mdbob, dbob).
+grandparent(dmbob, mbob).
+grandparent(mmbob, mbob).
+grandparent(djoe, bob).

@@ -78,5 +78,7 @@ public class DatalogSynthesisTest {
 				System.out.println(r);
 			}
 		}
+		
+		ctx.close();
 	}
 }

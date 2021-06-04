@@ -147,7 +147,7 @@ public class DatalogSetUtilsTest {
 			System.out.println(rule);
 		}
 		
-		kb.addStatement(Expressions.makeRule(Expressions.makePositiveLiteral("Ans", x, y), 
+		kb.addStatement(Expressions.makeRule(Expressions.makePositiveLiteral("Ans", x, y, z), 
 				Expressions.makePositiveLiteral(ans, x, z), Expressions.makePositiveLiteral(in, y, z)));
 		
 		System.out.println();
@@ -158,7 +158,7 @@ public class DatalogSetUtilsTest {
 			System.out.println("- Answering Query");
 			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(an, a, x), reasoner);
 			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(ans, a, x), reasoner);
-			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral("Ans", x, y), reasoner);
+			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral("Ans", x, y, z), reasoner);
 		}
 	}
 }

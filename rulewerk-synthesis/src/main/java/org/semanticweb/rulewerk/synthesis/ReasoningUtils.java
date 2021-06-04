@@ -90,6 +90,11 @@ public final class ReasoningUtils {
 		System.out.println(answers.getCount() + " answers, " + answers.getCorrectness());
 		return answers.getCount();
 	}
+
+	public static long isDerived(final PositiveLiteral queryAtom, final Reasoner reasoner) {
+		final QueryAnswerCount answers = reasoner.countQueryAnswers(queryAtom, true);
+		return answers.getCount();
+	}
 	
 	public static long printOutQueryCountMult(final List<Predicate> preds, final Reasoner reasoner) {
 		long total = 0;
