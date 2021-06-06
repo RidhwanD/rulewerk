@@ -8,6 +8,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import org.apache.log4j.Level;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import org.semanticweb.rulewerk.core.model.api.Conjunction;
 import org.semanticweb.rulewerk.core.model.api.Fact;
 import org.semanticweb.rulewerk.core.model.api.Literal;
@@ -33,6 +36,7 @@ public class DatalogSynthesis {
 	private Map<Rule, BoolExpr> rule2var;
 	private Context ctx;
 	private double coprovChance = 0.05; 		// Set probability of coprov being performed.
+	private static final Logger logger = LogManager.getLogger("HelloWorld");
 
 	public DatalogSynthesis(List<Fact> inputTuple, List<Fact> outputPTuple, List<Fact> outputNTuple, List<Rule> ruleSet, Context ctx){
 		this.inputTuple = inputTuple;
@@ -130,18 +134,18 @@ public class DatalogSynthesis {
 	}
 	
 	public List<Rule> whyProv(PositiveLiteral t, List<Rule> Pplus){
-		System.out.println("Investigate "+t);
+		logger.info("Investigate "+t);
 		// should return list of rules that produce term t.
 		return Pplus;
 	}
 	
 	public List<Rule> whyProvAlt(PositiveLiteral t, List<Rule> Pplus) throws IOException{
-		System.out.println("Investigate "+t);
+		logger.info("Investigate "+t);
 		// Alternative of why provenance  the delta debugging here
 		int d = 2;
 		while (d <= Pplus.size()) {
 			List<List<Rule>> partition = split(Pplus, d);
-			System.out.println("Partition: "+partition);
+			logger.debug("Partition: "+partition);
 			boolean deltabuggy = false; boolean revdeltabuggy = false;
 			int idx = 0; int iddbuggy = 0; int idrbuggy = 0;
 			while (idx < partition.size() && !deltabuggy) {
@@ -149,9 +153,9 @@ public class DatalogSynthesis {
 				kb.addStatements(partition.get(idx));
 				kb.addStatements(this.inputTuple);
 				try (final Reasoner reasoner = new VLogReasoner(kb)) {
-					System.out.println("Using knowledge base 1 containing ");
+					logger.debug("Using knowledge base 1 containing ");
 					for (Statement s : kb.getStatements()) {
-						System.out.println("- "+s);
+						logger.debug("- "+s);
 					}
 					reasoner.reason();
 					long generate = ReasoningUtils.isDerived(t, reasoner);
@@ -167,9 +171,9 @@ public class DatalogSynthesis {
 					kb2.addStatements(revDelta);
 					kb2.addStatements(this.inputTuple);
 					try (final Reasoner reasoner2 = new VLogReasoner(kb2)) {
-						System.out.println("Using knowledge base 2 containing ");
+						logger.debug("Using knowledge base 2 containing ");
 						for (Statement s : kb.getStatements()) {
-							System.out.println("- "+s);
+							logger.debug("- "+s);
 						}
 						reasoner2.reason();
 						long generate = ReasoningUtils.isDerived(t, reasoner2);
@@ -222,12 +226,12 @@ public class DatalogSynthesis {
 	}
 	
 	public List<Rule> whyNotProv(PositiveLiteral t, List<Rule> Pmin) throws IOException{
-		System.out.println("Investigate "+t);
+		logger.info("Investigate "+t);
 		// Use the delta debugging here
 		int d = 2;
 		while (d <= Pmin.size()) {
 			List<List<Rule>> partition = split(Pmin, d);
-			System.out.println("Partition: "+partition);
+			logger.debug("Partition: "+partition);
 			boolean deltabuggy = false; boolean revdeltabuggy = false;
 			int idx = 0; int iddbuggy = 0; int idrbuggy = 0;
 			while (idx < partition.size() && !deltabuggy) {
@@ -286,10 +290,10 @@ public class DatalogSynthesis {
 	}
 	
 	public List<Rule> coprovInv(Fact t, List<Rule>Pplus) {
-		System.out.println("Investigate "+t);
+		logger.info("Investigate "+t);
 		List<Statement> enRules = this.getExistNeg(Pplus);
 		for (Statement r : enRules) {
-			System.out.println(r);
+			logger.debug(r);
 		}
 		List<Rule> coprovIn = new ArrayList<Rule>();
 		Predicate p = t.getPredicate();
@@ -365,13 +369,13 @@ public class DatalogSynthesis {
 		s.add(expr);
 		Status result = s.check();
 		if (result == Status.SATISFIABLE){
-			System.out.println("Model for: "+expr.toString());  
-			System.out.println(s.getModel());
+			logger.info("Model for: "+expr.toString());  
+			logger.info(s.getModel());
 			return s.getModel();
 		} else if(result == Status.UNSATISFIABLE)
-			System.out.println("UNSAT");
+			logger.info("UNSAT");
 		else
-			System.out.println("UNKNOWN");
+			logger.info("UNKNOWN");
 		return null;
 	}
 	
@@ -384,14 +388,13 @@ public class DatalogSynthesis {
 		boolean loop = true; int iter = 0;
 		while (result != null && loop) {
 			iter++;
-			System.out.println();
 			loop = false;
-			System.out.println("P+:");
+			logger.debug("P+:");
 			for (Rule r:pPlus)
-				System.out.println("- "+r);
-			System.out.println("P-:");
+				logger.debug("- "+r);
+			logger.debug("P-:");
 			for (Rule r:pMin)
-				System.out.println("- "+r);
+				logger.debug("- "+r);
 			KnowledgeBase kb = new KnowledgeBase();
 			kb.addStatements(pPlus);
 			kb.addStatements(this.inputTuple);
@@ -402,20 +405,20 @@ public class DatalogSynthesis {
 					if (generate == 0) {
 						loop = true;
 						if (pMin.size() > 0) {
-							System.out.println("============= Perform Why Not Provenance ==============");
+							logger.info("============= Perform Why Not Provenance ==============");
 							phi = this.ctx.mkAnd(phi, this.whyNotProvExpr(this.whyNotProv(t, pMin)));
 							wnp++;
-							System.out.println("=============== Why Not Provenance End ================");
+							logger.info("=============== Why Not Provenance End ================");
 						}
 					} else if (generate == 1) {
 						Random rand = new Random();
 						double n = rand.nextInt(100)/100;
 						if (n <= this.coprovChance) {
 							if (pMin.size() > 0 && pPlus.size() > 0) {
-								System.out.println("============= Perform Co-Provenance ==============");
+								logger.info("============= Perform Co-Provenance ==============");
 								phi = this.ctx.mkAnd(phi, this.whyNotCoProvExpr(pMin, this.coprovInv(t, pPlus)));
 								cp++;
-								System.out.println("=============== Co-Provenance End ================");
+								logger.info("=============== Co-Provenance End ================");
 							}
 						}
 					}
@@ -425,10 +428,10 @@ public class DatalogSynthesis {
 					if (generate == 1) {
 						loop = true;
 						if (pPlus.size() > 0) {
-							System.out.println("============= Perform Why Provenance ==============");
+							logger.info("============= Perform Why Provenance ==============");
 							phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvAlt(t, pPlus)));
 							wp++;
-							System.out.println("=============== Why Provenance End ================");
+							logger.info("=============== Why Provenance End ================");
 						}
 					}
 				}

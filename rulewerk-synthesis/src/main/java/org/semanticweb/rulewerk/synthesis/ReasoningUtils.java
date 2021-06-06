@@ -161,7 +161,7 @@ public final class ReasoningUtils {
 		final String pattern = "%d{yyyy-MM-dd HH:mm:ss} %-5p - %m%n";
 		consoleAppender.setLayout(new PatternLayout(pattern));
 		// Change to Level.ERROR for fewer messages:
-		consoleAppender.setThreshold(Level.ERROR);
+		consoleAppender.setThreshold(Level.INFO);
 
 		consoleAppender.activateOptions();
 		Logger.getRootLogger().addAppender(consoleAppender);

@@ -70,12 +70,14 @@ public class Benchmark {
 		HashMap<String, String> cfg = new HashMap<String, String>();
 		cfg.put("model", "true");
 		Context ctx = new Context(cfg);
-	
+		
+		System.out.println("Synthesis Process Started");
 		DatalogSynthesis ds = new DatalogSynthesis(inputTuple, outputTupleP, outputTupleM, rules, ctx);
 		List<Rule> result = ds.synthesis();
+		System.out.println("Resulting Program:");
 		if (result != null) {
 			for (Rule r : result) {
-				System.out.println(r);
+				System.out.println("- "+r);
 			}	
 		}
 		ctx.close();
