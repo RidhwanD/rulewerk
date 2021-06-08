@@ -8,11 +8,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.semanticweb.rulewerk.core.model.api.AbstractConstant;
 import org.semanticweb.rulewerk.core.model.api.Conjunction;
 import org.semanticweb.rulewerk.core.model.api.ExistentialVariable;
 import org.semanticweb.rulewerk.core.model.api.Fact;
 import org.semanticweb.rulewerk.core.model.api.Literal;
+import org.semanticweb.rulewerk.core.model.api.NamedNull;
 import org.semanticweb.rulewerk.core.model.api.PositiveLiteral;
 import org.semanticweb.rulewerk.core.model.api.Predicate;
 import org.semanticweb.rulewerk.core.model.api.Rule;
@@ -26,6 +26,7 @@ import org.semanticweb.rulewerk.core.model.api.Statement;
 import org.semanticweb.rulewerk.core.model.api.Term;
 import org.semanticweb.rulewerk.core.model.api.UniversalVariable;
 import org.semanticweb.rulewerk.core.model.implementation.Expressions;
+import org.semanticweb.rulewerk.core.model.implementation.NamedNullImpl;
 import org.semanticweb.rulewerk.core.model.implementation.TermFactory;
 
 public class DatalogSetUtils {
@@ -41,7 +42,7 @@ public class DatalogSetUtils {
 	static UniversalVariable y		= tf.makeUniversalVariable("y");
 	static ExistentialVariable z 	= tf.makeExistentialVariable("z");
 	
-	static AbstractConstant emptySet = tf.makeAbstractConstant(Collections.EMPTY_SET.toString());
+	static NamedNull emptySet = new NamedNullImpl(Collections.EMPTY_SET.toString());
 
 	static Predicate truth 	= Expressions.makePredicate("true", 1);
 	static Predicate emp 	= Expressions.makePredicate("empty", 1);
