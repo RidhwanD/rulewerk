@@ -30,6 +30,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.semanticweb.rulewerk.core.exceptions.ReasonerStateException;
+import org.semanticweb.rulewerk.core.model.api.Fact;
 import org.semanticweb.rulewerk.core.model.api.PositiveLiteral;
 import org.semanticweb.rulewerk.core.model.api.Predicate;
 import org.semanticweb.rulewerk.core.model.api.Term;
@@ -82,6 +83,23 @@ public final class ReasoningUtils {
 			throw new RuntimeException(e);
 		}
 		System.out.println();
+	}
+
+	/**
+	 * Prints out the answers given by {@code reasoner} to the query
+	 * ({@code queryAtom}).
+	 *
+	 * @param queryAtom query to be answered
+	 * @param reasoner  reasoner to query on
+	 */
+	public static List<Fact> getQueryAnswerAsListWhyProv(final PositiveLiteral queryAtom, final Reasoner reasoner) {
+		List<Fact> answer = new ArrayList<Fact>();
+		try (final QueryResultIterator answers = reasoner.answerQuery(queryAtom, true)) {
+			while (answers.hasNext()) {
+				answer.add(Expressions.makeFact(queryAtom.getPredicate(), answers.next().getTerms()));
+			}
+		}
+		return answer;
 	}
 
 	public static long printOutQueryCount(final PositiveLiteral queryAtom, final Reasoner reasoner) {
@@ -161,7 +179,7 @@ public final class ReasoningUtils {
 		final String pattern = "%d{yyyy-MM-dd HH:mm:ss} %-5p - %m%n";
 		consoleAppender.setLayout(new PatternLayout(pattern));
 		// Change to Level.ERROR for fewer messages:
-		consoleAppender.setThreshold(Level.INFO);
+		consoleAppender.setThreshold(Level.ERROR);
 
 		consoleAppender.activateOptions();
 		Logger.getRootLogger().addAppender(consoleAppender);

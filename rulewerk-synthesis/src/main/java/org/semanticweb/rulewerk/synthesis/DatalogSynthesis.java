@@ -4,11 +4,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
-import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.semanticweb.rulewerk.core.model.api.Conjunction;
@@ -32,6 +33,7 @@ public class DatalogSynthesis {
 	private List<Fact> outputPTuple;
 	private List<Fact> outputNTuple;
 	private List<Rule> ruleSet;
+	private List<Statement> ruleSetExistNeg;
 	private Map<BoolExpr, Rule> var2rule;
 	private Map<Rule, BoolExpr> rule2var;
 	private Context ctx;
@@ -43,6 +45,7 @@ public class DatalogSynthesis {
 		this.outputPTuple = outputPTuple;
 		this.outputNTuple = outputNTuple;
 		this.ruleSet = ruleSet;
+		this.ruleSetExistNeg = this.getExistNeg(ruleSet);
 		this.ctx = ctx;
 		var2rule = new HashMap<BoolExpr, Rule>();
 		rule2var = new HashMap<Rule, BoolExpr>();
@@ -153,10 +156,6 @@ public class DatalogSynthesis {
 				kb.addStatements(partition.get(idx));
 				kb.addStatements(this.inputTuple);
 				try (final Reasoner reasoner = new VLogReasoner(kb)) {
-					logger.debug("Using knowledge base 1 containing ");
-					for (Statement s : kb.getStatements()) {
-						logger.debug("- "+s);
-					}
 					reasoner.reason();
 					long generate = ReasoningUtils.isDerived(t, reasoner);
 					if (generate == 1) {
@@ -171,10 +170,6 @@ public class DatalogSynthesis {
 					kb2.addStatements(revDelta);
 					kb2.addStatements(this.inputTuple);
 					try (final Reasoner reasoner2 = new VLogReasoner(kb2)) {
-						logger.debug("Using knowledge base 2 containing ");
-						for (Statement s : kb.getStatements()) {
-							logger.debug("- "+s);
-						}
 						reasoner2.reason();
 						long generate = ReasoningUtils.isDerived(t, reasoner2);
 						if (generate == 1) {
@@ -200,14 +195,16 @@ public class DatalogSynthesis {
 	}
 	
 	public BoolExpr whyProvExpr(List<Rule> wp) {
-		BoolExpr conjVars = this.rule2var.get(wp.get(0));
-		if (wp.size() > 1) {
-			for (Rule r : wp.subList(1, wp.size())) {
-				conjVars = this.ctx.mkAnd(conjVars, this.rule2var.get(r));
+		if (wp.size() > 0) {
+			BoolExpr conjVars = this.rule2var.get(wp.get(0));
+			if (wp.size() > 1) {
+				for (Rule r : wp.subList(1, wp.size())) {
+					conjVars = this.ctx.mkAnd(conjVars, this.rule2var.get(r));
+				}
 			}
-		}
-		BoolExpr negConjVars = this.ctx.mkNot(conjVars);
-		return negConjVars;
+			BoolExpr negConjVars = this.ctx.mkNot(conjVars);
+			return negConjVars;
+		} else return this.ctx.mkTrue();
 	}
 	
 	public static <T> List<List<T>> split(List<T> list, int numberOfParts) {
@@ -273,25 +270,37 @@ public class DatalogSynthesis {
 				revDelta.removeAll(partition.get(idrbuggy));
 				Pmin = revDelta;
 				d -= 1;
-			} else d *= 2;
+			} else {
+				d *= 2;
+			}
 		}
 		
 		return Pmin;
 	}
 	
 	public BoolExpr whyNotProvExpr(List<Rule> wnp) {
-		BoolExpr disjVars = this.rule2var.get(wnp.get(0));
-		if (wnp.size() > 1) {
-			for (Rule r : wnp.subList(1, wnp.size())) {
-				disjVars = this.ctx.mkOr(disjVars, this.rule2var.get(r));
+		if (wnp.size() > 0) {
+			BoolExpr disjVars = this.rule2var.get(wnp.get(0));
+			if (wnp.size() > 1) {
+				for (Rule r : wnp.subList(1, wnp.size())) {
+					disjVars = this.ctx.mkOr(disjVars, this.rule2var.get(r));
+				}
 			}
+			return disjVars;
+		} else return this.ctx.mkTrue();
+	}
+	
+	public List<Statement> getRelevantExistNeg(List<Rule> Pplus) {
+		List<Statement> rel = new ArrayList<Statement>();
+		for (Rule r : Pplus) {
+			rel.add(this.ruleSetExistNeg.get(this.ruleSet.indexOf(r)));
 		}
-		return disjVars;
+		return rel;
 	}
 	
 	public List<Rule> coprovInv(Fact t, List<Rule>Pplus) {
 		logger.info("Investigate "+t);
-		List<Statement> enRules = this.getExistNeg(Pplus);
+		List<Statement> enRules = this.getRelevantExistNeg(Pplus);
 		for (Statement r : enRules) {
 			logger.debug(r);
 		}
@@ -326,20 +335,22 @@ public class DatalogSynthesis {
 	}
 	
 	public BoolExpr whyNotCoProvExpr(List<Rule> pMin, List<Rule> cpr) {
-		BoolExpr disjVars = this.rule2var.get(pMin.get(0));
-		if (pMin.size() > 1) {
-			for (Rule r : pMin.subList(1, pMin.size())) {
-				disjVars = this.ctx.mkOr(disjVars, this.rule2var.get(r));
+		if (cpr.size() > 0) {
+			BoolExpr disjVars = this.rule2var.get(pMin.get(0));
+			if (pMin.size() > 1) {
+				for (Rule r : pMin.subList(1, pMin.size())) {
+					disjVars = this.ctx.mkOr(disjVars, this.rule2var.get(r));
+				}
 			}
-		}
-		BoolExpr conjVars = this.rule2var.get(cpr.get(0));
-		if (cpr.size() > 1) {
-			for (Rule r : cpr.subList(1, cpr.size())) {
-				conjVars = this.ctx.mkAnd(conjVars, this.rule2var.get(r));
+			BoolExpr conjVars = this.rule2var.get(cpr.get(0));
+			if (cpr.size() > 1) {
+				for (Rule r : cpr.subList(1, cpr.size())) {
+					conjVars = this.ctx.mkAnd(conjVars, this.rule2var.get(r));
+				}
 			}
-		}
-		BoolExpr coprov = this.ctx.mkOr(disjVars, conjVars);
-		return coprov;
+			BoolExpr coprov = this.ctx.mkOr(disjVars, conjVars);
+			return coprov;
+		} else return this.ctx.mkTrue();
 	}
 	
 	public List<Rule> derivePPlus(Model m) {
@@ -379,11 +390,46 @@ public class DatalogSynthesis {
 		return null;
 	}
 	
+	public PositiveLiteral produceQuery(Predicate p) {
+		List<Term> vars = new ArrayList<>();
+		for (int i = 0; i < p.getArity(); i++) {
+			vars.add(Expressions.makeUniversalVariable("X"+i));
+		}
+		return Expressions.makePositiveLiteral(p, vars);
+	}
+	
+	public List<Fact> getNonExpectedResults(Reasoner reasoner) {
+		Set<Predicate> exPred = new HashSet<>();
+		for (Fact f : this.outputPTuple)
+			exPred.add(f.getPredicate());
+		List<Fact> NOutput = new ArrayList<Fact>();
+		for (Predicate p : exPred) {
+			for (Fact f :ReasoningUtils.getQueryAnswerAsListWhyProv(produceQuery(p), reasoner)) {
+				if (!this.outputPTuple.contains(f)) NOutput.add(f);
+			}
+		}
+		return NOutput;
+	}
+	
+	public List<Fact> getNonGeneratedResults(Reasoner reasoner) {
+		Set<Predicate> exPred = new HashSet<>();
+		for (Fact f : this.outputPTuple)
+			exPred.add(f.getPredicate());
+		List<Fact> YOutput = new ArrayList<Fact>();
+		for (Predicate p : exPred) {
+			List<Fact> ROutput = ReasoningUtils.getQueryAnswerAsListWhyProv(produceQuery(p), reasoner);
+			for (Fact f : this.outputPTuple) {
+				if (!ROutput.contains(f)) YOutput.add(f);
+			}
+		}
+		return YOutput;
+	}
+	
 	public List<Rule> synthesis() {
 		int wp = 0; int wnp = 0; int cp = 0;
 		BoolExpr phi = this.ctx.mkTrue();
-		List<Rule> pPlus = this.ruleSet;
-		List<Rule> pMin = new ArrayList<Rule>();
+		List<Rule> pPlus = new ArrayList<Rule>();
+		List<Rule> pMin = this.ruleSet;
 		Model result = this.consultSATSolver(phi);
 		boolean loop = true; int iter = 0;
 		while (result != null && loop) {
@@ -400,14 +446,16 @@ public class DatalogSynthesis {
 			kb.addStatements(this.inputTuple);
 			try (final Reasoner reasoner = new VLogReasoner(kb)) {
 				reasoner.reason();
-				for (Fact t : this.outputPTuple) {
+				List<Fact> ngr = getNonGeneratedResults(reasoner);
+				for (Fact t : ngr) {
 					long generate = ReasoningUtils.isDerived(t, reasoner);
 					if (generate == 0) {
 						loop = true;
 						if (pMin.size() > 0) {
 							logger.info("============= Perform Why Not Provenance ==============");
-							phi = this.ctx.mkAnd(phi, this.whyNotProvExpr(this.whyNotProv(t, pMin)));
 							wnp++;
+							System.out.println("- "+wnp+" call of why-not-provenance");
+							phi = this.ctx.mkAnd(phi, this.whyNotProvExpr(this.whyNotProv(t, pMin)));
 							logger.info("=============== Why Not Provenance End ================");
 						}
 					} else if (generate == 1) {
@@ -416,21 +464,36 @@ public class DatalogSynthesis {
 						if (n <= this.coprovChance) {
 							if (pMin.size() > 0 && pPlus.size() > 0) {
 								logger.info("============= Perform Co-Provenance ==============");
-								phi = this.ctx.mkAnd(phi, this.whyNotCoProvExpr(pMin, this.coprovInv(t, pPlus)));
 								cp++;
+								System.out.println("- "+cp+" call of co-provenance");
+								phi = this.ctx.mkAnd(phi, this.whyNotCoProvExpr(pMin, this.coprovInv(t, pPlus)));
 								logger.info("=============== Co-Provenance End ================");
 							}
 						}
 					}
 				}
-				for (Fact t : this.outputNTuple) {
-					long generate = ReasoningUtils.isDerived(t, reasoner);
-					if (generate == 1) {
+				if (this.outputNTuple.size() > 0) {
+					for (Fact t : this.outputNTuple) {
+						long generate = ReasoningUtils.isDerived(t, reasoner);
+						if (generate == 1) {
+							loop = true;
+							if (pPlus.size() > 0) {
+								logger.info("============= Perform Why Provenance ==============");
+								wp++;
+								System.out.println("- "+wp+" call of why-provenance");
+								phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvAlt(t, pPlus)));
+								logger.info("=============== Why Provenance End ================");
+							}
+						}
+					}
+				} else {
+					for (Fact f : this.getNonExpectedResults(reasoner)) {
 						loop = true;
 						if (pPlus.size() > 0) {
 							logger.info("============= Perform Why Provenance ==============");
-							phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvAlt(t, pPlus)));
 							wp++;
+							System.out.println("- "+wp+" call of why-provenance");
+							phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvAlt(f, pPlus)));
 							logger.info("=============== Why Provenance End ================");
 						}
 					}
@@ -440,9 +503,13 @@ public class DatalogSynthesis {
 			}
 			result = this.consultSATSolver(phi);
 			if (result != null) {
-				pPlus = this.derivePPlus(result);
+				List<Rule> pPlust = this.derivePPlus(result);
 				pMin = this.derivePMinus(result);
+				if (pPlust.size() == 0) loop = true;
+				if (pPlus.equals(pPlust)) loop = false;
+				pPlus = pPlust;
 			}
+			System.out.println("Iteration "+iter+" complete.");
 		}
 		if (result != null) {
 			System.out.println("Synthesis finished in "+iter+" iteration(s):");

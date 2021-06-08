@@ -15,8 +15,9 @@ import com.microsoft.z3.Context;
 
 public class Benchmark {
 	public static void main(String[] arg) throws IOException, ParsingException {
+		String benchCase = "scc";
 		System.out.println("Parse Input");
-		File inputFile = new File(ReasoningUtils.INPUT_FOLDER + "abduce/rulewerk-input.txt");
+		File inputFile = new File(ReasoningUtils.INPUT_FOLDER + benchCase + "/rulewerk-input.txt");
 		FileInputStream inputStream = new FileInputStream(inputFile);
 		List<Fact> inputTuple;
 		try {
@@ -29,7 +30,7 @@ public class Benchmark {
 		inputStream.close();
 	
 		System.out.println("Parsing Expected Output");
-		File outputPFile = new File(ReasoningUtils.INPUT_FOLDER + "abduce/rulewerk-output-plus.txt");
+		File outputPFile = new File(ReasoningUtils.INPUT_FOLDER + benchCase + "/rulewerk-output-plus.txt");
 		FileInputStream outputPStream = new FileInputStream(outputPFile);
 		List<Fact> outputTupleP;
 		try {
@@ -42,7 +43,7 @@ public class Benchmark {
 		outputPStream.close();
 	
 		System.out.println("Parsing Non-Expected Output");
-		File outputMFile = new File(ReasoningUtils.INPUT_FOLDER + "abduce/rulewerk-output-min.txt");
+		File outputMFile = new File(ReasoningUtils.INPUT_FOLDER + benchCase + "/rulewerk-output-min.txt");
 		FileInputStream outputMStream = new FileInputStream(outputMFile);
 		List<Fact> outputTupleM;
 		try {
@@ -55,7 +56,7 @@ public class Benchmark {
 		outputMStream.close();
 	
 		System.out.println("Parsing Candidate Rules");
-		File rulesFile = new File(ReasoningUtils.INPUT_FOLDER + "abduce/rulewerk-rules-small.txt");
+		File rulesFile = new File(ReasoningUtils.INPUT_FOLDER + benchCase + "/rulewerk-rules-small.txt");
 		FileInputStream rulesStream = new FileInputStream(rulesFile);
 		List<Rule> rules;
 		try {
