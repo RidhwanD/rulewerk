@@ -1,0 +1,11 @@
+Rsg("g", "f").
+Rsg("m", "n").
+Rsg("m", "o").
+Rsg("p", "m").
+Rsg("a", "b").
+Rsg("f", "k").
+Rsg("h", "f").
+Rsg("i", "f").
+Rsg("j", "f").
+Rsg("a", "c").
+Rsg("a", "d").

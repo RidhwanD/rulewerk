@@ -1,0 +1,12 @@
+GreenSignal("Abercrombie St").
+GreenSignal("Cleveland St").
+GreenSignal("Shepard St").
+GreenSignal("Elizabeth St").
+GreenSignal("Goulburn St").
+HasTraffic("Abercrombie St").
+HasTraffic("Lawson St").
+HasTraffic("Elizabeth St").
+HasTraffic("Goulburn St").
+Intersect("Abercrombie St", "Lawson St").
+Intersect("Cleveland St", "Shepard St").
+Intersect("Elizabeth St", "Goulburn St").

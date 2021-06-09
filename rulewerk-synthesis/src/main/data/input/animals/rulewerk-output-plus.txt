@@ -1,0 +1,16 @@
+mammal(dog).
+mammal(dolphin).
+mammal(platypus).
+mammal(bat).
+fish(trout).
+fish(herring).
+fish(shark).
+fish(eel).
+reptile(lizard).
+reptile(crocodile).
+reptile(t_rex).
+reptile(snake).
+reptile(turtle).
+bird(eagle).
+bird(ostrich).
+bird(penguin).

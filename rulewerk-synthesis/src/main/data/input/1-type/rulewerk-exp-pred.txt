@@ -1,0 +1,2 @@
+pointsto 3
+heappointsto 3

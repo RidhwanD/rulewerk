@@ -1,0 +1,8 @@
+Mother(claudette,ann).
+Mother(jeannette,bill).
+Mother(mireille,john).
+Father(john,ann).
+Father(john,bill).
+Father(jean-jacques,alphonse).
+Father(alphonse,mireille).
+Father(brad,john).

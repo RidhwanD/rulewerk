@@ -1,0 +1,13 @@
+pointsto(v3,v1,h1).
+pointsto(v4,v2,h2).
+pointsto(v3,v5,h5).
+pointsto(v5,v9,h9).
+pointsto(v3,v11,h11).
+pointsto(v5,v4,h2).
+pointsto(v3,v8,h11).
+pointsto(v3,v4,h5).
+pointsto(v3,v2,h5).
+heappointsto(h5,f2,h11).
+heappointsto(h5,f1,h1).
+heappointsto(h1,f2,h5).
+heappointsto(h5,f1,h5).

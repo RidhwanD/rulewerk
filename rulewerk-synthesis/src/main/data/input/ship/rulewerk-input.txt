@@ -1,0 +1,15 @@
+CustomerCity("1", "london").
+CustomerCity("2", "paris").
+CustomerCity("3", "San Francisco").
+CustomerCity("4", "munich").
+CustomerCity("5", "seoul").
+HasOrdered("1", "1").
+HasOrdered("2", "2").
+HasOrdered("3", "3").
+HasOrdered("4", "4").
+HasOrdered("5", "5").
+ProductName("1", "tea").
+ProductName("2", "bread").
+ProductName("3", "flowers").
+ProductName("4", "sausage").
+ProductName("5", "horse").

@@ -1,0 +1,4 @@
+heappointsto(i1,f1,i1).
+heappointsto(i2,f2,i1).
+heappointsto(i1,f2,i1).
+heappointsto(h9,f2,i1).

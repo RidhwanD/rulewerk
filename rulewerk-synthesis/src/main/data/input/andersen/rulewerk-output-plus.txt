@@ -1,0 +1,7 @@
+pt(v2,v1).
+pt(v3,v1).
+pt(v4,v1).
+pt(v6,v7).
+pt(v5,v7).
+pt(v7,v1).
+pt(v8,v1).

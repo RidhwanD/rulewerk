@@ -1,0 +1,13 @@
+MmethArg(0,0,0).
+MmethArg(1,0,3).
+MmethArg(2,1,2).
+MmethRet(0,0,1).
+MmethRet(2,0,1).
+VH(1,2).
+VH(0,1).
+VH(2,3).
+VH(3,4).
+HFH(1,1,2).
+HFH(2,4,3).
+HFH(3,1,4).
+HFH(1,2,3).

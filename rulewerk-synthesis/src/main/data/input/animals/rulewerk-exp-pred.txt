@@ -1,0 +1,4 @@
+mammal 1
+fish 1
+reptile 1
+bird 1

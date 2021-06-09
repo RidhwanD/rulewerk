@@ -2,6 +2,7 @@ package org.semanticweb.rulewerk.synthesis;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -15,7 +16,7 @@ import com.microsoft.z3.Context;
 
 public class Benchmark {
 	public static void main(String[] arg) throws IOException, ParsingException {
-		String benchCase = "scc";
+		String benchCase = "1-call-site";
 		System.out.println("Parse Input");
 		File inputFile = new File(ReasoningUtils.INPUT_FOLDER + benchCase + "/rulewerk-input.txt");
 		FileInputStream inputStream = new FileInputStream(inputFile);
@@ -74,13 +75,26 @@ public class Benchmark {
 		
 		System.out.println("Synthesis Process Started");
 		DatalogSynthesis ds = new DatalogSynthesis(inputTuple, outputTupleP, outputTupleM, rules, ctx);
+		long startTime = System.nanoTime();
 		List<Rule> result = ds.synthesis();
+		long endTime = System.nanoTime();
 		System.out.println("Resulting Program:");
 		if (result != null) {
-			for (Rule r : result) {
-				System.out.println("- "+r);
-			}	
+			try {
+				FileWriter myWriter = new FileWriter(ReasoningUtils.INPUT_FOLDER + benchCase + "/rulewerk-result.txt");
+				for (Rule r : result) {
+					System.out.println("- "+r);
+					myWriter.write(r.toString()+"\n");
+				}
+				myWriter.close();
+				System.out.println("Successfully wrote to the file.");
+			} catch (IOException e) {
+				System.out.println("An error occurred.");
+				e.printStackTrace();
+			}
 		}
 		ctx.close();
+		long duration = (endTime - startTime);
+		System.out.println("Synthesis time: "+duration+ " ns / "+(duration/1000000)+" ms");
 	}
 }

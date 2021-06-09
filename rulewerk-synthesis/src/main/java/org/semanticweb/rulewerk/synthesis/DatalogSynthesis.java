@@ -37,7 +37,7 @@ public class DatalogSynthesis {
 	private Map<BoolExpr, Rule> var2rule;
 	private Map<Rule, BoolExpr> rule2var;
 	private Context ctx;
-	private double coprovChance = 0.05; 		// Set probability of coprov being performed.
+	private double coprovChance = -1; 		// Set probability of coprov being performed.
 	private static final Logger logger = LogManager.getLogger("HelloWorld");
 
 	public DatalogSynthesis(List<Fact> inputTuple, List<Fact> outputPTuple, List<Fact> outputNTuple, List<Rule> ruleSet, Context ctx){
@@ -107,8 +107,6 @@ public class DatalogSynthesis {
 	public List<Rule> transformInput() {
 		List<Rule> enSimp = new ArrayList<Rule>();
 		List<Predicate> storedPred = new  ArrayList<Predicate>();
-		final UniversalVariable x = Expressions.makeUniversalVariable("X");
-		final UniversalVariable y = Expressions.makeUniversalVariable("Y");
 		final UniversalVariable z = Expressions.makeUniversalVariable("Z");
 		Predicate iRP = Expressions.makePredicate("isRulePred", 1);
 		for (Fact f : this.inputTuple) {
@@ -116,7 +114,15 @@ public class DatalogSynthesis {
 			if (!storedPred.contains(p)) {
 				storedPred.add(p);
 				Predicate newp = Expressions.makePredicate(p.getName()+"_en", p.getArity()+1);
-				Rule r = Expressions.makeRule(Expressions.makePositiveLiteral(newp, x,y,z), Expressions.makePositiveLiteral(p, x,y), Expressions.makePositiveLiteral(iRP, z));
+				List<Term> termP = new ArrayList<>();
+				List<Term> termnewP = new ArrayList<>();
+				for (int i = 0; i < p.getArity(); i++) {
+					UniversalVariable x = Expressions.makeUniversalVariable("X"+i);
+					termP.add(x);
+					termnewP.add(x);
+				}
+				termnewP.add(z);
+				Rule r = Expressions.makeRule(Expressions.makePositiveLiteral(newp, termnewP), Expressions.makePositiveLiteral(p, termP), Expressions.makePositiveLiteral(iRP, z));
 				enSimp.add(r);
 			}
 		}
@@ -457,6 +463,7 @@ public class DatalogSynthesis {
 							System.out.println("- "+wnp+" call of why-not-provenance");
 							phi = this.ctx.mkAnd(phi, this.whyNotProvExpr(this.whyNotProv(t, pMin)));
 							logger.info("=============== Why Not Provenance End ================");
+							break;
 						}
 					} else if (generate == 1) {
 						Random rand = new Random();
@@ -483,6 +490,7 @@ public class DatalogSynthesis {
 								System.out.println("- "+wp+" call of why-provenance");
 								phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvAlt(t, pPlus)));
 								logger.info("=============== Why Provenance End ================");
+								break;
 							}
 						}
 					}
@@ -495,6 +503,7 @@ public class DatalogSynthesis {
 							System.out.println("- "+wp+" call of why-provenance");
 							phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvAlt(f, pPlus)));
 							logger.info("=============== Why Provenance End ================");
+							break;
 						}
 					}
 				}

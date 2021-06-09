@@ -1,0 +1,5 @@
+ShipTo("tea","london").
+ShipTo("bread","paris").
+ShipTo("flowers","San Francisco").
+ShipTo("sausage","munich").
+ShipTo("horse","seoul").

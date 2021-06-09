@@ -1,0 +1,17 @@
+Up("a","e").
+Up("a","f").
+Up("f","m").
+Up("g","n").
+Up("h","n").
+Up("i","o").
+Up("j","o").
+Flat("g","f").
+Flat("m","n").
+Flat("m","o").
+Flat("p","m").
+Down("l","f").
+Down("m","f").
+Down("g","b").
+Down("h","c").
+Down("i","d").
+Down("p","k").

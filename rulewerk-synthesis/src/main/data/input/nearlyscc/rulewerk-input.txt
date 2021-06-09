@@ -1,6 +1,0 @@
-Edge(1, 2).
-Edge(1, 6).
-Edge(3, 8).
-Edge(4, 5).
-Edge(6, 7).
-Edge(7, 9).
