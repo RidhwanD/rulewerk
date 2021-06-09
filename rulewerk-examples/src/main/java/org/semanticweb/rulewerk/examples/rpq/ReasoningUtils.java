@@ -83,7 +83,7 @@ public final class ReasoningUtils {
 		}
 		System.out.println();
 	}
-
+	
 	public static long printOutQueryCount(final PositiveLiteral queryAtom, final Reasoner reasoner) {
 		final QueryAnswerCount answers = reasoner.countQueryAnswers(queryAtom, true);
 		System.out.print("Query " + queryAtom + ": ");

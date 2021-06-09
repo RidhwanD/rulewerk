@@ -28,12 +28,12 @@ public class ReasoningGMarkCase {
 	public static void main(String[] arg) throws IOException, ParsingException {
 //		int ver = 1;
 		ReasoningUtils.configureLogging(); // use simple logger for the example
-		for (int ver = 2; ver < 4; ver++) {
-		for (int iter = 1; iter < 4; iter++) {
+		for (int ver = 1; ver <= 3; ver++) {
+		for (int iter = 1; iter <= 3; iter++) {
 		int size = 500000;
 		while (size <= 2000000) {
 		
-		FileWriter csvWriter = new FileWriter(ExamplesUtils.OUTPUT_FOLDER + "rpq/new/new-"+ver+"-"+size+"-"+iter+".csv");
+		FileWriter csvWriter = new FileWriter(ExamplesUtils.OUTPUT_FOLDER + "rpq/new/new-"+ver+"-"+size+"-"+iter+"-s2.csv");
 		csvWriter.append("Query");	csvWriter.append(",");	
 		csvWriter.append("DS");		csvWriter.append(",");	
 		csvWriter.append("FQA");	csvWriter.append(",");	
@@ -42,7 +42,7 @@ public class ReasoningGMarkCase {
 		csvWriter.append("RT");		csvWriter.append(",");	
 		csvWriter.append("NR");		csvWriter.append("\n");	
 		
-		FileWriter csvWriter2 = new FileWriter(ExamplesUtils.OUTPUT_FOLDER + "rpq/new/new-"+ver+"-"+size+"-"+iter+"_mem.csv");
+		FileWriter csvWriter2 = new FileWriter(ExamplesUtils.OUTPUT_FOLDER + "rpq/new/new-"+ver+"-"+size+"-"+iter+"-s2_mem.csv");
 		csvWriter2.append("Query");	csvWriter2.append(",");	
 		csvWriter2.append("TTMB");	csvWriter2.append(",");
 		csvWriter2.append("TFMB");	csvWriter2.append(",");	
@@ -63,16 +63,18 @@ public class ReasoningGMarkCase {
 			System.out.println("Knowledge base parsed: " + kb.getFacts().size() + " facts");
 		} catch (final org.semanticweb.rulewerk.parser.ParsingException e) {
 			System.out.println("Failed to parse rules: " + e.getMessage());
+			csvWriter.flush();		csvWriter.close();
+			csvWriter2.flush();		csvWriter2.close();
 			return;
 		}
 		inputStreamGMarkShop.close();
 			
-		for (int i = 2; i < 4; i++) {
-		for (int j = 1; j < 4; j++) {
-		for (int k = 1; k < 6; k += 2) {
-		for (int l = 0; l < 10; l++) {
+		for (int i = 2; i <= 3; i++) {
+		for (int j = 1; j <= 3; j++) {
+		for (int k = 1; k <= 5; k += 2) {
+		for (int l = 0; l <= 9; l++) {
 			System.out.println("Loading and Parsing Query["+i+"_"+j+"_"+k+"-"+(k+1)+"] "+l+" for size " + size + " in iteration " + iter);
-			File queryInput = new File(ExamplesUtils.INPUT_FOLDER + "rpq/newqueries/shop-a-["+i+"_"+j+"_"+k+"-"+(k+1)+"]/query-"+l+".sparql");
+			File queryInput = new File(ExamplesUtils.INPUT_FOLDER + "rpq/newqueries/shop-a-["+i+"_"+j+"_"+k+"-"+(k+1)+"]-star2-2/query-"+l+".sparql");
 			FileInputStream input = new FileInputStream(queryInput);
 			
 			// ============================== PARSING =============================== //

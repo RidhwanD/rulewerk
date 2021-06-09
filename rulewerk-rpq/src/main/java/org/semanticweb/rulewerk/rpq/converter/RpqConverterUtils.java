@@ -151,8 +151,9 @@ public class RpqConverterUtils {
 							for (State dest : inOut.get(1)) {
 								if (!orig.equals(s) && !dest.equals(s)) {
 									Transition t = RPQExpressions.makeTransition(orig, dest, epsilon);
-									if (!isTranExist(transCopy,t) && !isTranExist(newTrans,t))
+									if (!isTranExist(transCopy,t) && !isTranExist(newTrans,t)) {
 										newTrans.add(t);
+									}
 								}
 							}
 						}

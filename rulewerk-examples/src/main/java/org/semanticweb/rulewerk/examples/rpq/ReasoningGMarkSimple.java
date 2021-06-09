@@ -54,7 +54,7 @@ public class ReasoningGMarkSimple {
 		long beforeUsedMem2 = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 		final List<Term> uvars = statement.getProjVars();
 //		final List<Statement> datalogResult = RpqConverter.CRPQTranslate(uvars, statement, null);
-		final List<Statement> datalogResult = RpqNFAConverter.CRPQTranslate(uvars, statement, null);
+		final List<Statement> datalogResult = RpqNFAConverter.CRPQTranslateAlt(uvars, statement, null);
 		long afterUsedMem2 = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 		long endTime2 = System.currentTimeMillis();
 		long duration2 = (endTime2 - startTime2);
