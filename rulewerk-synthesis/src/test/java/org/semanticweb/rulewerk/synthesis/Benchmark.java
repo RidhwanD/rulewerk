@@ -16,7 +16,8 @@ import com.microsoft.z3.Context;
 
 public class Benchmark {
 	public static void main(String[] arg) throws IOException, ParsingException {
-		String benchCase = "1-call-site";
+		String benchCase = "rvcheck";
+		String size = "small";
 		System.out.println("Parse Input");
 		File inputFile = new File(ReasoningUtils.INPUT_FOLDER + benchCase + "/rulewerk-input.txt");
 		FileInputStream inputStream = new FileInputStream(inputFile);
@@ -57,7 +58,7 @@ public class Benchmark {
 		outputMStream.close();
 	
 		System.out.println("Parsing Candidate Rules");
-		File rulesFile = new File(ReasoningUtils.INPUT_FOLDER + benchCase + "/rulewerk-rules-small.txt");
+		File rulesFile = new File(ReasoningUtils.INPUT_FOLDER + benchCase + "/rulewerk-rules-" + size + ".txt");
 		FileInputStream rulesStream = new FileInputStream(rulesFile);
 		List<Rule> rules;
 		try {
@@ -79,22 +80,28 @@ public class Benchmark {
 		List<Rule> result = ds.synthesis();
 		long endTime = System.nanoTime();
 		System.out.println("Resulting Program:");
-		if (result != null) {
-			try {
-				FileWriter myWriter = new FileWriter(ReasoningUtils.INPUT_FOLDER + benchCase + "/rulewerk-result.txt");
+		long duration = (endTime - startTime);
+		try {
+			FileWriter myWriter = new FileWriter(ReasoningUtils.INPUT_FOLDER + benchCase + "/rulewerk-result.txt");
+			FileWriter myWriter2 = new FileWriter(ReasoningUtils.INPUT_FOLDER + benchCase + "/rulewerk-log.txt");
+			if (result != null) {
 				for (Rule r : result) {
 					System.out.println("- "+r);
 					myWriter.write(r.toString()+"\n");
 				}
-				myWriter.close();
-				System.out.println("Successfully wrote to the file.");
-			} catch (IOException e) {
-				System.out.println("An error occurred.");
-				e.printStackTrace();
 			}
+			myWriter2.write(String.valueOf(duration)+"\n");
+			myWriter2.write(String.valueOf(ds.getIteration())+"\n");
+			myWriter2.write(String.valueOf(ds.getRulewerkCall())+"\n");
+			myWriter2.write(String.valueOf(ds.getZ3Call())+"\n");
+			myWriter.close();
+			myWriter2.close();
+			System.out.println("Successfully wrote to the file.");
+		} catch (IOException e) {
+			System.out.println("An error occurred.");
+			e.printStackTrace();
 		}
 		ctx.close();
-		long duration = (endTime - startTime);
 		System.out.println("Synthesis time: "+duration+ " ns / "+(duration/1000000)+" ms");
 	}
 }

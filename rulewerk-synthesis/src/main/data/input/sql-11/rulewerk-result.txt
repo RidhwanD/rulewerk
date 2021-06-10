@@ -1,0 +1,5 @@
+inv3(?v1) :- ans(?v0), Student(?v1, ?v0, ?v2) .
+ans(?v2) :- Junior(?v0), Student(?v1, ?v2, ?v0), inv3(?v1) .
+inv2(?v1) :- inv1(?v0), Class(?v1, ?v0), Class(?v1, ?v2) .
+inv1(?v1) :- focus(?v0), Faculty(?v1, ?v0) .
+inv3(?v2) :- Class(?v0, ?v1), inv2(?v0), Enroll(?v2, ?v0) .

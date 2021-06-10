@@ -1,0 +1,11 @@
+input1(1,A,Name,AAA).
+input1(2,A,Class,P).
+input1(3,A,IsActive,True).
+input1(4,B,Name,BBB).
+input1(5,B,Class,Q).
+input1(6,B,IsActive,False).
+input1(7,C,Name,CCC).
+input1(8,C,Class,R).
+input1(9,C,IsActive,True).
+active(IsActive).
+correct(True).

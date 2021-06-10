@@ -1,0 +1,7 @@
+Out(2,b).
+Out(2,c).
+Out(5,f).
+Out(5,g).
+Out(5,h).
+Out(7,b).
+Out(7,c).

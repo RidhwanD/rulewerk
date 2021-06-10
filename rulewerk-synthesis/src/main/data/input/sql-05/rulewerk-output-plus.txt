@@ -1,0 +1,5 @@
+ans(PN1).
+ans(PN2).
+ans(PN3).
+ans(PN4).
+ans(PN5).

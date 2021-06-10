@@ -1,0 +1,7 @@
+ans(S1).
+ans(S6).
+ans(S9).
+ans(S10).
+ans(S12).
+ans(S13).
+ans(S14).

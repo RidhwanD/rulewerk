@@ -27,6 +27,7 @@ public class DatalogSetUtilsTest {
 		}
 		
 		SetVariable u = Expressions.makeSetVariable("U");
+		SetVariable v = Expressions.makeSetVariable("V");
 		
 		UniversalVariable x = Expressions.makeUniversalVariable("x");
 		UniversalVariable y = Expressions.makeUniversalVariable("y");
@@ -44,6 +45,7 @@ public class DatalogSetUtilsTest {
 		
 		SetConstruct sety = Expressions.makeSetConstruct(y);
 		SetUnion un1 = Expressions.makeSetUnion(sety, u);
+		SetUnion un2 = Expressions.makeSetUnion(u, v);
 		
 		Predicate p = Expressions.makePredicate("parent", 2);
 		Predicate an = Expressions.makePredicate("ancestor", 2);
@@ -56,7 +58,7 @@ public class DatalogSetUtilsTest {
 		kb.addStatement(f1);
 		Fact f2 = Expressions.makeFact(p, b, c);
 		kb.addStatement(f2);
-		Fact f3 = Expressions.makeFact(p, b, d);
+		Fact f3 = Expressions.makeFact(p, c, d);
 		kb.addStatement(f3);
 		Fact f4 = Expressions.makeFact(p, a, e);
 		kb.addStatement(f4);
@@ -70,8 +72,12 @@ public class DatalogSetUtilsTest {
 		Rule r1 = Expressions.makeRule(Expressions.makePositiveLiteral(an, x, y), Expressions.makePositiveLiteral(p, x, y));
 		Rule r2 = Expressions.makeRule(Expressions.makePositiveLiteral(an, x, z), 
 				Expressions.makePositiveLiteral(an, x, y), Expressions.makePositiveLiteral(p, y, z));
+//		Rule r3 = Expressions.makeRule(Expressions.makePositiveLiteral(ans, x, u), 
+//				Expressions.makePositiveLiteral(p, x, y), Expressions.makePositiveLiteral(in, y, u));
 		Rule r3 = Expressions.makeRule(Expressions.makePositiveLiteral(ans, x, sety), 
 				Expressions.makePositiveLiteral(p, x, y));
+//		Rule r4 = Expressions.makeRule(Expressions.makePositiveLiteral(ans, x, un2), 
+//				Expressions.makePositiveLiteral(an, x, y), Expressions.makePositiveLiteral(in, y, u), Expressions.makePositiveLiteral(ans, x, v));
 		Rule r4 = Expressions.makeRule(Expressions.makePositiveLiteral(ans, x, un1), 
 				Expressions.makePositiveLiteral(an, x, y), Expressions.makePositiveLiteral(ans, x, u));
 		

@@ -1,0 +1,5 @@
+In(1,Joe,ODU).
+In(2,Mike,VCU).
+In(3,Ane,ODU).
+In(4,Trevor,VT).
+In(5,Cools,VCU).

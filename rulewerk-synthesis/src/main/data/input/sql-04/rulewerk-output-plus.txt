@@ -1,0 +1,6 @@
+Out(facebook,d1).
+Out(google,d1).
+Out(google,d2).
+Out(google,d3).
+Out(linkedin,d1).
+Out(yahoo,d2).

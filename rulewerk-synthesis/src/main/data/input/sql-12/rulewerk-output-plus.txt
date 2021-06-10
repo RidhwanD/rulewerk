@@ -1,0 +1,7 @@
+ans(SN1).
+ans(SN2).
+ans(SN3).
+ans(SN5).
+ans(SN6).
+ans(SN8).
+ans(SN9).

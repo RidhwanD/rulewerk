@@ -1,0 +1,12 @@
+input1(S1,P1).
+input1(S1,P4).
+input1(S2,P2).
+input1(S2,P3).
+input1(S3,P5).
+input2(P1,PN1).
+input2(P2,PN2).
+input2(P3,PN3).
+input2(P4,PN4).
+input2(P5,PN5).
+input2(P6,PN6).
+input2(P7,PN7).

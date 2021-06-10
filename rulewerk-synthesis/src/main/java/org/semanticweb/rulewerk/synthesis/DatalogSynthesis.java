@@ -38,7 +38,10 @@ public class DatalogSynthesis {
 	private Map<Rule, BoolExpr> rule2var;
 	private Context ctx;
 	private double coprovChance = -1; 		// Set probability of coprov being performed.
-	private static final Logger logger = LogManager.getLogger("HelloWorld");
+	private static final Logger logger = LogManager.getLogger("");
+	private int rulewerkCall = 0;
+	private int z3Call = 0;
+	private int iteration = 0;
 
 	public DatalogSynthesis(List<Fact> inputTuple, List<Fact> outputPTuple, List<Fact> outputNTuple, List<Rule> ruleSet, Context ctx){
 		this.inputTuple = inputTuple;
@@ -51,6 +54,18 @@ public class DatalogSynthesis {
 		rule2var = new HashMap<Rule, BoolExpr>();
 		this.setVarRuleMapping(ruleSet);
 		ReasoningUtils.configureLogging(); // use simple logger for the example
+	}
+	
+	public int getRulewerkCall() {
+		return this.rulewerkCall;
+	}
+	
+	public int getZ3Call() {
+		return this.z3Call;
+	}
+	
+	public int getIteration() {
+		return this.iteration;
 	}
 	
 	private void setVarRuleMapping(List<Rule> ruleSet) {
@@ -162,6 +177,7 @@ public class DatalogSynthesis {
 				kb.addStatements(partition.get(idx));
 				kb.addStatements(this.inputTuple);
 				try (final Reasoner reasoner = new VLogReasoner(kb)) {
+					this.rulewerkCall++;
 					reasoner.reason();
 					long generate = ReasoningUtils.isDerived(t, reasoner);
 					if (generate == 1) {
@@ -176,6 +192,7 @@ public class DatalogSynthesis {
 					kb2.addStatements(revDelta);
 					kb2.addStatements(this.inputTuple);
 					try (final Reasoner reasoner2 = new VLogReasoner(kb2)) {
+						this.rulewerkCall++;
 						reasoner2.reason();
 						long generate = ReasoningUtils.isDerived(t, reasoner2);
 						if (generate == 1) {
@@ -244,6 +261,7 @@ public class DatalogSynthesis {
 				kb.addStatements(buggy);
 				kb.addStatements(this.inputTuple);
 				try (final Reasoner reasoner = new VLogReasoner(kb)) {
+					this.rulewerkCall++;
 					reasoner.reason();
 					long generate = ReasoningUtils.isDerived(t, reasoner);
 					if (generate == 0) {
@@ -259,6 +277,7 @@ public class DatalogSynthesis {
 				kb2.addStatements(buggy2);
 				kb2.addStatements(this.inputTuple);
 				try (final Reasoner reasoner2 = new VLogReasoner(kb2)) {
+					this.rulewerkCall++;
 					reasoner2.reason();
 					long generate = ReasoningUtils.isDerived(t, reasoner2);
 					if (generate == 0) {
@@ -293,7 +312,10 @@ public class DatalogSynthesis {
 				}
 			}
 			return disjVars;
-		} else return this.ctx.mkTrue();
+		} else {
+			System.out.println("TRUE");
+			return this.ctx.mkTrue();
+		}
 	}
 	
 	public List<Statement> getRelevantExistNeg(List<Rule> Pplus) {
@@ -324,6 +346,7 @@ public class DatalogSynthesis {
 			kb.addStatements(enRules);
 			kb.addStatements(this.inputTuple);
 			try (final Reasoner reasoner = new VLogReasoner(kb)) {
+				this.rulewerkCall++;
 				reasoner.reason();
 				long generate = ReasoningUtils.isDerived(newt, reasoner);
 				if (generate == 1) coprovIn.add(r);
@@ -382,6 +405,7 @@ public class DatalogSynthesis {
 	}
 	
 	public Model consultSATSolver(BoolExpr expr) {
+		this.z3Call++;
 		Solver s = this.ctx.mkSolver();
 		s.add(expr);
 		Status result = s.check();
@@ -432,6 +456,7 @@ public class DatalogSynthesis {
 	}
 	
 	public List<Rule> synthesis() {
+		this.rulewerkCall = 0; this.z3Call = 0; this.iteration = 0;
 		int wp = 0; int wnp = 0; int cp = 0;
 		BoolExpr phi = this.ctx.mkTrue();
 		List<Rule> pPlus = new ArrayList<Rule>();
@@ -519,7 +544,9 @@ public class DatalogSynthesis {
 				pPlus = pPlust;
 			}
 			System.out.println("Iteration "+iter+" complete.");
+			System.out.println("Made "+this.z3Call+" calls to Z3 and "+this.rulewerkCall+" calls to Rulewerk.");
 		}
+		this.iteration = iter;
 		if (result != null) {
 			System.out.println("Synthesis finished in "+iter+" iteration(s):");
 			System.out.println("- "+wp+" call of why-provenance");
@@ -527,7 +554,7 @@ public class DatalogSynthesis {
 			System.out.println("- "+cp+" call of co-provenance");
 			return pPlus;
 		} else {
-			System.out.println("No solutions found.");
+			System.out.println("Cannot find solution.");
 			return null;
 		}
 	}

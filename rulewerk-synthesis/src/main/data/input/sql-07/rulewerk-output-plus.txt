@@ -1,0 +1,5 @@
+Out(1,Joe).
+Out(2,Mike).
+Out(3,Ane).
+Out(4,Trevor).
+Out(5,Cools).

@@ -1,0 +1,6 @@
+Active(active).
+Inactive(inactive).
+Input1(a,active,1).
+Input1(a,inactive,2).
+Input1(b,active,4).
+Input1(b,inactive,5).

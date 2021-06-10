@@ -23,6 +23,6 @@ def addPred(s, pred):
 	t = s.strip().split("\t")
 	return pred+"("+", ".join(t)+")."
 
-# addPredicates("1-call-site","assign","hold")
-removeRules("1-call-site","small")
+# addPredicates("sql-15","ans","hold")
+removeRules("sql-15","small")
 

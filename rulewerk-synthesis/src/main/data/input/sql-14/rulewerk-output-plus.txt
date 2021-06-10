@@ -1,0 +1,6 @@
+ans(1,A,Name,AAA).
+ans(2,A,Class,P).
+ans(3,A,IsActive,True).
+ans(7,C,Name,CCC).
+ans(8,C,Class,R).
+ans(9,C,IsActive,True).
