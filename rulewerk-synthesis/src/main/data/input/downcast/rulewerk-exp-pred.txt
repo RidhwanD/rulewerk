@@ -1,0 +1,4 @@
+reachableCast 2
+ptsVT 2
+unsafeDowncast 2
+badCast 2

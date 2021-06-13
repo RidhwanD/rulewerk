@@ -1,4 +1,5 @@
+Ancestor(?v0, ?v1) :- Mother(?v0, ?v1) .
 Ancestor(?v2, ?v1) :- Ancestor(?v0, ?v1), inv(?v2, ?v0) .
-Ancestor(?v0, ?v1) :- inv(?v0, ?v1) .
 inv(?v0, ?v1) :- Father(?v0, ?v1) .
 inv(?v0, ?v1) :- Mother(?v0, ?v1) .
+Ancestor(?v0, ?v1) :- Father(?v0, ?v1) .

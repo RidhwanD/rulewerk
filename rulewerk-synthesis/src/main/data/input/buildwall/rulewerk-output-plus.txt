@@ -1,0 +1,4 @@
+buildWall(d1,d2).
+buildWall(d3,d6).
+buildWall(d1,d6).
+buildWall(d11,d12).
