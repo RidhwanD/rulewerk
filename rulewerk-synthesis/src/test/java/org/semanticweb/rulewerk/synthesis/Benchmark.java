@@ -16,8 +16,9 @@ import com.microsoft.z3.Context;
 
 public class Benchmark {
 	public static void main(String[] arg) throws IOException, ParsingException {
-		String benchCase = "rvcheck";
+		String benchCase = "polysite";
 		String size = "small";
+		System.out.println(benchCase);
 		System.out.println("Parse Input");
 		File inputFile = new File(ReasoningUtils.INPUT_FOLDER + benchCase + "/rulewerk-input.txt");
 		FileInputStream inputStream = new FileInputStream(inputFile);
@@ -97,7 +98,8 @@ public class Benchmark {
 			myWriter.close();
 			myWriter2.close();
 			System.out.println("Successfully wrote to the file.");
-		} catch (IOException e) {
+		} 
+		catch (IOException e) {
 			System.out.println("An error occurred.");
 			e.printStackTrace();
 		}

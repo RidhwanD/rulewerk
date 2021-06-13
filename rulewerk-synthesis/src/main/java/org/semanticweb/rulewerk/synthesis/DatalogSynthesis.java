@@ -163,6 +163,41 @@ public class DatalogSynthesis {
 		return Pplus;
 	}
 	
+	public List<Rule> whyProvAlt(PositiveLiteral t, List<Rule> Pplus, List<Rule> Pmin) throws IOException {
+		List<Rule> code = Pplus;
+		int d = 2;
+		while (true) {
+			for (List<Rule> codeChunk : split(code, d)) {
+				Set<Rule> currRMinus = new HashSet<>(Pmin);
+				currRMinus.removeAll(codeChunk);
+				Set<Rule> currRPlus = new HashSet<>(Pplus);
+				currRPlus.addAll(codeChunk);
+				boolean bugProduced = false;
+				KnowledgeBase kb = new KnowledgeBase();
+				kb.addStatements(currRMinus);
+				kb.addStatements(this.inputTuple);
+				try (final Reasoner reasoner = new VLogReasoner(kb)) {
+					this.rulewerkCall++;
+					reasoner.reason();
+					long generate = ReasoningUtils.isDerived(t, reasoner);
+					if (generate == 1) {
+						bugProduced = true;
+					}
+				}
+				if (bugProduced) {
+					Pplus = new ArrayList<>(currRPlus);
+					Pmin = new ArrayList<>(currRMinus);
+				}
+			}
+			if (d == code.size())
+                break;
+			d = Math.min(code.size(), d*2);
+			if (d == 0)
+                break;
+		}
+		return Pplus;
+	}
+	
 	public List<Rule> whyProvAlt(PositiveLiteral t, List<Rule> Pplus) throws IOException{
 		logger.info("Investigate "+t);
 		// Alternative of why provenance  the delta debugging here
@@ -213,7 +248,7 @@ public class DatalogSynthesis {
 				d -= 1;
 			} else d *= 2;
 		}
-		
+		System.out.println(Pplus);
 		return Pplus;
 	}
 	
@@ -243,6 +278,41 @@ public class DatalogSynthesis {
 			sizePernumberOfParts = (int) Math.ceil(((double) leftElements) / --numberOfParts);
 		}
 		return numberOfPartss;
+	}
+	
+	public List<Rule> whyNotProvAlt(PositiveLiteral t, List<Rule> Pplus, List<Rule> Pmin) throws IOException {
+		List<Rule> code = Pmin;
+		int d = 2;
+		while (true) {
+			for (List<Rule> codeChunk : split(code, d)) {
+				Set<Rule> currRMinus = new HashSet<>(Pmin);
+				currRMinus.removeAll(codeChunk);
+				Set<Rule> currRPlus = new HashSet<>(Pplus);
+				currRPlus.addAll(codeChunk);
+				boolean bugProduced = false;
+				KnowledgeBase kb = new KnowledgeBase();
+				kb.addStatements(currRPlus);
+				kb.addStatements(this.inputTuple);
+				try (final Reasoner reasoner = new VLogReasoner(kb)) {
+					this.rulewerkCall++;
+					reasoner.reason();
+					long generate = ReasoningUtils.isDerived(t, reasoner);
+					if (generate == 0) {
+						bugProduced = true;
+					}
+				}
+				if (bugProduced) {
+					Pplus = new ArrayList<>(currRPlus);
+					Pmin = new ArrayList<>(currRMinus);
+				}
+			}
+			if (d == code.size())
+                break;
+			d = Math.min(code.size(), d*2);
+			if (d == 0)
+                break;
+		}
+		return Pmin;
 	}
 	
 	public List<Rule> whyNotProv(PositiveLiteral t, List<Rule> Pmin) throws IOException{
@@ -486,7 +556,8 @@ public class DatalogSynthesis {
 							logger.info("============= Perform Why Not Provenance ==============");
 							wnp++;
 							System.out.println("- "+wnp+" call of why-not-provenance");
-							phi = this.ctx.mkAnd(phi, this.whyNotProvExpr(this.whyNotProv(t, pMin)));
+							phi = this.ctx.mkAnd(phi, this.whyNotProvExpr(this.whyNotProvAlt(t, pPlus, pMin)));
+//							phi = this.ctx.mkAnd(phi, this.whyNotProvExpr(this.whyNotProv(t, pMin)));
 							logger.info("=============== Why Not Provenance End ================");
 							break;
 						}
@@ -505,31 +576,35 @@ public class DatalogSynthesis {
 					}
 				}
 				if (this.outputNTuple.size() > 0) {
+					int newWhys = 0;
 					for (Fact t : this.outputNTuple) {
 						long generate = ReasoningUtils.isDerived(t, reasoner);
 						if (generate == 1) {
 							loop = true;
 							if (pPlus.size() > 0) {
 								logger.info("============= Perform Why Provenance ==============");
-								wp++;
+								wp++; newWhys++;
 								System.out.println("- "+wp+" call of why-provenance");
 								phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvAlt(t, pPlus)));
+//								phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvAlt(t, pPlus, pMin)));
 								logger.info("=============== Why Provenance End ================");
-								break;
 							}
 						}
+						if (newWhys > 0) break;
 					}
 				} else {
+					int newWhys = 0;
 					for (Fact f : this.getNonExpectedResults(reasoner)) {
 						loop = true;
 						if (pPlus.size() > 0) {
 							logger.info("============= Perform Why Provenance ==============");
-							wp++;
+							wp++; newWhys++;
 							System.out.println("- "+wp+" call of why-provenance");
 							phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvAlt(f, pPlus)));
+//							phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvAlt(f, pPlus, pMin)));
 							logger.info("=============== Why Provenance End ================");
-							break;
 						}
+						if (newWhys > 0) break;
 					}
 				}
 			} catch (IOException e) {

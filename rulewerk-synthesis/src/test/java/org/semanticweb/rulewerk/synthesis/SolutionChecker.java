@@ -25,7 +25,8 @@ public class SolutionChecker {
 	}
 	
 	public static void main(String[] arg) throws IOException, ParsingException {
-		String benchCase = "rvcheck";
+		String benchCase = "polysite";
+		System.out.println(benchCase);
 		KnowledgeBase kb = new KnowledgeBase();
 		ReasoningUtils.configureLogging();
 		
