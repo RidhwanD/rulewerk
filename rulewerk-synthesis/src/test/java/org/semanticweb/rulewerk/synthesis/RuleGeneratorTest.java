@@ -20,8 +20,11 @@ public class RuleGeneratorTest {
 		Variable x2 = Expressions.makeUniversalVariable("x2");
 		
 		metaRuleSet.add(Expressions.makeRule(Expressions.makePositiveLiteral("P0", x0, x1), Expressions.makePositiveLiteral("P1", x0, x1)));
+		metaRuleSet.add(Expressions.makeRule(Expressions.makePositiveLiteral("P0", x0), Expressions.makePositiveLiteral("P1", x0)));
 		metaRuleSet.add(Expressions.makeRule(Expressions.makePositiveLiteral("P0", x0, x2), 
-				Expressions.makePositiveLiteral("P1", x0, x1), Expressions.makePositiveLiteral("P0", x1, x2)));
+				Expressions.makePositiveLiteral("P1", x0, x1), Expressions.makePositiveLiteral("P2", x1, x2)));
+		metaRuleSet.add(Expressions.makeRule(Expressions.makePositiveLiteral("P0", x0, x2), 
+				Expressions.makePositiveLiteral("P1", x0, x1), Expressions.makePositiveLiteral("P2", x2)));
 		
 		// --------------------------------- Comment the relevant one --------------------------------- //
 		// Abduce

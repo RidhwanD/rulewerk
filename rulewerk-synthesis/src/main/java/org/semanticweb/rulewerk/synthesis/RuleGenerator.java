@@ -71,8 +71,8 @@ public class RuleGenerator {
 					while (idx < len && consider) {
 						if (perm.get(idx).getArity() == metaRule.getBody().getLiterals().get(idx).getPredicate().getArity()) {
 							body.add(idx, Expressions.makePositiveLiteral(perm.get(idx), metaRule.getBody().getLiterals().get(idx).getArguments()));
-						}
-						idx++;
+							idx++;
+						} else break;
 					}
 					if (idx == len) {
 						result.add(Expressions.makeRule(Expressions.makePositiveConjunction(head), Expressions.makeConjunction(body)));

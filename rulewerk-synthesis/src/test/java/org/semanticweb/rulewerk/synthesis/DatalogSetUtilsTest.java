@@ -56,24 +56,22 @@ public class DatalogSetUtilsTest {
 		
 		Fact f1 = Expressions.makeFact(p, a, b);
 		kb.addStatement(f1);
-//		Fact f2 = Expressions.makeFact(p, b, c);
-//		kb.addStatement(f2);
-//		Fact f3 = Expressions.makeFact(p, c, d);
-//		kb.addStatement(f3);
+		Fact f2 = Expressions.makeFact(p, b, c);
+		kb.addStatement(f2);
+		Fact f3 = Expressions.makeFact(p, c, d);
+		kb.addStatement(f3);
 		Fact f4 = Expressions.makeFact(p, a, e);
 		kb.addStatement(f4);
-//		Fact f5 = Expressions.makeFact(p, e, f);
-//		kb.addStatement(f5);
-//		Fact f6 = Expressions.makeFact(p, f, g);
-//		kb.addStatement(f6);
-//		Fact f7 = Expressions.makeFact(p, h, i);
-//		kb.addStatement(f7);
+		Fact f5 = Expressions.makeFact(p, e, f);
+		kb.addStatement(f5);
+		Fact f6 = Expressions.makeFact(p, f, g);
+		kb.addStatement(f6);
+		Fact f7 = Expressions.makeFact(p, h, i);
+		kb.addStatement(f7);
 
 		Rule r1 = Expressions.makeRule(Expressions.makePositiveLiteral(an, x, y), Expressions.makePositiveLiteral(p, x, y));
 		Rule r2 = Expressions.makeRule(Expressions.makePositiveLiteral(an, x, z), 
 				Expressions.makePositiveLiteral(an, x, y), Expressions.makePositiveLiteral(p, y, z));
-//		Rule r3 = Expressions.makeRule(Expressions.makePositiveLiteral(ans, x, u), 
-//				Expressions.makePositiveLiteral(p, x, y), Expressions.makePositiveLiteral(in, y, u));
 		Rule r3 = Expressions.makeRule(Expressions.makePositiveLiteral(ans, x, sety), 
 				Expressions.makePositiveLiteral(an, x, y));
 		Rule r4 = Expressions.makeRule(Expressions.makePositiveLiteral(ans, x, un2), 
@@ -128,7 +126,7 @@ public class DatalogSetUtilsTest {
 			System.out.println("- "+rule);
 		}
 		
-		kb.addStatement(Expressions.makeRule(Expressions.makePositiveLiteral("Ans", x, y, z), 
+		kb.addStatement(Expressions.makeRule(Expressions.makePositiveLiteral("Ans", x, y), 
 				Expressions.makePositiveLiteral(ans, x, z), Expressions.makePositiveLiteral(in, y, z)));
 		
 		System.out.println();
@@ -145,9 +143,8 @@ public class DatalogSetUtilsTest {
 			System.out.println("- Answering Query");
 			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(an, x, y), reasoner);
 			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(in, x, y), reasoner);
-			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral("getSU", x, y), reasoner);
 			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(ans, x, y), reasoner);
-			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral("Ans", x, y, z), reasoner);
+			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral("Ans", x, y), reasoner);
 		}
 	}
 }

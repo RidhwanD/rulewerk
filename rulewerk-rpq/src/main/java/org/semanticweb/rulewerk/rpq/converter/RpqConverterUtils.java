@@ -160,7 +160,6 @@ public class RpqConverterUtils {
 						for (Transition t : transCopy) {
 							if (!t.getOrigin().equals(s) && ! t.getDest().equals(s) && !isTranExist(newTrans,t)) {
 								newTrans.add(t);
-							} else {
 							}
 						}
 						transCopy = newTrans;
