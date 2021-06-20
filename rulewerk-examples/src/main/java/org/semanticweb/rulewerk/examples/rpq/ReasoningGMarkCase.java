@@ -26,14 +26,13 @@ import org.semanticweb.rulewerk.rpq.parser.RPQParser;
 
 public class ReasoningGMarkCase {
 	public static void main(String[] arg) throws IOException, ParsingException {
-//		int ver = 1;
 		ReasoningUtils.configureLogging(); // use simple logger for the example
-		for (int ver = 1; ver <= 3; ver++) {
+		for (int ver = 1; ver <= 4; ver++) {
 		for (int iter = 1; iter <= 3; iter++) {
 		int size = 500000;
 		while (size <= 2000000) {
 		
-		FileWriter csvWriter = new FileWriter(ExamplesUtils.OUTPUT_FOLDER + "rpq/new/new-"+ver+"-"+size+"-"+iter+"-s2.csv");
+		FileWriter csvWriter = new FileWriter(ExamplesUtils.OUTPUT_FOLDER + "rpq/new/new-"+ver+"-"+size+"-"+iter+"-nc.csv");
 		csvWriter.append("Query");	csvWriter.append(",");	
 		csvWriter.append("DS");		csvWriter.append(",");	
 		csvWriter.append("FQA");	csvWriter.append(",");	
@@ -42,7 +41,7 @@ public class ReasoningGMarkCase {
 		csvWriter.append("RT");		csvWriter.append(",");	
 		csvWriter.append("NR");		csvWriter.append("\n");	
 		
-		FileWriter csvWriter2 = new FileWriter(ExamplesUtils.OUTPUT_FOLDER + "rpq/new/new-"+ver+"-"+size+"-"+iter+"-s2_mem.csv");
+		FileWriter csvWriter2 = new FileWriter(ExamplesUtils.OUTPUT_FOLDER + "rpq/new/new-"+ver+"-"+size+"-"+iter+"-nc_mem.csv");
 		csvWriter2.append("Query");	csvWriter2.append(",");	
 		csvWriter2.append("TTMB");	csvWriter2.append(",");
 		csvWriter2.append("TFMB");	csvWriter2.append(",");	
@@ -74,7 +73,7 @@ public class ReasoningGMarkCase {
 		for (int k = 1; k <= 5; k += 2) {
 		for (int l = 0; l <= 9; l++) {
 			System.out.println("Loading and Parsing Query["+i+"_"+j+"_"+k+"-"+(k+1)+"] "+l+" for size " + size + " in iteration " + iter);
-			File queryInput = new File(ExamplesUtils.INPUT_FOLDER + "rpq/newqueries/shop-a-["+i+"_"+j+"_"+k+"-"+(k+1)+"]-star2-2/query-"+l+".sparql");
+			File queryInput = new File(ExamplesUtils.INPUT_FOLDER + "rpq/newqueries/shop-a-["+i+"_"+j+"_"+k+"-"+(k+1)+"]-noconverse/query-"+l+".sparql");
 			FileInputStream input = new FileInputStream(queryInput);
 			
 			// ============================== PARSING =============================== //
@@ -89,13 +88,26 @@ public class ReasoningGMarkCase {
 			long beforeTotMem1 = Runtime.getRuntime().totalMemory();
 			long beforeFreeMem1 = Runtime.getRuntime().freeMemory();
 			final List<Term> uvars = statement.getProjVars();
-			List<Statement> datalogResult = null;
+			List<Statement> datalogResult = new ArrayList<>();
 			if (ver == 1) {
 				datalogResult = RpqConverter.CRPQTranslate(uvars, statement, null);
 			} else if (ver == 2) {
 				datalogResult = RpqNFAConverter.CRPQTranslate(uvars, statement, null);
 			} else if (ver == 3) {
 				datalogResult = RpqNFAConverter.CRPQTranslateAlt(uvars, statement, null);
+			} else if (ver == 4) {
+				try {
+					queryInput = new File(ExamplesUtils.INPUT_FOLDER + "rpq/newqueries/shop-a-["+i+"_"+j+"_"+k+"-"+(k+1)+"]-noconverse/query-"+l+".lb");
+					input = new FileInputStream(queryInput);
+					for (Statement s : RuleParser.parse(input).getStatements()) {
+						datalogResult.add(s);
+					}
+				} catch (final org.semanticweb.rulewerk.parser.ParsingException e) {
+					System.out.println("Failed to parse rules: " + e.getMessage());
+					csvWriter.flush();		csvWriter.close();
+					csvWriter2.flush();		csvWriter2.close();
+					return;
+				}
 			}
 			long afterTotMem1 = Runtime.getRuntime().totalMemory();
 			long afterFreeMem1 = Runtime.getRuntime().freeMemory();
@@ -108,10 +120,9 @@ public class ReasoningGMarkCase {
 				kb.addStatement(r);
 				Rule rs = (Rule) r;
 				Predicate p = rs.getHead().getLiterals().get(0).getPredicate();
-				if (!preds.contains(p) && !p.getName().equals("Ans")) preds.add(p);
+				if (!preds.contains(p) && !p.getName().equals("Ans") && !p.getName().equals("query")) preds.add(p);
 				numRuleGenerated++;
 			}
-
 			System.out.println("Reasoning");
 			long duration3 = 0;
 			long beforeTotMem2 = 0;
@@ -128,7 +139,10 @@ public class ReasoningGMarkCase {
 				reasoner.reason();
 				/* Execute some queries */
 				System.out.println("- Answering Query");
-				ans = ReasoningUtils.printOutQueryCount(Expressions.makePositiveLiteral("Ans", uvars), reasoner);
+				if (ver != 4)
+					ans = ReasoningUtils.printOutQueryCount(Expressions.makePositiveLiteral("Ans", uvars), reasoner);
+				else
+					ans = ReasoningUtils.printOutQueryCount(Expressions.makePositiveLiteral("query", uvars), reasoner);
 				
 				long endTime3 = System.nanoTime();
 				afterTotMem2 = Runtime.getRuntime().totalMemory();
@@ -141,6 +155,11 @@ public class ReasoningGMarkCase {
 			long actualMemUsed1 = afterTotMem1 - beforeTotMem1;
 			long actualMemUsed2 = afterTotMem2 - beforeTotMem2;
 			long maxMem = Runtime.getRuntime().maxMemory();
+
+			if (ver == 4) {
+				duration1 = 0;
+				duration2 = 0;
+			}
 			
 			System.out.println("Generated Datalog statements: " + numRuleGenerated);
 			System.out.println("Parsing time: "+duration1+ " ns");
