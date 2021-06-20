@@ -18,7 +18,7 @@ import org.semanticweb.rulewerk.core.reasoner.Reasoner;
 import org.semanticweb.rulewerk.reasoner.vlog.VLogReasoner;
 
 public class DatalogSetUtilsTest {
-	public static void main(String[] arg) throws IOException {
+	public static void main (String[] arg) throws IOException {
 		ReasoningUtils.configureLoggingAll(); // use simple logger for the example
 		Set<Statement> r_su = DatalogSetUtils.getR_SU();
 		
@@ -27,8 +27,8 @@ public class DatalogSetUtilsTest {
 		}
 		
 		SetVariable u = Expressions.makeSetVariable("U");
-		SetVariable v = Expressions.makeSetVariable("V");
-		
+
+		UniversalVariable w = Expressions.makeUniversalVariable("w");
 		UniversalVariable x = Expressions.makeUniversalVariable("x");
 		UniversalVariable y = Expressions.makeUniversalVariable("y");
 		UniversalVariable z = Expressions.makeUniversalVariable("z");
@@ -44,12 +44,12 @@ public class DatalogSetUtilsTest {
 		AbstractConstant i = Expressions.makeAbstractConstant("i");
 		
 		SetConstruct sety = Expressions.makeSetConstruct(y);
+		SetConstruct setz = Expressions.makeSetConstruct(z);
 		SetUnion un1 = Expressions.makeSetUnion(sety, u);
-		SetUnion un2 = Expressions.makeSetUnion(u, v);
+		SetUnion un2 = Expressions.makeSetUnion(setz, u);
 		
 		Predicate p = Expressions.makePredicate("parent", 2);
-		Predicate an = Expressions.makePredicate("ancestor", 2);
-		Predicate ans = Expressions.makePredicate("ancestors", 2);
+		Predicate an = Expressions.makePredicate("ancestor", 3);
 		Predicate in = Expressions.makePredicate("in", 2);
 		
 		KnowledgeBase kb = new KnowledgeBase();
@@ -69,15 +69,11 @@ public class DatalogSetUtilsTest {
 		Fact f7 = Expressions.makeFact(p, h, i);
 		kb.addStatement(f7);
 
-		Rule r1 = Expressions.makeRule(Expressions.makePositiveLiteral(an, x, y), Expressions.makePositiveLiteral(p, x, y));
-		Rule r2 = Expressions.makeRule(Expressions.makePositiveLiteral(an, x, z), 
-				Expressions.makePositiveLiteral(an, x, y), Expressions.makePositiveLiteral(p, y, z));
-		Rule r3 = Expressions.makeRule(Expressions.makePositiveLiteral(ans, x, sety), 
-				Expressions.makePositiveLiteral(an, x, y));
-		Rule r4 = Expressions.makeRule(Expressions.makePositiveLiteral(ans, x, un2), 
-				Expressions.makePositiveLiteral(ans, x, u), Expressions.makePositiveLiteral(ans, x, v));
-//		Rule r4 = Expressions.makeRule(Expressions.makePositiveLiteral(ans, x, un1), 
-//				Expressions.makePositiveLiteral(an, x, y), Expressions.makePositiveLiteral(ans, x, u));
+		
+		Rule r1 = Expressions.makeRule(Expressions.makePositiveLiteral(an, x, y, un1), 
+				Expressions.makePositiveLiteral(p, x, y), Expressions.makePositiveLiteral("empty", u));
+		Rule r2 = Expressions.makeRule(Expressions.makePositiveLiteral(an, x, z, un2), 
+				Expressions.makePositiveLiteral(an, x, y, u), Expressions.makePositiveLiteral(p, y, z));
 		
 		kb.addStatements(r_su);
 		
@@ -105,29 +101,8 @@ public class DatalogSetUtilsTest {
 			System.out.println("- "+rule);
 		}
 		
-		System.out.println();
-		System.out.println(r3);
-		Rule nr3 = DatalogSetUtils.normalize(r3);
-		System.out.println(DatalogSetUtils.getOrder(r3));
-		System.out.println("Result of transformation: ");
-		for (Statement rule : DatalogSetUtils.transformRule(nr3)) {
-			kb.addStatement(rule);
-			System.out.println("- "+rule);
-		}
-		
-		System.out.println();
-		System.out.println(r4);
-		Rule nr4 = DatalogSetUtils.normalize(r4);
-		System.out.println(nr4);
-		System.out.println(DatalogSetUtils.getOrder(nr4));
-		System.out.println("Result of transformation: ");
-		for (Rule rule : DatalogSetUtils.transformRule(r4)) {
-			kb.addStatement(rule);
-			System.out.println("- "+rule);
-		}
-		
 		kb.addStatement(Expressions.makeRule(Expressions.makePositiveLiteral("Ans", x, y), 
-				Expressions.makePositiveLiteral(ans, x, z), Expressions.makePositiveLiteral(in, y, z)));
+				Expressions.makePositiveLiteral(an, x, w, z), Expressions.makePositiveLiteral(in, y, z)));
 		
 		System.out.println();
 		System.out.println("ALL STATEMENTS");
@@ -141,9 +116,8 @@ public class DatalogSetUtilsTest {
 			reasoner.reason();
 			/* Execute some queries */
 			System.out.println("- Answering Query");
-			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(an, x, y), reasoner);
+			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(an, x, y, z), reasoner);
 			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(in, x, y), reasoner);
-			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(ans, x, y), reasoner);
 			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral("Ans", x, y), reasoner);
 		}
 	}
