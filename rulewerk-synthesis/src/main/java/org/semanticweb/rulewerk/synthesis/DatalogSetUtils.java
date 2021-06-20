@@ -227,16 +227,20 @@ public class DatalogSetUtils {
 			if (!t.isSetVariable()) {
 				if ((t instanceof SetConstruct && ((SetConstruct) t).getElement() != null) || t instanceof SetUnion) {
 					boolean insert = false; int idx = 0;
-					while (!insert && idx < order.size()) {
-						if (order.get(idx) instanceof SetUnion) {
-							if (((SetUnion) order.get(idx)).isSubTerm(t)) {
-								insert = true;
-								order.add(idx, t);
+					if (t instanceof SetConstruct) {
+						order.add(idx, t);
+					} else {
+						while (!insert && idx < order.size()) {
+							if (order.get(idx) instanceof SetUnion) {
+								if (((SetUnion) order.get(idx)).isSubTerm(t)) {
+									insert = true;
+									order.add(idx, t);
+								}
 							}
+							idx++;
 						}
-						idx++;
+						if (!insert) order.add(t);
 					}
-					if (!insert) order.add(t);
 				}
 			}
 		}
