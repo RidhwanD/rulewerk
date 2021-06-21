@@ -165,12 +165,6 @@ public class DatalogSynthesis {
 		return enList;
 	}
 	
-	public List<Rule> whyProv(PositiveLiteral t, List<Rule> Pplus){
-		logger.info("Investigate "+t);
-		// should return list of rules that produce term t.
-		return Pplus;
-	}
-	
 	public List<Rule> whyProvAlt(PositiveLiteral t, List<Rule> Pplus, List<Rule> Pmin) throws IOException {
 		List<Rule> code = Pplus;
 		int d = 2;
@@ -256,7 +250,6 @@ public class DatalogSynthesis {
 				d -= 1;
 			} else d *= 2;
 		}
-		System.out.println(Pplus);
 		return Pplus;
 	}
 	
@@ -391,7 +384,6 @@ public class DatalogSynthesis {
 			}
 			return disjVars;
 		} else {
-			System.out.println("TRUE");
 			return this.ctx.mkTrue();
 		}
 	}
@@ -594,6 +586,7 @@ public class DatalogSynthesis {
 								wp++; newWhys++;
 								System.out.println("- "+wp+" call of why-provenance");
 								phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvAlt(t, pPlus)));
+//								phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProv(t, pPlus)));
 //								phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvAlt(t, pPlus, pMin)));
 								logger.info("=============== Why Provenance End ================");
 							}
@@ -609,6 +602,7 @@ public class DatalogSynthesis {
 							wp++; newWhys++;
 							System.out.println("- "+wp+" call of why-provenance");
 							phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvAlt(f, pPlus)));
+//							phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProv(f, pPlus)));
 //							phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvAlt(f, pPlus, pMin)));
 							logger.info("=============== Why Provenance End ================");
 						}
@@ -662,7 +656,6 @@ public class DatalogSynthesis {
 	
 	public List<Statement> transformToS() {
 		Set<Predicate> edb = getEDB();
-		Set<Predicate> idb = getIDB();
 		List<Statement> result = new ArrayList<>();
 		for (Rule r : this.ruleSet) {
 			Conjunction<PositiveLiteral> head = r.getHead();
@@ -673,7 +666,7 @@ public class DatalogSynthesis {
 			newBody.add(Expressions.makePositiveLiteral("Rule", cr));
 			int newVar = 0;
 			for (Literal l : body) {
-				if (idb.contains(l.getPredicate())) {
+				if (!edb.contains(l.getPredicate())) {
 					SetVariable v = Expressions.makeSetVariable("U"+newVar);
 					List<Term> newArgs = new ArrayList<>(l.getArguments());
 					newArgs.add(v);
@@ -681,7 +674,7 @@ public class DatalogSynthesis {
 					newBody.add(newL);
 					setVs.add(v);
 					newVar++;
-				} else if (edb.contains(l.getPredicate())) {
+				} else {
 					newBody.add(l);
 				}
 			}
@@ -703,6 +696,73 @@ public class DatalogSynthesis {
 			result.add(Expressions.makeRule(
 					Expressions.makePositiveConjunction(newHead), 
 					Expressions.makeConjunction(newBody)));
+		}
+		return result;
+	}
+	
+	public List<Statement> getSFromPlus(List<Rule> Pplus) {
+		List<Statement> sFromPlus = new ArrayList<>();
+		for (Rule r : Pplus) {
+			sFromPlus.add(this.ruleSetS.get(this.ruleSet.indexOf(r)));
+			sFromPlus.add(Expressions.makeFact("Rule", Expressions.makeAbstractConstant("cr"+this.ruleSet.indexOf(r))));
+		}
+		return sFromPlus;
+	}
+	
+	public BoolExpr whyProvExpr(Set<List<Term>> Sterms) {
+		if (Sterms.size() > 0) {
+			BoolExpr outerConjunct = this.ctx.mkTrue();
+			for (List<Term> terms : Sterms) {
+				BoolExpr conjVars = ctx.mkBoolConst("vr_"+terms.get(0).getName().substring(2));
+				if (terms.size() > 1) {
+					for (Term t : terms.subList(1, terms.size())) {
+						conjVars = this.ctx.mkAnd(conjVars, ctx.mkBoolConst("vr_"+t.getName().substring(2)));
+					}
+				}
+				BoolExpr negConjVars = this.ctx.mkNot(conjVars);
+				if (Sterms.size() > 1)
+					outerConjunct = this.ctx.mkAnd(outerConjunct, negConjVars);
+				else
+					outerConjunct = negConjVars;
+			}
+			return outerConjunct;
+		} else return this.ctx.mkTrue();
+	}
+	
+	public Set<List<Term>> whyProv(PositiveLiteral t, List<Rule> Pplus) throws IOException{
+		logger.info("Investigate "+t);
+		KnowledgeBase kb = new KnowledgeBase();
+		kb.addStatements(this.inputTuple);
+		kb.addStatements(DatalogSetUtils.getR_SU());
+		for (Statement s : this.getSFromPlus(Pplus)) {
+			if (s instanceof Rule) {
+				for (Statement st : DatalogSetUtils.transform(s))
+					kb.addStatements(st);
+			} else {
+				kb.addStatements(s);
+			}
+		}
+		List<Term> vars = new ArrayList<>();
+		for (int i = 0; i < t.getArguments().size()+2; i++) {
+			vars.add(Expressions.makeUniversalVariable("v"+i));
+		}
+		Rule query = Expressions.makeRule(Expressions.makePositiveLiteral("Ans", vars), 
+				Expressions.makePositiveLiteral(t.getPredicate().getName(), vars.subList(0, vars.size()-1)), 
+				Expressions.makePositiveLiteral("in", vars.get(vars.size()-1), vars.get(vars.size()-2)));
+		kb.addStatement(query);
+		
+		Set<List<Term>> result = new HashSet<>(); 
+		try (final Reasoner reasoner = new VLogReasoner(kb)) {
+			this.rulewerkCall++;
+			reasoner.reason();
+			List<Term> newTerm = new ArrayList<>(t.getArguments());
+			newTerm.add(vars.get(vars.size()-2));
+			newTerm.add(vars.get(vars.size()-1));
+			PositiveLiteral l = Expressions.makePositiveLiteral("Ans", newTerm);
+			Map<Term,List<Term>> res = ReasoningUtils.getAllDifferentSets(l, reasoner);
+			for (Term key : res.keySet()) {
+				result.add(res.get(key));
+			}
 		}
 		return result;
 	}

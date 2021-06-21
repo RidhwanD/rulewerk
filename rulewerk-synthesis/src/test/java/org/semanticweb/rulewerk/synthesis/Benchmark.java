@@ -17,7 +17,7 @@ import com.microsoft.z3.Context;
 public class Benchmark {
 	public static void main(String[] arg) throws IOException, ParsingException {
 		boolean write = false;
-		String benchCase = "path";
+		String benchCase = "abduce";
 		String size = "small";
 		System.out.println(benchCase);
 		System.out.println("Parse Input");

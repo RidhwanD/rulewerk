@@ -23,7 +23,10 @@ package org.semanticweb.rulewerk.synthesis;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
@@ -83,6 +86,28 @@ public final class ReasoningUtils {
 			throw new RuntimeException(e);
 		}
 		System.out.println();
+	}
+	
+	/**
+	 * Prints out the answers given by {@code reasoner} to the query
+	 * ({@code queryAtom}).
+	 *
+	 * @param queryAtom query to be answered
+	 * @param reasoner  reasoner to query on
+	 */
+	public static Map<Term, List<Term>> getAllDifferentSets(final PositiveLiteral queryAtom, final Reasoner reasoner) {
+		Map<Term, List<Term>> result = new HashMap<>();
+		try (final QueryResultIterator answers = reasoner.answerQuery(queryAtom, true)) {
+			while (answers.hasNext()) {
+				List<Term> ans = answers.next().getTerms();
+				if (result.containsKey(ans.get(ans.size()-2))) {
+					result.get(ans.get(ans.size()-2)).add(ans.get(ans.size()-1));
+				} else {
+					result.put(ans.get(ans.size()-2), new ArrayList<Term>(Arrays.asList(ans.get(ans.size()-1))));
+				}
+			}
+		}
+		return result;
 	}
 
 	/**
