@@ -16,7 +16,8 @@ import com.microsoft.z3.Context;
 
 public class Benchmark {
 	public static void main(String[] arg) throws IOException, ParsingException {
-		String benchCase = "polysite";
+		boolean write = false;
+		String benchCase = "path";
 		String size = "small";
 		System.out.println(benchCase);
 		System.out.println("Parse Input");
@@ -77,31 +78,40 @@ public class Benchmark {
 		
 		System.out.println("Synthesis Process Started");
 		DatalogSynthesis ds = new DatalogSynthesis(inputTuple, outputTupleP, outputTupleM, rules, ctx);
+		
 		long startTime = System.nanoTime();
 		List<Rule> result = ds.synthesis();
 		long endTime = System.nanoTime();
 		System.out.println("Resulting Program:");
 		long duration = (endTime - startTime);
-		try {
-			FileWriter myWriter = new FileWriter(ReasoningUtils.INPUT_FOLDER + benchCase + "/rulewerk-result.txt");
-			FileWriter myWriter2 = new FileWriter(ReasoningUtils.INPUT_FOLDER + benchCase + "/rulewerk-log.txt");
+		if (write) {
+			try {
+				FileWriter myWriter = new FileWriter(ReasoningUtils.INPUT_FOLDER + benchCase + "/rulewerk-result.txt");
+				FileWriter myWriter2 = new FileWriter(ReasoningUtils.INPUT_FOLDER + benchCase + "/rulewerk-log.txt");
+				if (result != null) {
+					for (Rule r : result) {
+						System.out.println("- "+r);
+						myWriter.write(r.toString()+"\n");
+					}
+				}
+				myWriter2.write(String.valueOf(duration)+"\n");
+				myWriter2.write(String.valueOf(ds.getIteration())+"\n");
+				myWriter2.write(String.valueOf(ds.getRulewerkCall())+"\n");
+				myWriter2.write(String.valueOf(ds.getZ3Call())+"\n");
+				myWriter.close();
+				myWriter2.close();
+				System.out.println("Successfully wrote to the file.");
+			} 
+			catch (IOException e) {
+				System.out.println("An error occurred.");
+				e.printStackTrace();
+			}
+		} else {
 			if (result != null) {
 				for (Rule r : result) {
 					System.out.println("- "+r);
-					myWriter.write(r.toString()+"\n");
 				}
 			}
-			myWriter2.write(String.valueOf(duration)+"\n");
-			myWriter2.write(String.valueOf(ds.getIteration())+"\n");
-			myWriter2.write(String.valueOf(ds.getRulewerkCall())+"\n");
-			myWriter2.write(String.valueOf(ds.getZ3Call())+"\n");
-			myWriter.close();
-			myWriter2.close();
-			System.out.println("Successfully wrote to the file.");
-		} 
-		catch (IOException e) {
-			System.out.println("An error occurred.");
-			e.printStackTrace();
 		}
 		ctx.close();
 		System.out.println("Synthesis time: "+duration+ " ns / "+(duration/1000000)+" ms");

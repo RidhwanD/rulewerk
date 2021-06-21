@@ -18,6 +18,8 @@ import org.semanticweb.rulewerk.core.model.api.Literal;
 import org.semanticweb.rulewerk.core.model.api.PositiveLiteral;
 import org.semanticweb.rulewerk.core.model.api.Predicate;
 import org.semanticweb.rulewerk.core.model.api.Rule;
+import org.semanticweb.rulewerk.core.model.api.SetTerm;
+import org.semanticweb.rulewerk.core.model.api.SetVariable;
 import org.semanticweb.rulewerk.core.model.api.Statement;
 import org.semanticweb.rulewerk.core.model.api.Term;
 import org.semanticweb.rulewerk.core.model.api.UniversalVariable;
@@ -34,6 +36,7 @@ public class DatalogSynthesis {
 	private List<Fact> outputNTuple;
 	private List<Rule> ruleSet;
 	private List<Statement> ruleSetExistNeg;
+	private List<Statement> ruleSetS;
 	private Map<BoolExpr, Rule> var2rule;
 	private Map<Rule, BoolExpr> rule2var;
 	private Context ctx;
@@ -49,6 +52,7 @@ public class DatalogSynthesis {
 		this.outputNTuple = outputNTuple;
 		this.ruleSet = ruleSet;
 		this.ruleSetExistNeg = this.getExistNeg(ruleSet);
+		this.ruleSetS = transformToS();
 		this.ctx = ctx;
 		var2rule = new HashMap<BoolExpr, Rule>();
 		rule2var = new HashMap<Rule, BoolExpr>();
@@ -66,6 +70,10 @@ public class DatalogSynthesis {
 	
 	public int getIteration() {
 		return this.iteration;
+	}
+	
+	public List<Statement> getS() {
+		return this.ruleSetS;
 	}
 	
 	private void setVarRuleMapping(List<Rule> ruleSet) {
@@ -632,5 +640,70 @@ public class DatalogSynthesis {
 			System.out.println("Cannot find solution.");
 			return null;
 		}
+	}
+	
+	// Testing the Provenance via Datalog(S)
+	
+	public Set<Predicate> getEDB() {
+		Set<Predicate> edb = new HashSet<>();
+		for (Literal l : this.inputTuple) {
+			edb.add(l.getPredicate());
+		}
+		return edb;
+	}
+	
+	public Set<Predicate> getIDB() {
+		Set<Predicate> idb = new HashSet<>();
+		for (Literal l : this.outputPTuple) {
+			idb.add(l.getPredicate());
+		}
+		return idb;
+	}
+	
+	public List<Statement> transformToS() {
+		Set<Predicate> edb = getEDB();
+		Set<Predicate> idb = getIDB();
+		List<Statement> result = new ArrayList<>();
+		for (Rule r : this.ruleSet) {
+			Conjunction<PositiveLiteral> head = r.getHead();
+			Conjunction<Literal> body = r.getBody();
+			List<SetVariable> setVs = new ArrayList<>();
+			List<Literal> newBody = new ArrayList<>();
+			Term cr = Expressions.makeAbstractConstant("cr"+this.ruleSet.indexOf(r));
+			newBody.add(Expressions.makePositiveLiteral("Rule", cr));
+			int newVar = 0;
+			for (Literal l : body) {
+				if (idb.contains(l.getPredicate())) {
+					SetVariable v = Expressions.makeSetVariable("U"+newVar);
+					List<Term> newArgs = new ArrayList<>(l.getArguments());
+					newArgs.add(v);
+					Literal newL = Expressions.makePositiveLiteral(l.getPredicate().getName(), newArgs);
+					newBody.add(newL);
+					setVs.add(v);
+					newVar++;
+				} else if (edb.contains(l.getPredicate())) {
+					newBody.add(l);
+				}
+			}
+			SetTerm scr = Expressions.makeSetConstruct(cr);
+			SetTerm hTerm = scr;
+			if (setVs.size() > 0) {
+				hTerm = Expressions.makeSetUnion(scr, setVs.get(0));
+				for (int idx = 1; idx < setVs.size(); idx++) {
+					hTerm = Expressions.makeSetUnion(hTerm, setVs.get(idx));
+				}
+			}
+			List<PositiveLiteral> newHead = new ArrayList<>();
+			for (PositiveLiteral l : head) {
+				List<Term> newArgs = new ArrayList<>(l.getArguments());
+				newArgs.add(hTerm);
+				PositiveLiteral newL = Expressions.makePositiveLiteral(l.getPredicate().getName(), newArgs);
+				newHead.add(newL);
+			}
+			result.add(Expressions.makeRule(
+					Expressions.makePositiveConjunction(newHead), 
+					Expressions.makeConjunction(newBody)));
+		}
+		return result;
 	}
 }
