@@ -262,8 +262,12 @@ public class DatalogSynthesis {
 				}
 			}
 			BoolExpr negConjVars = this.ctx.mkNot(conjVars);
+			logger.info("Add "+negConjVars+" as why-provenance constraint");
 			return negConjVars;
-		} else return this.ctx.mkTrue();
+		} else {
+			logger.info("Add TRUE as why-provenance constraint");
+			return this.ctx.mkTrue();
+		}
 	}
 	
 	public static <T> List<List<T>> split(List<T> list, int numberOfParts) {
@@ -382,8 +386,10 @@ public class DatalogSynthesis {
 					disjVars = this.ctx.mkOr(disjVars, this.rule2var.get(r));
 				}
 			}
+			logger.info("Add "+disjVars+" as why-not-provenance constraint");
 			return disjVars;
 		} else {
+			logger.info("Add TRUE as why-not-provenance constraint");
 			return this.ctx.mkTrue();
 		}
 	}
@@ -448,8 +454,12 @@ public class DatalogSynthesis {
 				}
 			}
 			BoolExpr coprov = this.ctx.mkOr(disjVars, conjVars);
+			logger.info("Add "+coprov+" as co-provenance constraint");
 			return coprov;
-		} else return this.ctx.mkTrue();
+		} else {
+			logger.info("Add TRUE as co-provenance constraint");
+			return this.ctx.mkTrue();
+		}
 	}
 	
 	public List<Rule> derivePPlus(Model m) {
@@ -585,8 +595,8 @@ public class DatalogSynthesis {
 								logger.info("============= Perform Why Provenance ==============");
 								wp++; newWhys++;
 								System.out.println("- "+wp+" call of why-provenance");
-								phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvAlt(t, pPlus)));
-//								phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProv(t, pPlus)));
+//								phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvAlt(t, pPlus)));
+								phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProv(t, pPlus)));
 //								phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvAlt(t, pPlus, pMin)));
 								logger.info("=============== Why Provenance End ================");
 							}
@@ -601,8 +611,8 @@ public class DatalogSynthesis {
 							logger.info("============= Perform Why Provenance ==============");
 							wp++; newWhys++;
 							System.out.println("- "+wp+" call of why-provenance");
-							phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvAlt(f, pPlus)));
-//							phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProv(f, pPlus)));
+//							phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvAlt(f, pPlus)));
+							phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProv(f, pPlus)));
 //							phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvAlt(f, pPlus, pMin)));
 							logger.info("=============== Why Provenance End ================");
 						}
@@ -617,7 +627,10 @@ public class DatalogSynthesis {
 				List<Rule> pPlust = this.derivePPlus(result);
 				pMin = this.derivePMinus(result);
 				if (pPlust.size() == 0) loop = true;
-				if (pPlus.equals(pPlust)) loop = false;
+				if (pPlus.equals(pPlust)) {
+					System.out.println("REPEATED - Add as constraint"); // loop = false;
+					phi = this.ctx.mkAnd(phi, this.whyProvExpr(pPlust));
+				}
 				pPlus = pPlust;
 			}
 			System.out.println("Iteration "+iter+" complete.");
@@ -725,8 +738,12 @@ public class DatalogSynthesis {
 				else
 					outerConjunct = negConjVars;
 			}
+			logger.info("Add "+outerConjunct+" as why-provenance constraint");
 			return outerConjunct;
-		} else return this.ctx.mkTrue();
+		} else {
+			logger.info("Add TRUE as why-provenance constraint");
+			return this.ctx.mkTrue();
+		}
 	}
 	
 	public Set<List<Term>> whyProv(PositiveLiteral t, List<Rule> Pplus) throws IOException{
@@ -736,8 +753,8 @@ public class DatalogSynthesis {
 		kb.addStatements(DatalogSetUtils.getR_SU());
 		for (Statement s : this.getSFromPlus(Pplus)) {
 			if (s instanceof Rule) {
-				for (Statement st : DatalogSetUtils.transform(s))
-					kb.addStatements(st);
+				for (Rule st : DatalogSetUtils.transformRule((Rule) s))
+					kb.addStatements(DatalogSetUtils.simplify(st));
 			} else {
 				kb.addStatements(s);
 			}

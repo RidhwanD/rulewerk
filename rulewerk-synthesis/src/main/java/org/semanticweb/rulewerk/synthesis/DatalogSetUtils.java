@@ -368,4 +368,38 @@ public class DatalogSetUtils {
 		results.add(Expressions.makeRule(Expressions.makePositiveConjunction(head), Expressions.makeConjunction(newBody)));
 		return results;
 	}
+	
+	public static Rule simplify(Rule r) {
+		List<Term> headTerm = r.getHead().getTerms().collect(Collectors.toList());
+		Set<Term> relevantTerms = new HashSet<>(headTerm);
+		// Get all relevant terms.
+		for (Literal l : r.getBody()) {
+			List<Term> litTerm = l.getArguments();
+			boolean intersect = false;
+			for (Term t : headTerm) {
+				if (litTerm.contains(t)) {
+					intersect = true;
+					break;
+				}
+			}
+			if (intersect) {
+				relevantTerms.addAll(litTerm);
+			}
+		}
+		// Remove body that is not relevant.
+		List<Literal> newBody = new ArrayList<>();
+		for (Literal l : r.getBody()) {
+			boolean intersect = false;
+			for (Term t : l.getArguments()) {
+				if (relevantTerms.contains(t)) {
+					intersect = true;
+					break;
+				}
+			}
+			if (intersect || l.getPredicate().getName().equals("Rule")) {
+				newBody.add(l);
+			}
+		}
+		return Expressions.makeRule(r.getHead(), Expressions.makeConjunction(newBody));
+	}
 }

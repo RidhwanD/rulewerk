@@ -45,7 +45,6 @@ public class DatalogSetUtilsTest {
 		
 		SetConstruct sety = Expressions.makeSetConstruct(y);
 		SetConstruct setz = Expressions.makeSetConstruct(z);
-		SetUnion un1 = Expressions.makeSetUnion(sety, u);
 		SetUnion un2 = Expressions.makeSetUnion(setz, u);
 		
 		Predicate p = Expressions.makePredicate("parent", 2);
@@ -70,8 +69,8 @@ public class DatalogSetUtilsTest {
 		kb.addStatement(f7);
 
 		
-		Rule r1 = Expressions.makeRule(Expressions.makePositiveLiteral(an, x, y, un1), 
-				Expressions.makePositiveLiteral(p, x, y), Expressions.makePositiveLiteral("empty", u));
+		Rule r1 = Expressions.makeRule(Expressions.makePositiveLiteral(an, x, y, sety), 
+				Expressions.makePositiveLiteral(p, x, y));
 		Rule r2 = Expressions.makeRule(Expressions.makePositiveLiteral(an, x, z, un2), 
 				Expressions.makePositiveLiteral(an, x, y, u), Expressions.makePositiveLiteral(p, y, z));
 		
@@ -88,6 +87,7 @@ public class DatalogSetUtilsTest {
 		for (Rule rule : DatalogSetUtils.transformRule(r1)) {
 			kb.addStatement(rule);
 			System.out.println("- "+rule);
+			System.out.println("S "+DatalogSetUtils.simplify(rule));
 		}
 		
 		System.out.println();
@@ -99,6 +99,7 @@ public class DatalogSetUtilsTest {
 		for (Rule rule : DatalogSetUtils.transformRule(r2)) {
 			kb.addStatement(rule);
 			System.out.println("- "+rule);
+			System.out.println("S "+DatalogSetUtils.simplify(rule));
 		}
 		
 		kb.addStatement(Expressions.makeRule(Expressions.makePositiveLiteral("Ans", x, y), 

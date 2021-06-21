@@ -22,9 +22,6 @@ public class Test {
 		Variable x1 = Expressions.makeUniversalVariable("x1");
 		Variable x2 = Expressions.makeUniversalVariable("x2");
 		Variable x3 = Expressions.makeUniversalVariable("x3");
-		Variable x4 = Expressions.makeUniversalVariable("x4");
-		Variable x5 = Expressions.makeUniversalVariable("x5");
-		Variable x6 = Expressions.makeUniversalVariable("x6");
 
 		SetVariable u = Expressions.makeSetVariable("U");
 		SetVariable v = Expressions.makeSetVariable("V");
@@ -94,8 +91,10 @@ public class Test {
 		System.out.println(DatalogSetUtils.getOrder(nr2));
 		System.out.println("Result of transformation: ");
 		for (Rule rule : DatalogSetUtils.transformRule(nr2)) {
-			kb.addStatement(rule);
+//			kb.addStatement(rule);
+			kb.addStatement(DatalogSetUtils.simplify(rule));
 			System.out.println("- "+rule);
+			System.out.println("S "+DatalogSetUtils.simplify(rule));
 		}
 		
 		System.out.println();
@@ -105,8 +104,10 @@ public class Test {
 		System.out.println(DatalogSetUtils.getOrder(nr3));
 		System.out.println("Result of transformation: ");
 		for (Rule rule : DatalogSetUtils.transformRule(nr3)) {
-			kb.addStatement(rule);
+//			kb.addStatement(rule);
+			kb.addStatement(DatalogSetUtils.simplify(rule));
 			System.out.println("- "+rule);
+			System.out.println("S "+DatalogSetUtils.simplify(rule));
 		}
 		
 		kb.addStatement(f1);
@@ -120,18 +121,13 @@ public class Test {
 		kb.addStatement(Expressions.makeRule(Expressions.makePositiveLiteral("Ans", x0, x1, x2, x3), 
 				Expressions.makePositiveLiteral("ancestor", x0, x1, x3), Expressions.makePositiveLiteral("in", x2, x3)));
 		
-		kb.addStatement(Expressions.makeRule(Expressions.makePositiveLiteral("Ans2", x6, x3), 
-				Expressions.makePositiveLiteral("Rule", x6), 
-				Expressions.makePositiveLiteral("ancestor", x0, x1, x4), Expressions.makePositiveLiteral("ancestor", x1, x2, x5), 
-				Expressions.makePositiveLiteral("empty", x3)));
-		
 		try (final Reasoner reasoner = new VLogReasoner(kb)) {
 			reasoner.reason();
 			/* Execute some queries */
 			System.out.println("- Answering Query");
 			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral("Rule", x0), reasoner);
 			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral("ancestor", x0, x1, x2), reasoner);
-			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral("Ans", c1, c2, x2, x3), reasoner);
+			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral("Ans", c1, c4, x2, x3), reasoner);
 			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral("Ans2", x0, x1), reasoner);
 			ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral("in", x0, x1), reasoner);
 		}

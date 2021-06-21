@@ -96,6 +96,7 @@ public final class ReasoningUtils {
 	 * @param reasoner  reasoner to query on
 	 */
 	public static Map<Term, List<Term>> getAllDifferentSets(final PositiveLiteral queryAtom, final Reasoner reasoner) {
+		System.out.println("GET DIF SET");
 		Map<Term, List<Term>> result = new HashMap<>();
 		try (final QueryResultIterator answers = reasoner.answerQuery(queryAtom, true)) {
 			while (answers.hasNext()) {
@@ -105,6 +106,7 @@ public final class ReasoningUtils {
 				} else {
 					result.put(ans.get(ans.size()-2), new ArrayList<Term>(Arrays.asList(ans.get(ans.size()-1))));
 				}
+				System.out.println(ans);
 			}
 		}
 		return result;
