@@ -37,6 +37,7 @@ public class DatalogSynthesis {
 	private List<Rule> ruleSet;
 	private List<Statement> ruleSetExistNeg;
 	private List<Statement> ruleSetS;
+	private Map<Integer,Set<Rule>> ruleSetTrans;
 	private Map<BoolExpr, Rule> var2rule;
 	private Map<Rule, BoolExpr> rule2var;
 	private Context ctx;
@@ -52,10 +53,11 @@ public class DatalogSynthesis {
 		this.outputNTuple = outputNTuple;
 		this.ruleSet = ruleSet;
 		this.ruleSetExistNeg = this.getExistNeg(ruleSet);
+		this.ruleSetTrans = new HashMap<>();
 		this.ruleSetS = transformToS();
 		this.ctx = ctx;
-		var2rule = new HashMap<BoolExpr, Rule>();
-		rule2var = new HashMap<Rule, BoolExpr>();
+		this.var2rule = new HashMap<>();
+		this.rule2var = new HashMap<>();
 		this.setVarRuleMapping(ruleSet);
 		ReasoningUtils.configureLogging(); // use simple logger for the example
 	}
@@ -595,8 +597,8 @@ public class DatalogSynthesis {
 								logger.info("============= Perform Why Provenance ==============");
 								wp++; newWhys++;
 								System.out.println("- "+wp+" call of why-provenance");
-//								phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvAlt(t, pPlus)));
-								phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProv(t, pPlus)));
+								phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvAlt(t, pPlus)));
+//								phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProv(t, pPlus)));
 //								phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvAlt(t, pPlus, pMin)));
 								logger.info("=============== Why Provenance End ================");
 							}
@@ -611,8 +613,8 @@ public class DatalogSynthesis {
 							logger.info("============= Perform Why Provenance ==============");
 							wp++; newWhys++;
 							System.out.println("- "+wp+" call of why-provenance");
-//							phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvAlt(f, pPlus)));
-							phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProv(f, pPlus)));
+							phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvAlt(f, pPlus)));
+//							phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProv(f, pPlus)));
 //							phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvAlt(f, pPlus, pMin)));
 							logger.info("=============== Why Provenance End ================");
 						}
@@ -706,9 +708,15 @@ public class DatalogSynthesis {
 				PositiveLiteral newL = Expressions.makePositiveLiteral(l.getPredicate().getName(), newArgs);
 				newHead.add(newL);
 			}
-			result.add(Expressions.makeRule(
+			Rule newRule = Expressions.makeRule(
 					Expressions.makePositiveConjunction(newHead), 
-					Expressions.makeConjunction(newBody)));
+					Expressions.makeConjunction(newBody));
+			result.add(newRule);
+			Set<Rule> translation = new HashSet<>();
+			for (Rule rule : DatalogSetUtils.transformRule(newRule)) {
+				translation.add(DatalogSetUtils.simplify(rule));
+			}
+			this.ruleSetTrans.put(this.ruleSet.indexOf(r), translation);
 		}
 		return result;
 	}
@@ -753,8 +761,7 @@ public class DatalogSynthesis {
 		kb.addStatements(DatalogSetUtils.getR_SU());
 		for (Statement s : this.getSFromPlus(Pplus)) {
 			if (s instanceof Rule) {
-				for (Rule st : DatalogSetUtils.transformRule((Rule) s))
-					kb.addStatements(DatalogSetUtils.simplify(st));
+				kb.addStatements(this.ruleSetTrans.get(this.ruleSetS.indexOf(s)));
 			} else {
 				kb.addStatements(s);
 			}
