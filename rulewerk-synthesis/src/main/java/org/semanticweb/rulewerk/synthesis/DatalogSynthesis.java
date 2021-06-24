@@ -774,8 +774,8 @@ public class DatalogSynthesis {
 				Expressions.makePositiveLiteral(t.getPredicate().getName(), vars.subList(0, vars.size()-1)), 
 				Expressions.makePositiveLiteral("in", vars.get(vars.size()-1), vars.get(vars.size()-2)));
 		kb.addStatement(query);
-		
-		Set<List<Term>> result = new HashSet<>(); 
+		ReasoningUtils.printKB(kb);
+		Set<List<Term>> result = new HashSet<>();
 		try (final Reasoner reasoner = new VLogReasoner(kb)) {
 			this.rulewerkCall++;
 			reasoner.reason();
@@ -784,8 +784,18 @@ public class DatalogSynthesis {
 			newTerm.add(vars.get(vars.size()-1));
 			PositiveLiteral l = Expressions.makePositiveLiteral("Ans", newTerm);
 			Map<Term,List<Term>> res = ReasoningUtils.getAllDifferentSets(l, reasoner);
+			// Collect only minimal sets
 			for (Term key : res.keySet()) {
-				result.add(res.get(key));
+				Set<List<Term>> temp = new HashSet<>();
+				boolean put = true;
+				for (List<Term> terms : result) {
+					if (!terms.containsAll(res.get(key)))
+						temp.add(terms);
+					if (res.get(key).containsAll(terms))
+						put = false;
+				}
+				result = temp;
+				if (put) result.add(res.get(key));
 			}
 		}
 		return result;

@@ -36,10 +36,12 @@ import org.semanticweb.rulewerk.core.exceptions.ReasonerStateException;
 import org.semanticweb.rulewerk.core.model.api.Fact;
 import org.semanticweb.rulewerk.core.model.api.PositiveLiteral;
 import org.semanticweb.rulewerk.core.model.api.Predicate;
+import org.semanticweb.rulewerk.core.model.api.Statement;
 import org.semanticweb.rulewerk.core.model.api.Term;
 import org.semanticweb.rulewerk.core.model.api.Variable;
 import org.semanticweb.rulewerk.core.model.implementation.Expressions;
 import org.semanticweb.rulewerk.core.reasoner.Correctness;
+import org.semanticweb.rulewerk.core.reasoner.KnowledgeBase;
 import org.semanticweb.rulewerk.core.reasoner.LiteralQueryResultPrinter;
 import org.semanticweb.rulewerk.core.reasoner.QueryAnswerCount;
 import org.semanticweb.rulewerk.core.reasoner.QueryResultIterator;
@@ -233,5 +235,11 @@ public final class ReasoningUtils {
 
 		consoleAppender.activateOptions();
 		Logger.getRootLogger().addAppender(consoleAppender);
+	}
+	
+	public static void printKB(KnowledgeBase kb) {
+		for (Statement s : kb.getStatements()) {
+			System.out.println(s);
+		}
 	}
 }
