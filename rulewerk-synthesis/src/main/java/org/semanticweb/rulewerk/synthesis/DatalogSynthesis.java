@@ -80,7 +80,7 @@ public class DatalogSynthesis {
 	
 	private void setVarRuleMapping(List<Rule> ruleSet) {
 		// Formatting of boolean variable for r_i = vr_i
-		int idx = 1;
+		int idx = 0;
 		for (Rule r : ruleSet) {
 			BoolExpr v = ctx.mkBoolConst("vr_"+idx);
 			this.var2rule.put(v, r);
@@ -392,7 +392,7 @@ public class DatalogSynthesis {
 			return disjVars;
 		} else {
 			logger.info("Add TRUE as why-not-provenance constraint");
-			return this.ctx.mkTrue();
+			return this.ctx.mkFalse();
 		}
 	}
 	
@@ -597,8 +597,8 @@ public class DatalogSynthesis {
 								logger.info("============= Perform Why Provenance ==============");
 								wp++; newWhys++;
 								System.out.println("- "+wp+" call of why-provenance");
-								phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvAlt(t, pPlus)));
-//								phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProv(t, pPlus)));
+//								phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvAlt(t, pPlus)));
+								phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProv(t, pPlus)));
 //								phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvAlt(t, pPlus, pMin)));
 								logger.info("=============== Why Provenance End ================");
 							}
@@ -613,8 +613,8 @@ public class DatalogSynthesis {
 							logger.info("============= Perform Why Provenance ==============");
 							wp++; newWhys++;
 							System.out.println("- "+wp+" call of why-provenance");
-							phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvAlt(f, pPlus)));
-//							phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProv(f, pPlus)));
+//							phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvAlt(f, pPlus)));
+							phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProv(f, pPlus)));
 //							phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvAlt(f, pPlus, pMin)));
 							logger.info("=============== Why Provenance End ================");
 						}
@@ -630,7 +630,6 @@ public class DatalogSynthesis {
 				pMin = this.derivePMinus(result);
 				if (pPlust.size() == 0) loop = true;
 				if (pPlus.equals(pPlust)) {
-					System.out.println("REPEATED - Add as constraint"); // loop = false;
 					phi = this.ctx.mkAnd(phi, this.whyProvExpr(pPlust));
 				}
 				pPlus = pPlust;
@@ -774,9 +773,9 @@ public class DatalogSynthesis {
 				Expressions.makePositiveLiteral(t.getPredicate().getName(), vars.subList(0, vars.size()-1)), 
 				Expressions.makePositiveLiteral("in", vars.get(vars.size()-1), vars.get(vars.size()-2)));
 		kb.addStatement(query);
-		ReasoningUtils.printKB(kb);
 		Set<List<Term>> result = new HashSet<>();
 		try (final Reasoner reasoner = new VLogReasoner(kb)) {
+			reasoner.setReasoningTimeout(20);
 			this.rulewerkCall++;
 			reasoner.reason();
 			List<Term> newTerm = new ArrayList<>(t.getArguments());
