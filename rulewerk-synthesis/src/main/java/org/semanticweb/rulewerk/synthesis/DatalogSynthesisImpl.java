@@ -1,0 +1,642 @@
+package org.semanticweb.rulewerk.synthesis;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+import org.semanticweb.rulewerk.core.model.api.AbstractConstant;
+import org.semanticweb.rulewerk.core.model.api.Conjunction;
+import org.semanticweb.rulewerk.core.model.api.Fact;
+import org.semanticweb.rulewerk.core.model.api.Literal;
+import org.semanticweb.rulewerk.core.model.api.PositiveLiteral;
+import org.semanticweb.rulewerk.core.model.api.Predicate;
+import org.semanticweb.rulewerk.core.model.api.Rule;
+import org.semanticweb.rulewerk.core.model.api.SetTerm;
+import org.semanticweb.rulewerk.core.model.api.SetVariable;
+import org.semanticweb.rulewerk.core.model.api.Statement;
+import org.semanticweb.rulewerk.core.model.api.Term;
+import org.semanticweb.rulewerk.core.model.api.UniversalVariable;
+import org.semanticweb.rulewerk.core.model.api.Variable;
+import org.semanticweb.rulewerk.core.model.implementation.Expressions;
+import org.semanticweb.rulewerk.core.reasoner.KnowledgeBase;
+import org.semanticweb.rulewerk.core.reasoner.Reasoner;
+import org.semanticweb.rulewerk.reasoner.vlog.VLogReasoner;
+
+import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.BoolSort;
+import com.microsoft.z3.Context;
+import com.microsoft.z3.Expr;
+import com.microsoft.z3.Model;
+import com.microsoft.z3.Solver;
+import com.microsoft.z3.Status;
+
+public class DatalogSynthesisImpl {
+	private List<Fact> inputTuple;
+	private List<Predicate> expPred;
+	private List<Fact> outputPTuple;
+	private List<Fact> outputNTuple;
+	private List<Rule> ruleSet;
+	private List<Statement> ruleSetExistNeg;
+	private List<Statement> ruleSetS;
+	private Map<Integer,Set<Rule>> ruleSetTrans;
+	private Map<BoolExpr, Rule> var2rule;
+	private Map<Rule, BoolExpr> rule2var;
+	private Map<AbstractConstant, Rule> const2rule;
+	private Map<Rule, AbstractConstant> rule2const;
+	private Context ctx;
+	private boolean coprov = false;
+	private static final Logger logger = LogManager.getLogger("");
+	private int rulewerkCall = 0;
+	private int z3Call = 0;
+	private int iteration = 0;
+	
+	public DatalogSynthesisImpl(List<Fact> inputTuple, List<Predicate> expPred, List<Fact> outputPTuple, List<Fact> outputNTuple, List<Rule> ruleSet, Context ctx){
+		this.inputTuple = inputTuple;
+		this.expPred = expPred;
+		this.outputPTuple = outputPTuple;
+		this.outputNTuple = outputNTuple;
+		this.ruleSet = ruleSet;
+		if (coprov) {
+			this.ruleSetExistNeg = this.getExistNeg(ruleSet);
+			this.ruleSetTrans = new HashMap<>();
+		}
+		this.ruleSetS = transformToDatalogS();
+		this.ctx = ctx;
+		this.var2rule = new HashMap<>();
+		this.rule2var = new HashMap<>();
+		this.const2rule = new HashMap<>();
+		this.rule2const = new HashMap<>();
+		this.initMapping();
+		ReasoningUtils.configureLogging(); // use simple logger for the example
+	}
+	
+	public int getRulewerkCall() {
+		return this.rulewerkCall;
+	}
+	
+	public int getZ3Call() {
+		return this.z3Call;
+	}
+	
+	public int getIteration() {
+		return this.iteration;
+	}
+	
+	public Rule transformRule(Rule rule) {
+		Conjunction<PositiveLiteral> head = rule.getHead();
+		Conjunction<Literal> body = rule.getBody();
+		Variable var = Expressions.makeUniversalVariable("r1");
+		int i = 1;
+		while (rule.getVariables().anyMatch(var::equals)) {
+			i++;
+			var = Expressions.makeUniversalVariable("r"+String.valueOf(i));
+		}
+		List<PositiveLiteral> nh = new ArrayList<>();
+		for (PositiveLiteral pl : head) {
+			List<Term> args = new ArrayList<>();
+			for (Term t : pl.getArguments()){
+				args.add(t);
+			}
+			args.add(var);
+			PositiveLiteral newpl = Expressions.makePositiveLiteral(
+					Expressions.makePredicate(pl.getPredicate().getName()+"_en", pl.getPredicate().getArity()+1), args);
+			nh.add(newpl);
+		}
+		List<Literal> nb = new ArrayList<>();
+		for (Literal pl : body) {
+			List<Term> args = new ArrayList<>();
+			for (Term t : pl.getArguments()){
+				args.add(t);
+			}
+			args.add(var);
+			Literal newpl = Expressions.makePositiveLiteral(
+					Expressions.makePredicate(pl.getPredicate().getName()+"_en", pl.getPredicate().getArity()+1), args);
+			nb.add(newpl);
+		}
+		nb.add(Expressions.makeNegativeLiteral(
+				Expressions.makePredicate("Equal", 2), Arrays.asList(var, rule2const.get(rule))));
+		return Expressions.makeRule(Expressions.makeConjunction(nh), Expressions.makeConjunction(nb));
+	}
+	
+	public List<Rule> transformInput() {
+		List<Rule> enSimp = new ArrayList<>();
+		List<Predicate> storedPred = new  ArrayList<>();
+		final UniversalVariable z = Expressions.makeUniversalVariable("Z");
+		Predicate iRP = Expressions.makePredicate("isRulePred", 1);
+		for (Fact f : this.inputTuple) {
+			Predicate p = f.getPredicate();
+			if (!storedPred.contains(p)) {
+				storedPred.add(p);
+				Predicate newp = Expressions.makePredicate(p.getName()+"_en", p.getArity()+1);
+				List<Term> termP = new ArrayList<>();
+				List<Term> termnewP = new ArrayList<>();
+				for (int i = 0; i < p.getArity(); i++) {
+					UniversalVariable x = Expressions.makeUniversalVariable("X"+i);
+					termP.add(x);
+					termnewP.add(x);
+				}
+				termnewP.add(z);
+				Rule r = Expressions.makeRule(Expressions.makePositiveLiteral(newp, termnewP), 
+						Expressions.makePositiveLiteral(p, termP), Expressions.makePositiveLiteral(iRP, z));
+				enSimp.add(r);
+			}
+		}
+		return enSimp;
+	}
+	
+	public List<Statement> getExistNeg(List<Rule> Pplus){
+		List<Statement> enList = new ArrayList<Statement>();
+		for (Rule r : Pplus) {
+			enList.add(this.transformRule(r));
+			Predicate iRP = Expressions.makePredicate("isRulePred", 1);
+			enList.add(Expressions.makeFact(iRP, rule2const.get(r)));
+			Predicate eq = Expressions.makePredicate("Equal", 2);
+			enList.add(Expressions.makeFact(eq, rule2const.get(r), rule2const.get(r)));
+		}
+		enList.addAll(this.transformInput());
+		return enList;
+	}
+	
+	public List<Statement> transformToDatalogS() {
+		Set<Predicate> edb = getEDB();
+		List<Statement> result = new ArrayList<>();
+		for (Rule r : this.ruleSet) {
+			Conjunction<PositiveLiteral> head = r.getHead();
+			Conjunction<Literal> body = r.getBody();
+			List<SetVariable> setVs = new ArrayList<>();
+			List<Literal> newBody = new ArrayList<>();
+			Term cr = this.rule2const.get(r);
+			newBody.add(Expressions.makePositiveLiteral("Rule", cr));
+			int newVar = 0;
+			for (Literal l : body) {
+				if (!edb.contains(l.getPredicate())) {
+					SetVariable v = Expressions.makeSetVariable("U"+newVar);
+					List<Term> newArgs = new ArrayList<>(l.getArguments());
+					newArgs.add(v);
+					Literal newL = Expressions.makePositiveLiteral(l.getPredicate().getName(), newArgs);
+					newBody.add(newL);
+					setVs.add(v);
+					newVar++;
+				} else {
+					newBody.add(l);
+				}
+			}
+			SetTerm scr = Expressions.makeSetConstruct(cr);
+			SetTerm hTerm = scr;
+			if (setVs.size() > 0) {
+				hTerm = Expressions.makeSetUnion(scr, setVs.get(0));
+				for (int idx = 1; idx < setVs.size(); idx++) {
+					hTerm = Expressions.makeSetUnion(hTerm, setVs.get(idx));
+				}
+			}
+			List<PositiveLiteral> newHead = new ArrayList<>();
+			for (PositiveLiteral l : head) {
+				List<Term> newArgs = new ArrayList<>(l.getArguments());
+				newArgs.add(hTerm);
+				PositiveLiteral newL = Expressions.makePositiveLiteral(l.getPredicate().getName(), newArgs);
+				newHead.add(newL);
+			}
+			Rule newRule = Expressions.makeRule(
+					Expressions.makePositiveConjunction(newHead),
+					Expressions.makeConjunction(newBody));
+			result.add(newRule);
+			Set<Rule> translation = new HashSet<>();
+			for (Rule rule : DatalogSetUtils.transformRule(newRule)) {
+				translation.add(DatalogSetUtils.simplify(rule));
+			}
+			this.ruleSetTrans.put(this.ruleSet.indexOf(r), translation);
+		}
+		return result;
+	}
+	
+	// ================================================ UTILITIES ================================================== //
+		
+	private void initMapping() {
+		// Format of boolean variable for r_i = vr_i
+		// Format of constant for r_i = cr_i
+		int idx = 0;
+		for (Rule r : this.ruleSet) {
+			BoolExpr v = ctx.mkBoolConst("vr_"+idx);
+			AbstractConstant c = Expressions.makeAbstractConstant("cr_"+idx); 
+			this.var2rule.put(v, r);
+			this.rule2var.put(r, v);
+			this.const2rule.put(c, r);
+			this.rule2const.put(r, c);
+			idx++;
+		}
+	}
+	
+	public BoolExpr initPhi() {
+		List<BoolExpr> rules = new ArrayList<>(this.var2rule.keySet());
+		BoolExpr disjVars = rules.get(0);
+		if (rules.size() > 1) {
+			for (BoolExpr b : rules) {
+				disjVars = this.ctx.mkOr(disjVars, b);
+			}
+		}
+		return disjVars;
+	}
+	
+	private Set<Predicate> getEDB() {
+		Set<Predicate> edb = new HashSet<>();
+		for (Literal l : this.inputTuple) {
+			edb.add(l.getPredicate());
+		}
+		return edb;
+	}
+	
+	private static <T> List<List<T>> split(List<T> list, int numberOfParts) {
+		List<List<T>> numberOfPartss = new ArrayList<>(numberOfParts);
+		int size = list.size();
+		int sizePernumberOfParts = (int) Math.ceil(((double) size) / numberOfParts);
+		int leftElements = size;
+		int i = 0;
+		while (i < size && numberOfParts != 0) {
+			numberOfPartss.add(list.subList(i, i + sizePernumberOfParts));
+			i = i + sizePernumberOfParts;
+			leftElements = leftElements - sizePernumberOfParts;
+			sizePernumberOfParts = (int) Math.ceil(((double) leftElements) / --numberOfParts);
+		}
+		return numberOfPartss;
+	}
+	
+	private PositiveLiteral produceQuery(Predicate p) {
+		List<Term> vars = new ArrayList<>();
+		for (int i = 0; i < p.getArity(); i++) {
+			vars.add(Expressions.makeUniversalVariable("X"+i));
+		}
+		return Expressions.makePositiveLiteral(p, vars);
+	}
+	
+	// ============================================== WHY PROVENANCE =============================================== //
+	
+	public List<Rule> whyProvDelta(PositiveLiteral t, List<Rule> Pplus) throws IOException{
+		logger.info("Investigate "+t);
+		// Alternative of why provenance  the delta debugging here
+		int d = 2;
+		while (d <= Pplus.size()) {
+			List<List<Rule>> partition = split(Pplus, d);
+			logger.debug("Partition: "+partition);
+			boolean deltaBuggy = false; boolean revDeltaBuggy = false;
+			int idx = 0; int idxSaved = 0;
+			while (idx < partition.size() && !deltaBuggy) {
+				KnowledgeBase kb = new KnowledgeBase();
+				kb.addStatements(partition.get(idx));
+				kb.addStatements(this.inputTuple);
+				try (final Reasoner reasoner = new VLogReasoner(kb)) {
+					this.rulewerkCall++;
+					reasoner.reason();
+					if (ReasoningUtils.isDerived(t, reasoner) == 1) {
+						deltaBuggy = true;
+					}
+				}
+				if (!deltaBuggy) {
+					KnowledgeBase kb2 = new KnowledgeBase();
+					List<Rule> revDelta = new ArrayList<Rule>(Pplus);
+					revDelta.removeAll(partition.get(idx));
+					kb2.addStatements(revDelta);
+					kb2.addStatements(this.inputTuple);
+					try (final Reasoner reasoner2 = new VLogReasoner(kb2)) {
+						this.rulewerkCall++;
+						reasoner2.reason();
+						long generate = ReasoningUtils.isDerived(t, reasoner2);
+						if (generate == 1) {
+							revDeltaBuggy = true;
+							idxSaved = idx;
+						}
+					}
+				}
+				idx += 1;
+			}
+			if (deltaBuggy) {
+				Pplus = partition.get(idx - 1);
+				d = 2;
+			} else if (revDeltaBuggy) {
+				List<Rule> revDelta = new ArrayList<Rule>(Pplus);
+				revDelta.removeAll(partition.get(idxSaved));
+				Pplus = revDelta;
+				d -= 1;
+			} else d *= 2;
+		}
+		return Pplus;
+	}
+	
+	public BoolExpr whyProvExpr(List<Rule> wp) {
+		if (wp.size() > 0) {
+			BoolExpr conjVars = this.rule2var.get(wp.get(0));
+			if (wp.size() > 1) {
+				for (Rule r : wp.subList(1, wp.size())) {
+					conjVars = this.ctx.mkAnd(conjVars, this.rule2var.get(r));
+				}
+			}
+			BoolExpr negConjVars = this.ctx.mkNot(conjVars);
+			logger.info("Add "+negConjVars+" as why-provenance constraint");
+			return negConjVars;
+		} else {
+			logger.info("Add TRUE as why-provenance constraint");
+			return this.ctx.mkTrue();
+		}
+	}
+	
+	// ============================================== WHY-NOT PROVENANCE =============================================== //
+	
+	public List<Rule> whyNotProv(PositiveLiteral t, List<Rule> Pplus) throws IOException{
+		logger.info("Investigate "+t);
+		// Use the delta debugging here
+		List<Rule> Pmin = new ArrayList<>(this.ruleSet);
+		Pmin.removeAll(Pplus);
+		int d = 2;
+		while (d <= Pmin.size()) {
+			List<List<Rule>> partition = split(Pmin, d);
+			logger.debug("Partition: "+partition);
+			boolean deltabuggy = false; boolean revdeltabuggy = false;
+			int idx = 0; int idrbuggy = 0;
+			while (idx < partition.size() && !deltabuggy) {
+				KnowledgeBase kb = new KnowledgeBase();
+				List<Rule> deltaBuggy = new ArrayList<Rule>(this.ruleSet);
+				deltaBuggy.removeAll(partition.get(idx));
+				kb.addStatements(deltaBuggy);
+				kb.addStatements(this.inputTuple);
+				try (final Reasoner reasoner = new VLogReasoner(kb)) {
+					this.rulewerkCall++;
+					reasoner.reason();
+					long generate = ReasoningUtils.isDerived(t, reasoner);
+					if (generate == 0) {
+						deltabuggy = true;
+					}
+				}
+				KnowledgeBase kb2 = new KnowledgeBase();
+				List<Rule> revDeltaBuggy = new ArrayList<Rule>(Pplus);
+				revDeltaBuggy.addAll(partition.get(idx));
+				kb2.addStatements(revDeltaBuggy);
+				kb2.addStatements(this.inputTuple);
+				try (final Reasoner reasoner2 = new VLogReasoner(kb2)) {
+					this.rulewerkCall++;
+					reasoner2.reason();
+					long generate = ReasoningUtils.isDerived(t, reasoner2);
+					if (generate == 0) {
+						revdeltabuggy = true;
+						idrbuggy = idx;
+					}
+				}
+				idx += 1;
+			}
+			if (deltabuggy) {
+				Pmin = partition.get(idx - 1);
+				d = 2;
+			} else if (revdeltabuggy) {
+				List<Rule> revDelta = new ArrayList<Rule>(Pmin);
+				revDelta.removeAll(partition.get(idrbuggy));
+				Pmin = revDelta;
+				d -= 1;
+			} else {
+				d *= 2;
+			}
+		}
+		
+		return Pmin;
+	}
+	
+	public BoolExpr whyNotProvExpr(List<Rule> wnp) {
+		if (wnp.size() > 0) {
+			BoolExpr disjVars = this.rule2var.get(wnp.get(0));
+			if (wnp.size() > 1) {
+				for (Rule r : wnp.subList(1, wnp.size())) {
+					disjVars = this.ctx.mkOr(disjVars, this.rule2var.get(r));
+				}
+			}
+			logger.info("Add "+disjVars+" as why-not-provenance constraint");
+			return disjVars;
+		} else {
+			logger.info("Add TRUE as why-not-provenance constraint");
+			return this.ctx.mkFalse();
+		}
+	}
+	
+	// ============================================== CO-PROVENANCE =============================================== // 
+	
+	public List<Statement> getRelevantExistNeg(List<Rule> Pplus) {
+		List<Statement> rel = new ArrayList<Statement>();
+		for (Rule r : Pplus) {
+			rel.add(this.ruleSetExistNeg.get(this.ruleSet.indexOf(r)));
+		}
+		return rel;
+	}
+	
+	public List<Rule> coprovInv(Fact t, List<Rule>Pplus) {
+		logger.info("Investigate "+t);
+		List<Statement> enRules = this.getRelevantExistNeg(Pplus);
+		for (Statement r : enRules) {
+			logger.debug(r);
+		}
+		List<Rule> coprovIn = new ArrayList<Rule>();
+		Predicate p = t.getPredicate();
+		for (Rule r: Pplus) {
+			List<Term> args = new ArrayList<Term>();
+			for (Term term : t.getArguments()){
+				args.add(term);
+			}
+			args.add(rule2const.get(r));
+			Predicate newp = Expressions.makePredicate(p.getName()+"_en", p.getArity()+1);
+			Fact newt = Expressions.makeFact(newp, args);
+			KnowledgeBase kb = new KnowledgeBase();
+			kb.addStatements(enRules);
+			kb.addStatements(this.inputTuple);
+			try (final Reasoner reasoner = new VLogReasoner(kb)) {
+				this.rulewerkCall++;
+				reasoner.reason();
+				long generate = ReasoningUtils.isDerived(newt, reasoner);
+				if (generate == 1) coprovIn.add(r);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		List<Rule> coprov = new ArrayList<Rule>();
+		for (Rule r : Pplus) {
+			if (!coprovIn.contains(r)) {
+				coprov.add(r);
+			}
+		}
+		return coprov;
+	}
+	
+	public BoolExpr whyNotCoProvExpr(List<Rule> pPlus, List<Rule> cpr) {
+		if (cpr.size() > 0) {
+			List<Rule> Pmin = new ArrayList<>(this.ruleSet);
+			Pmin.removeAll(pPlus);
+			BoolExpr disjVars = this.rule2var.get(Pmin.get(0));
+			if (Pmin.size() > 1) {
+				for (Rule r : Pmin.subList(1, Pmin.size())) {
+					disjVars = this.ctx.mkOr(disjVars, this.rule2var.get(r));
+				}
+			}
+			BoolExpr conjVars = this.rule2var.get(cpr.get(0));
+			if (cpr.size() > 1) {
+				for (Rule r : cpr.subList(1, cpr.size())) {
+					conjVars = this.ctx.mkAnd(conjVars, this.rule2var.get(r));
+				}
+			}
+			BoolExpr coprov = this.ctx.mkOr(disjVars, conjVars);
+			logger.info("Add "+coprov+" as co-provenance constraint");
+			return coprov;
+		} else {
+			logger.info("Add TRUE as co-provenance constraint");
+			return this.ctx.mkTrue();
+		}
+	}
+	
+	// =========================================== Z3 Utility ============================================ //
+	
+	public List<Rule> derivePPlus(Model m) {
+		List<Rule> pPlus = new ArrayList<Rule>();
+		for (Rule r : this.ruleSet) {
+			Expr<BoolSort> truth = m.getConstInterp(this.rule2var.get(r));
+			if (truth != null && truth.isTrue()) {
+				pPlus.add(r);
+			}
+		}
+		return pPlus;
+	}
+	
+	public Model consultSATSolver(BoolExpr expr) {
+		this.z3Call++;
+		Solver s = this.ctx.mkSolver();
+		s.add(expr);
+		Status result = s.check();
+		if (result == Status.SATISFIABLE){
+			logger.info("Model for: "+expr.toString());  
+			logger.info(s.getModel());
+			return s.getModel();
+		} else if(result == Status.UNSATISFIABLE)
+			logger.info("UNSAT");
+		else
+			logger.info("UNKNOWN");
+		return null;
+	}
+	
+	// =========================================== Synthesis Process ======================================== //
+	
+	public List<Fact> getNonExpectedResults(Reasoner reasoner) {
+		List<Fact> NOutput = new ArrayList<Fact>();
+		for (Predicate p : this.expPred) {
+			for (Fact f :ReasoningUtils.getQueryAnswerAsListWhyProv(produceQuery(p), reasoner)) {
+				if (!this.outputPTuple.contains(f)) NOutput.add(f);
+			}
+		}
+		return NOutput;
+	}
+	
+	public List<Fact> getNonExpectedResultsDecl(Reasoner reasoner) {
+		List<Fact> NOutput = new ArrayList<Fact>();
+		for (Fact t : this.outputNTuple) {
+			if (ReasoningUtils.isDerived(t, reasoner) == 1) {
+				NOutput.add(t);
+			}
+		}
+		return NOutput;
+	}
+	
+	public List<Fact> getNonGeneratedResults(Reasoner reasoner) {
+		List<Fact> YOutput = new ArrayList<Fact>();
+		for (Predicate p : this.expPred) {
+			List<Fact> ROutput = ReasoningUtils.getQueryAnswerAsListWhyProv(produceQuery(p), reasoner);
+			for (Fact f : this.outputPTuple) {
+				if (!ROutput.contains(f)) YOutput.add(f);
+			}
+		}
+		return YOutput;
+	}
+	
+	public List<Rule> synthesis() {
+		this.rulewerkCall = 0; this.z3Call = 0; this.iteration = 0;
+		int wp = 0; int wnp = 0; int cp = 0;
+		BoolExpr phi = initPhi();
+		List<Rule> pPlus = new ArrayList<Rule>();
+		Model result = this.consultSATSolver(phi);
+		boolean loop = true; int iter = 0;
+		while (result != null && loop) {
+			iter++;
+			loop = false;
+			logger.debug("P+:");
+			for (Rule r:pPlus)
+				logger.debug("- "+r);
+			KnowledgeBase kb = new KnowledgeBase();
+			kb.addStatements(pPlus);
+			kb.addStatements(this.inputTuple);
+			try (final Reasoner reasoner = new VLogReasoner(kb)) {
+				reasoner.reason();
+				List<Fact> ngr = getNonGeneratedResults(reasoner);
+				for (Fact t : ngr) {
+					long generate = ReasoningUtils.isDerived(t, reasoner);
+					if (generate == 0) {
+						loop = true;
+						if (pPlus.size() < this.ruleSet.size()) {
+							logger.info("============= Perform Why Not Provenance ==============");
+							wnp++;
+							System.out.println("- "+wnp+" call of why-not-provenance");
+							phi = this.ctx.mkAnd(phi, this.whyNotProvExpr(this.whyNotProv(t, pPlus)));
+							logger.info("=============== Why Not Provenance End ================");
+							break;
+						}
+					} else if (generate == 1) {
+						if (this.coprov) {
+							if (pPlus.size() < this.ruleSet.size() && pPlus.size() > 0) {
+								logger.info("============= Perform Co-Provenance ==============");
+								cp++;
+								System.out.println("- "+cp+" call of co-provenance");
+								phi = this.ctx.mkAnd(phi, this.whyNotCoProvExpr(pPlus, this.coprovInv(t, pPlus)));
+								logger.info("=============== Co-Provenance End ================");
+							}
+						}
+					}
+				}
+				List<Fact> nonExpectedTuples = new ArrayList<>();
+				if (this.outputNTuple.size() > 0) {
+					nonExpectedTuples = this.getNonExpectedResultsDecl(reasoner);
+				} else {
+					nonExpectedTuples = this.getNonExpectedResults(reasoner);
+				}
+				int newWhys = 0;
+				for (Fact f : nonExpectedTuples) {
+					loop = true;
+					if (pPlus.size() > 0) {
+						logger.info("============= Perform Why Provenance ==============");
+						wp++; newWhys++;
+						System.out.println("- "+wp+" call of why-provenance");
+						phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvDelta(f, pPlus)));
+						logger.info("=============== Why Provenance End ================");
+					}
+					if (newWhys > 0) break;
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			result = this.consultSATSolver(phi);
+			if (result != null) {
+				pPlus = this.derivePPlus(result);
+				if (pPlus.size() == 0) loop = true;
+			}
+			System.out.println("Iteration "+iter+" complete.");
+			System.out.println("Made "+this.z3Call+" calls to Z3 and "+this.rulewerkCall+" calls to Rulewerk.");
+		}
+		this.iteration = iter;
+		if (result != null) {
+			System.out.println("Synthesis finished in "+iter+" iteration(s):");
+			System.out.println("- "+wp+" call of why-provenance");
+			System.out.println("- "+wnp+" call of why-not-provenance");
+			System.out.println("- "+cp+" call of co-provenance");
+			return pPlus;
+		} else {
+			System.out.println("Cannot find solution.");
+			return null;
+		}
+	}
+}
