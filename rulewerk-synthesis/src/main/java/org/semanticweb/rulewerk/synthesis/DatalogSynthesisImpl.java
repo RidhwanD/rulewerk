@@ -299,7 +299,7 @@ public class DatalogSynthesisImpl {
 		logger.info("Investigate "+t);
 		// Alternative of why provenance  the delta debugging here
 		int d = 2;
-		while (d <= Pplus.size()) {
+		while (d <= Pplus.size() && d > 0) {
 			List<List<Rule>> partition = split(Pplus, d);
 			logger.debug("Partition: "+partition);
 			boolean deltaBuggy = false; boolean revDeltaBuggy = false;
@@ -343,7 +343,8 @@ public class DatalogSynthesisImpl {
 				d -= 1;
 			} else d *= 2;
 		}
-		return Pplus;
+		if (d > 0) return Pplus;
+		else return new ArrayList<>();
 	}
 	
 	public BoolExpr whyProvExpr(List<Rule> wp) {
@@ -371,7 +372,7 @@ public class DatalogSynthesisImpl {
 		List<Rule> Pmin = new ArrayList<>(this.ruleSet);
 		Pmin.removeAll(Pplus);
 		int d = 2;
-		while (d <= Pmin.size()) {
+		while (d <= Pmin.size() && d > 0) {
 			List<List<Rule>> partition = split(Pmin, d);
 			logger.debug("Partition: "+partition);
 			boolean deltabuggy = false; boolean revdeltabuggy = false;
@@ -418,8 +419,8 @@ public class DatalogSynthesisImpl {
 				d *= 2;
 			}
 		}
-		
-		return Pmin;
+		if (d > 0) return Pmin;
+		else return new ArrayList<>();
 	}
 	
 	public BoolExpr whyNotProvExpr(List<Rule> wnp) {
@@ -590,8 +591,7 @@ public class DatalogSynthesisImpl {
 			kb.addStatements(this.inputTuple);
 			try (final Reasoner reasoner = new VLogReasoner(kb)) {
 				reasoner.reason();
-				List<Fact> ngr = getNonGeneratedResults(reasoner);
-				for (Fact t : ngr) {
+				for (Fact t : this.outputPTuple) {
 					long generate = ReasoningUtils.isDerived(t, reasoner);
 					if (generate == 0) {
 						loop = true;
@@ -601,7 +601,6 @@ public class DatalogSynthesisImpl {
 							System.out.println("- "+wnp+" call of why-not-provenance");
 							phi = this.ctx.mkAnd(phi, this.whyNotProvExpr(this.whyNotProv(t, pPlus)));
 							logger.info("=============== Why Not Provenance End ================");
-							break;
 						}
 					} else if (generate == 1) {
 						if (this.coprov) {
@@ -631,7 +630,7 @@ public class DatalogSynthesisImpl {
 						phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvDelta(f, pPlus)));
 						logger.info("=============== Why Provenance End ================");
 					}
-					if (newWhys > 0) break;
+//					if (newWhys > 0) break;
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
