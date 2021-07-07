@@ -299,6 +299,7 @@ public class DatalogSynthesisImpl {
 		logger.info("Investigate "+t);
 		// Alternative of why provenance  the delta debugging here
 		int d = 2;
+		List<Rule> initPplus = new ArrayList<>(Pplus);
 		while (d <= Pplus.size() && d > 0) {
 			List<List<Rule>> partition = split(Pplus, d);
 			logger.debug("Partition: "+partition);
@@ -344,7 +345,7 @@ public class DatalogSynthesisImpl {
 			} else d *= 2;
 		}
 		if (d > 0) return Pplus;
-		else return new ArrayList<>();
+		else return initPplus;
 	}
 	
 	public BoolExpr whyProvExpr(List<Rule> wp) {
@@ -420,7 +421,11 @@ public class DatalogSynthesisImpl {
 			}
 		}
 		if (d > 0) return Pmin;
-		else return new ArrayList<>();
+		else {
+			Pmin = new ArrayList<>(this.ruleSet);
+			Pmin.removeAll(Pplus);
+			return Pmin;
+		}
 	}
 	
 	public BoolExpr whyNotProvExpr(List<Rule> wnp) {
@@ -431,10 +436,10 @@ public class DatalogSynthesisImpl {
 					disjVars = this.ctx.mkOr(disjVars, this.rule2var.get(r));
 				}
 			}
-			logger.info("Add "+disjVars+" as why-not-provenance constraint");
+			System.out.println("Add "+disjVars+" as why-not-provenance constraint");
 			return disjVars;
 		} else {
-			logger.info("Add TRUE as why-not-provenance constraint");
+			System.out.println("Add TRUE as why-not-provenance constraint");
 			return this.ctx.mkTrue();
 		}
 	}
