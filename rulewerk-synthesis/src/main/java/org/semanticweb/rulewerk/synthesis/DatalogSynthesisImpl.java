@@ -365,6 +365,38 @@ public class DatalogSynthesisImpl {
 	
 	// ============================================== WHY-NOT PROVENANCE =============================================== //
 	
+	public boolean debugTool(PositiveLiteral t, List<Rule> wnpResult) throws IOException {
+		System.out.println("Debug "+t+" for result "+wnpResult);
+		// Check based on Lemma 4.4
+		List<Rule> PPlusDelta = new ArrayList<>(this.ruleSet);
+		PPlusDelta.removeAll(wnpResult);
+		KnowledgeBase kb = new KnowledgeBase();
+		kb.addStatements(this.inputTuple);
+		kb.addStatements(PPlusDelta);
+		try (final Reasoner reasoner = new VLogReasoner(kb)) {
+			reasoner.reason();
+			if (ReasoningUtils.isDerived(t, reasoner) == 1) {
+				System.out.println("FALSE: Remainder derive "+t);
+				return false;
+			}
+		}
+		for (Rule r : wnpResult) {
+			List<Rule> ppdr = new ArrayList<>(PPlusDelta);
+			ppdr.add(r);
+			KnowledgeBase kbr = new KnowledgeBase();
+			kbr.addStatements(this.inputTuple);
+			kbr.addStatements(ppdr);
+			try (final Reasoner reasoner = new VLogReasoner(kbr)) {
+				reasoner.reason();
+				if (ReasoningUtils.isDerived(t, reasoner) == 0) {
+					System.out.println("FALSE: "+r+" not derive "+t);
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+	
 	public List<Rule> whyNotProv(PositiveLiteral t, List<Rule> Pplus) throws IOException{
 		logger.info("Investigate "+t);
 		// Use the delta debugging here
@@ -418,7 +450,10 @@ public class DatalogSynthesisImpl {
 				d *= 2;
 			}
 		}
-		if (d > 0) return Pmin;
+		if (d > 0) {
+			System.out.println(debugTool(t, Pmin));
+			return Pmin;
+		}
 		else {
 			Pmin = new ArrayList<>(this.ruleSet);
 			Pmin.removeAll(Pplus);
@@ -679,13 +714,11 @@ public class DatalogSynthesisImpl {
 			newTerm.add(Expressions.makeUniversalVariable("x"));
 			newTerm.add(Expressions.makeUniversalVariable("y"));
 			PositiveLiteral l = Expressions.makePositiveLiteral("Ans", newTerm);
-			System.out.println(l);			
 			Map<Term,List<Term>> res = ReasoningUtils.getAllDifferentSets(l, reasoner);
 			for (Term key : res.keySet()) {
 				result.add(res.get(key));
 			}
 		}
-		System.out.println(result);
 		if (result.size() > 0) {
 			BoolExpr outerConjunct = this.ctx.mkTrue();
 			for (List<Term> terms : result) {
@@ -701,7 +734,6 @@ public class DatalogSynthesisImpl {
 				else
 					outerConjunct = negConjVars;
 			}
-			System.out.println(outerConjunct);
 			logger.info("Add "+outerConjunct+" as why-provenance constraint");
 			return outerConjunct;
 		} else {
