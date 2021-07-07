@@ -435,7 +435,7 @@ public class DatalogSynthesisImpl {
 			return disjVars;
 		} else {
 			logger.info("Add TRUE as why-not-provenance constraint");
-			return this.ctx.mkFalse();
+			return this.ctx.mkTrue();
 		}
 	}
 	
