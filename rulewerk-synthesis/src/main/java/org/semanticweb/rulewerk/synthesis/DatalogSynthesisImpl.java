@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 
 import org.apache.log4j.LogManager;
@@ -45,7 +44,6 @@ public class DatalogSynthesisImpl {
 	private List<Fact> outputNTuple;
 	private List<Rule> ruleSet;
 	private List<Statement> ruleSetExistNeg;
-	private List<Statement> ruleSetS;
 	private Map<Rule,Set<Rule>> ruleSetTrans;
 	private Map<BoolExpr, Rule> var2rule;
 	private Map<Rule, BoolExpr> rule2var;
@@ -74,7 +72,7 @@ public class DatalogSynthesisImpl {
 		this.rule2const = new HashMap<>();
 		this.initMapping();
 		this.ruleSetTrans = new HashMap<>();
-		this.ruleSetS = transformToDatalogS();
+		this.transformToDatalogS();
 		ReasoningUtils.configureLogging(); // use simple logger for the example
 	}
 	
@@ -173,18 +171,20 @@ public class DatalogSynthesisImpl {
 		List<Statement> result = new ArrayList<>();
 		for (Predicate p : this.expPred) {
 			List<Term> vars = new ArrayList<>();
-			for (int i = 0; i <= p.getArity(); i++) {
+			for (int i = 0; i <= p.getArity() + 1; i++) {
 				vars.add(Expressions.makeUniversalVariable("X"+i));
 			}
-			result.add(Expressions.makeRule(Expressions.makePositiveLiteral(p, vars), 
-					Expressions.makePositiveLiteral(p, vars.subList(0, vars.size()-1))));
+			result.add(Expressions.makeRule(Expressions.makePositiveLiteral(p, vars.subList(0, vars.size()-2)), 
+					Expressions.makePositiveLiteral(p.getName(), vars.subList(0, vars.size()-1))));
+			result.add(Expressions.makeRule(Expressions.makePositiveLiteral("Ans", vars), 
+					Expressions.makePositiveLiteral(p.getName(), vars.subList(0, vars.size()-1)), 
+					Expressions.makePositiveLiteral("in", vars.get(vars.size()-1), vars.get(vars.size()-2))));
 		}
 		return result;
 	}
 	
-	public List<Statement> transformToDatalogS() {
+	public void transformToDatalogS() {
 		Set<Predicate> edb = getEDB();
-		List<Statement> result = new ArrayList<>();
 		for (Rule r : this.ruleSet) {
 			Conjunction<PositiveLiteral> head = r.getHead();
 			Conjunction<Literal> body = r.getBody();
@@ -224,14 +224,12 @@ public class DatalogSynthesisImpl {
 			Rule newRule = Expressions.makeRule(
 					Expressions.makePositiveConjunction(newHead),
 					Expressions.makeConjunction(newBody));
-			result.add(newRule);
 			Set<Rule> translation = new HashSet<>();
 			for (Rule rule : DatalogSetUtils.transformRule(newRule)) {
 				translation.add(DatalogSetUtils.simplify(rule));
 			}
 			this.ruleSetTrans.put(r, translation);
 		}
-		return result;
 	}
 	
 	// ============================================ GENERAL UTILITIES ============================================== //
@@ -436,10 +434,10 @@ public class DatalogSynthesisImpl {
 					disjVars = this.ctx.mkOr(disjVars, this.rule2var.get(r));
 				}
 			}
-			System.out.println("Add "+disjVars+" as why-not-provenance constraint");
+			logger.info("Add "+disjVars+" as why-not-provenance constraint");
 			return disjVars;
 		} else {
-			System.out.println("Add TRUE as why-not-provenance constraint");
+			logger.info("Add TRUE as why-not-provenance constraint");
 			return this.ctx.mkTrue();
 		}
 	}
@@ -596,13 +594,14 @@ public class DatalogSynthesisImpl {
 			kb.addStatements(this.inputTuple);
 			try (final Reasoner reasoner = new VLogReasoner(kb)) {
 				reasoner.reason();
+				int newWhyNots = 0;
 				for (Fact t : this.outputPTuple) {
 					long generate = ReasoningUtils.isDerived(t, reasoner);
 					if (generate == 0) {
 						loop = true;
 						if (pPlus.size() < this.ruleSet.size()) {
 							logger.info("============= Perform Why Not Provenance ==============");
-							wnp++;
+							wnp++; newWhyNots++;
 							System.out.println("- "+wnp+" call of why-not-provenance");
 							phi = this.ctx.mkAnd(phi, this.whyNotProvExpr(this.whyNotProv(t, pPlus)));
 							logger.info("=============== Why Not Provenance End ================");
@@ -618,6 +617,7 @@ public class DatalogSynthesisImpl {
 							}
 						}
 					}
+					if (newWhyNots >= 3) break;
 				}
 				List<Fact> nonExpectedTuples = new ArrayList<>();
 				if (this.outputNTuple.size() > 0) {
@@ -635,7 +635,7 @@ public class DatalogSynthesisImpl {
 						phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvDelta(f, pPlus)));
 						logger.info("=============== Why Provenance End ================");
 					}
-//					if (newWhys > 0) break;
+					if (newWhys >= 3) break;
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -675,23 +675,24 @@ public class DatalogSynthesisImpl {
 	public BoolExpr whyProvSet(List<Fact> ts, Reasoner reasoner) throws IOException{
 		Set<List<Term>> result = new HashSet<>();
 		for (PositiveLiteral t : ts) {
-			System.out.println("Investigate "+t);
 			List<Term> newTerm = new ArrayList<>(t.getArguments());
 			newTerm.add(Expressions.makeUniversalVariable("x"));
 			newTerm.add(Expressions.makeUniversalVariable("y"));
 			PositiveLiteral l = Expressions.makePositiveLiteral("Ans", newTerm);
+			System.out.println(l);			
 			Map<Term,List<Term>> res = ReasoningUtils.getAllDifferentSets(l, reasoner);
 			for (Term key : res.keySet()) {
 				result.add(res.get(key));
 			}
 		}
+		System.out.println(result);
 		if (result.size() > 0) {
 			BoolExpr outerConjunct = this.ctx.mkTrue();
 			for (List<Term> terms : result) {
-				BoolExpr conjVars = ctx.mkBoolConst("vr_"+terms.get(0).getName().substring(2));
+				BoolExpr conjVars = this.rule2var.get(this.const2rule.get(terms.get(0)));
 				if (terms.size() > 1) {
 					for (Term t : terms.subList(1, terms.size())) {
-						conjVars = this.ctx.mkAnd(conjVars, ctx.mkBoolConst("vr_"+t.getName().substring(2)));
+						conjVars = this.ctx.mkAnd(conjVars, this.rule2var.get(this.const2rule.get(t)));
 					}
 				}
 				BoolExpr negConjVars = this.ctx.mkNot(conjVars);
@@ -700,6 +701,7 @@ public class DatalogSynthesisImpl {
 				else
 					outerConjunct = negConjVars;
 			}
+			System.out.println(outerConjunct);
 			logger.info("Add "+outerConjunct+" as why-provenance constraint");
 			return outerConjunct;
 		} else {
@@ -722,23 +724,24 @@ public class DatalogSynthesisImpl {
 			for (Rule r:pPlus)
 				logger.debug("- "+r);
 			KnowledgeBase kb = new KnowledgeBase();
+			kb.addStatements(DatalogSetUtils.getR_SU());
 			kb.addStatements(getTransFromPlus(pPlus));
 			kb.addStatements(rulesFromExpPred());
 			kb.addStatements(this.inputTuple);
 			try (final Reasoner reasoner = new VLogReasoner(kb)) {
 				reasoner.reason();
 				List<Fact> ngr = getNonGeneratedResults(reasoner);
+				int newWhyNots = 0;
 				for (Fact t : ngr) {
 					long generate = ReasoningUtils.isDerived(t, reasoner);
 					if (generate == 0) {
 						loop = true;
 						if (pPlus.size() < this.ruleSet.size()) {
 							logger.info("============= Perform Why Not Provenance ==============");
-							wnp++;
+							wnp++; newWhyNots++;
 							System.out.println("- "+wnp+" call of why-not-provenance");
 							phi = this.ctx.mkAnd(phi, this.whyNotProvExpr(this.whyNotProv(t, pPlus)));
 							logger.info("=============== Why Not Provenance End ================");
-							break;
 						}
 					} else if (generate == 1) {
 						if (this.coprov) {
@@ -751,6 +754,7 @@ public class DatalogSynthesisImpl {
 							}
 						}
 					}
+					if (newWhyNots >= 3) break;
 				}
 				List<Fact> nonExpectedTuples = new ArrayList<>();
 				if (this.outputNTuple.size() > 0) {
@@ -758,14 +762,15 @@ public class DatalogSynthesisImpl {
 				} else {
 					nonExpectedTuples = this.getNonExpectedResults(reasoner);
 				}
-				int newWhys = 0;
-				loop = true;
-				if (pPlus.size() > 0) {
-					logger.info("============= Perform Why Provenance ==============");
-					wp++; newWhys++;
-					System.out.println("- "+wp+" call of why-provenance");
-					phi = this.ctx.mkAnd(phi, whyProvSet(nonExpectedTuples, reasoner));
-					logger.info("=============== Why Provenance End ================");
+				if (nonExpectedTuples.size() > 0) {
+					loop = true;
+					if (pPlus.size() > 0) {
+						logger.info("============= Perform Why Provenance ==============");
+						wp++;
+						System.out.println("- "+wp+" call of why-provenance");
+						phi = this.ctx.mkAnd(phi, whyProvSet(nonExpectedTuples, reasoner));
+						logger.info("=============== Why Provenance End ================");
+					}
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
