@@ -367,19 +367,10 @@ public class DatalogSynthesisImpl {
 	
 	public boolean debugTool(PositiveLiteral t, List<Rule> wnpResult) throws IOException {
 		System.out.println("Debug "+t+" for result "+wnpResult);
-		// Check based on Lemma 4.4
+		// Check based partially on Lemma 4.4
+		boolean satisfied = true;
 		List<Rule> PPlusDelta = new ArrayList<>(this.ruleSet);
 		PPlusDelta.removeAll(wnpResult);
-		KnowledgeBase kb = new KnowledgeBase();
-		kb.addStatements(this.inputTuple);
-		kb.addStatements(PPlusDelta);
-		try (final Reasoner reasoner = new VLogReasoner(kb)) {
-			reasoner.reason();
-			if (ReasoningUtils.isDerived(t, reasoner) == 1) {
-				System.out.println("FALSE: Remainder derive "+t);
-				return false;
-			}
-		}
 		for (Rule r : wnpResult) {
 			List<Rule> ppdr = new ArrayList<>(PPlusDelta);
 			ppdr.add(r);
@@ -390,11 +381,11 @@ public class DatalogSynthesisImpl {
 				reasoner.reason();
 				if (ReasoningUtils.isDerived(t, reasoner) == 0) {
 					System.out.println("FALSE: "+r+" not derive "+t);
-					return false;
+					satisfied = false;
 				}
 			}
 		}
-		return true;
+		return satisfied;
 	}
 	
 	public List<Rule> whyNotProv(PositiveLiteral t, List<Rule> Pplus) throws IOException{
@@ -707,6 +698,24 @@ public class DatalogSynthesisImpl {
 		return transFromPlus;
 	}
 	
+	public boolean debugSetTool(PositiveLiteral t, List<Term> wpResult) throws IOException {
+		System.out.println("Debug "+t+" for result "+wpResult);
+		boolean satisfied = true;
+		KnowledgeBase kb = new KnowledgeBase();
+		kb.addStatements(this.inputTuple);
+		for (Term term : wpResult) {
+			kb.addStatement(this.const2rule.get(term));
+		}
+		try (final Reasoner reasoner = new VLogReasoner(kb)) {
+			reasoner.reason();
+			if (ReasoningUtils.isDerived(t, reasoner) == 0) {
+				System.out.println("FALSE: "+wpResult+" not derive "+t);
+				satisfied = false;
+			}
+		}
+		return satisfied;
+	}
+	
 	public BoolExpr whyProvSet(List<Fact> ts, Reasoner reasoner) throws IOException{
 		Set<List<Term>> result = new HashSet<>();
 		for (PositiveLiteral t : ts) {
@@ -716,6 +725,7 @@ public class DatalogSynthesisImpl {
 			PositiveLiteral l = Expressions.makePositiveLiteral("Ans", newTerm);
 			Map<Term,List<Term>> res = ReasoningUtils.getAllDifferentSets(l, reasoner);
 			for (Term key : res.keySet()) {
+				System.out.println(debugSetTool(t, res.get(key)));
 				result.add(res.get(key));
 			}
 		}

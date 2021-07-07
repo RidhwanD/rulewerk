@@ -4,11 +4,15 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Scanner;
 
 import org.semanticweb.rulewerk.core.model.api.Fact;
+import org.semanticweb.rulewerk.core.model.api.Predicate;
 import org.semanticweb.rulewerk.core.model.api.Rule;
+import org.semanticweb.rulewerk.core.model.implementation.Expressions;
 import org.semanticweb.rulewerk.parser.ParsingException;
 import org.semanticweb.rulewerk.parser.RuleParser;
 
@@ -17,7 +21,7 @@ import com.microsoft.z3.Context;
 public class Benchmark {
 	public static void main(String[] arg) throws IOException, ParsingException {
 		boolean write = true;
-		String benchCase = "abduce";
+		String benchCase = "inflamation";
 		String size = "small";
 		System.out.println(benchCase);
 		System.out.println("Parse Input");
@@ -33,6 +37,15 @@ public class Benchmark {
 		}
 		inputStream.close();
 	
+		File expFile = new File(ReasoningUtils.INPUT_FOLDER + benchCase + "/rulewerk-exp-pred.txt");
+		Scanner myReader = new Scanner(expFile);
+		List<Predicate> expPred = new ArrayList<>();
+		while (myReader.hasNextLine()) {
+			String[] data = myReader.nextLine().split(" ");
+			expPred.add(Expressions.makePredicate(data[0], Integer.valueOf(data[1])));
+		}
+		myReader.close();
+		
 		System.out.println("Parsing Expected Output");
 		File outputPFile = new File(ReasoningUtils.INPUT_FOLDER + benchCase + "/rulewerk-output-plus.txt");
 		FileInputStream outputPStream = new FileInputStream(outputPFile);
@@ -77,10 +90,10 @@ public class Benchmark {
 		Context ctx = new Context(cfg);
 		
 		System.out.println("Synthesis Process Started");
-		DatalogSynthesis ds = new DatalogSynthesis(inputTuple, outputTupleP, outputTupleM, rules, ctx);
+		DatalogSynthesisImpl ds = new DatalogSynthesisImpl(inputTuple, expPred, outputTupleP, outputTupleM, rules, ctx);
 		
 		long startTime = System.nanoTime();
-		List<Rule> result = ds.synthesis();
+		List<Rule> result = ds.synthesisSet();
 		long endTime = System.nanoTime();
 		System.out.println("Resulting Program:");
 		long duration = (endTime - startTime);
