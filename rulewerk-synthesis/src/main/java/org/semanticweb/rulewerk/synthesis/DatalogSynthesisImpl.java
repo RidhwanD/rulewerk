@@ -622,13 +622,16 @@ public class DatalogSynthesisImpl {
 					nonExpectedTuples = this.getNonExpectedResults(reasoner);
 				}
 				int newWhys = 0;
-				loop = true;
-				if (pPlus.size() > 0) {
-					logger.info("============= Perform Why Provenance ==============");
-					wp++; newWhys++;
-					System.out.println("- "+wp+" call of why-provenance");
-					phi = this.ctx.mkAnd(phi, whyProvSet(nonExpectedTuples, reasoner));
-					logger.info("=============== Why Provenance End ================");
+				for (Fact f : nonExpectedTuples) {
+					loop = true;
+					if (pPlus.size() > 0) {
+						logger.info("============= Perform Why Provenance ==============");
+						wp++; newWhys++;
+						System.out.println("- "+wp+" call of why-provenance");
+						phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvDelta(f, pPlus)));
+						logger.info("=============== Why Provenance End ================");
+					}
+					if (newWhys > 0) break;
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -752,16 +755,13 @@ public class DatalogSynthesisImpl {
 					nonExpectedTuples = this.getNonExpectedResults(reasoner);
 				}
 				int newWhys = 0;
-				for (Fact f : nonExpectedTuples) {
-					loop = true;
-					if (pPlus.size() > 0) {
-						logger.info("============= Perform Why Provenance ==============");
-						wp++; newWhys++;
-						System.out.println("- "+wp+" call of why-provenance");
-						phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvDelta(f, pPlus)));
-						logger.info("=============== Why Provenance End ================");
-					}
-					if (newWhys > 0) break;
+				loop = true;
+				if (pPlus.size() > 0) {
+					logger.info("============= Perform Why Provenance ==============");
+					wp++; newWhys++;
+					System.out.println("- "+wp+" call of why-provenance");
+					phi = this.ctx.mkAnd(phi, whyProvSet(nonExpectedTuples, reasoner));
+					logger.info("=============== Why Provenance End ================");
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
