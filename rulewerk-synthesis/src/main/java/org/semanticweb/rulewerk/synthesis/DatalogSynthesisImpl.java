@@ -176,7 +176,7 @@ public class DatalogSynthesisImpl {
 			}
 			result.add(Expressions.makeRule(Expressions.makePositiveLiteral(p, vars.subList(0, vars.size()-2)), 
 					Expressions.makePositiveLiteral(p.getName(), vars.subList(0, vars.size()-1))));
-			result.add(Expressions.makeRule(Expressions.makePositiveLiteral("Ans", vars), 
+			result.add(Expressions.makeRule(Expressions.makePositiveLiteral("WhyProv_"+p.getName(), vars), 
 					Expressions.makePositiveLiteral(p.getName(), vars.subList(0, vars.size()-1)), 
 					Expressions.makePositiveLiteral("in", vars.get(vars.size()-1), vars.get(vars.size()-2))));
 		}
@@ -706,10 +706,10 @@ public class DatalogSynthesisImpl {
 			List<Term> newTerm = new ArrayList<>(t.getArguments());
 			newTerm.add(Expressions.makeUniversalVariable("x"));
 			newTerm.add(Expressions.makeUniversalVariable("y"));
-			PositiveLiteral l = Expressions.makePositiveLiteral("Ans", newTerm);
+			PositiveLiteral l = Expressions.makePositiveLiteral("WhyProv_"+t.getPredicate().getName(), newTerm);
 			Map<Term,List<Term>> res = ReasoningUtils.getAllDifferentSets(l, reasoner);
 			for (Term key : res.keySet()) {
-//				System.out.println(debugSetTool(t, res.get(key)));
+				System.out.println(debugSetTool(t, res.get(key)));
 				result.add(res.get(key));
 			}
 		}
@@ -746,9 +746,9 @@ public class DatalogSynthesisImpl {
 		while (result != null && loop) {
 			iter++;
 			loop = false;
-			logger.debug("P+:");
+			logger.info("P+:");
 			for (Rule r:pPlus)
-				logger.debug("- "+r);
+				logger.info("- "+r);
 			KnowledgeBase kb = new KnowledgeBase();
 			kb.addStatements(DatalogSetUtils.getR_SU());
 			kb.addStatements(getTransFromPlus(pPlus));
