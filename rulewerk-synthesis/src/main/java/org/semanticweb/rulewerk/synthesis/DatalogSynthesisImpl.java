@@ -371,6 +371,16 @@ public class DatalogSynthesisImpl {
 		boolean satisfied = true;
 		List<Rule> PPlusDelta = new ArrayList<>(this.ruleSet);
 		PPlusDelta.removeAll(wnpResult);
+		KnowledgeBase kb = new KnowledgeBase();
+		kb.addStatements(this.inputTuple);
+		kb.addStatements(PPlusDelta);
+		try (final Reasoner reasoner = new VLogReasoner(kb)) {
+			reasoner.reason();
+			if (ReasoningUtils.isDerived(t, reasoner) == 1) {
+				System.out.println("FALSE: Remainder derive "+t);
+				satisfied = false;
+			}
+		}
 		for (Rule r : wnpResult) {
 			List<Rule> ppdr = new ArrayList<>(PPlusDelta);
 			ppdr.add(r);
@@ -388,68 +398,42 @@ public class DatalogSynthesisImpl {
 		return satisfied;
 	}
 	
-	public List<Rule> whyNotProv(PositiveLiteral t, List<Rule> Pplus) throws IOException{
-		logger.info("Investigate "+t);
-		// Use the delta debugging here
+	public List<Rule> whyNotProv(PositiveLiteral t, List<Rule> Pplus) throws IOException {
 		List<Rule> Pmin = new ArrayList<>(this.ruleSet);
 		Pmin.removeAll(Pplus);
+		List<Rule> code = Pmin;
 		int d = 2;
-		while (d <= Pmin.size() && d > 0) {
-			List<List<Rule>> partition = split(Pmin, d);
-			logger.debug("Partition: "+partition);
-			boolean deltabuggy = false; boolean revdeltabuggy = false;
-			int idx = 0; int idrbuggy = 0;
-			while (idx < partition.size() && !deltabuggy) {
+		while (true) {
+			for (List<Rule> codeChunk : split(code, d)) {
+				Set<Rule> currRMinus = new HashSet<>(Pmin);
+				currRMinus.removeAll(codeChunk);
+				Set<Rule> currRPlus = new HashSet<>(Pplus);
+				currRPlus.addAll(codeChunk);
+				boolean bugProduced = false;
 				KnowledgeBase kb = new KnowledgeBase();
-				List<Rule> deltaBuggy = new ArrayList<Rule>(this.ruleSet);
-				deltaBuggy.removeAll(partition.get(idx));
-				kb.addStatements(deltaBuggy);
+				kb.addStatements(currRPlus);
 				kb.addStatements(this.inputTuple);
 				try (final Reasoner reasoner = new VLogReasoner(kb)) {
 					this.rulewerkCall++;
 					reasoner.reason();
 					long generate = ReasoningUtils.isDerived(t, reasoner);
 					if (generate == 0) {
-						deltabuggy = true;
+						bugProduced = true;
 					}
 				}
-				KnowledgeBase kb2 = new KnowledgeBase();
-				List<Rule> revDeltaBuggy = new ArrayList<Rule>(Pplus);
-				revDeltaBuggy.addAll(partition.get(idx));
-				kb2.addStatements(revDeltaBuggy);
-				kb2.addStatements(this.inputTuple);
-				try (final Reasoner reasoner2 = new VLogReasoner(kb2)) {
-					this.rulewerkCall++;
-					reasoner2.reason();
-					long generate = ReasoningUtils.isDerived(t, reasoner2);
-					if (generate == 0) {
-						revdeltabuggy = true;
-						idrbuggy = idx;
-					}
+				if (bugProduced) {
+					Pplus = new ArrayList<>(currRPlus);
+					Pmin = new ArrayList<>(currRMinus);
 				}
-				idx += 1;
 			}
-			if (deltabuggy) {
-				Pmin = partition.get(idx - 1);
-				d = 2;
-			} else if (revdeltabuggy) {
-				List<Rule> revDelta = new ArrayList<Rule>(Pmin);
-				revDelta.removeAll(partition.get(idrbuggy));
-				Pmin = revDelta;
-				d -= 1;
-			} else {
-				d *= 2;
-			}
+			if (d == code.size())
+                break;
+			d = Math.min(code.size(), d*2);
+			if (d == 0)
+                break;
 		}
-		if (d > 0) {
-			System.out.println(debugTool(t, Pmin));
-			return Pmin;
-		}
-		else {
-			Pmin = new ArrayList<>(this.ruleSet);
-			Pmin.removeAll(Pplus);
-			return Pmin;
-		}
+		System.out.println(debugTool(t, Pmin));
+		return Pmin;
 	}
 	
 	public BoolExpr whyNotProvExpr(List<Rule> wnp) {
@@ -709,7 +693,7 @@ public class DatalogSynthesisImpl {
 		try (final Reasoner reasoner = new VLogReasoner(kb)) {
 			reasoner.reason();
 			if (ReasoningUtils.isDerived(t, reasoner) == 0) {
-				System.out.println("FALSE: "+wpResult+" not derive "+t);
+				System.out.println("FALSE: "+kb.getRules()+" not derive "+t);
 				satisfied = false;
 			}
 		}
@@ -725,7 +709,7 @@ public class DatalogSynthesisImpl {
 			PositiveLiteral l = Expressions.makePositiveLiteral("Ans", newTerm);
 			Map<Term,List<Term>> res = ReasoningUtils.getAllDifferentSets(l, reasoner);
 			for (Term key : res.keySet()) {
-				System.out.println(debugSetTool(t, res.get(key)));
+//				System.out.println(debugSetTool(t, res.get(key)));
 				result.add(res.get(key));
 			}
 		}
