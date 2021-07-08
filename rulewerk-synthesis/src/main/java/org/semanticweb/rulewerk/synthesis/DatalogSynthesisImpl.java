@@ -62,15 +62,15 @@ public class DatalogSynthesisImpl {
 		this.outputPTuple = outputPTuple;
 		this.outputNTuple = outputNTuple;
 		this.ruleSet = ruleSet;
-		if (coprov) {
-			this.ruleSetExistNeg = this.getExistNeg(ruleSet);
-		}
 		this.ctx = ctx;
 		this.var2rule = new HashMap<>();
 		this.rule2var = new HashMap<>();
 		this.const2rule = new HashMap<>();
 		this.rule2const = new HashMap<>();
 		this.initMapping();
+		if (coprov) {
+			this.ruleSetExistNeg = this.getExistNeg(ruleSet);
+		}
 		this.ruleSetTrans = new HashMap<>();
 		this.transformToDatalogS();
 		ReasoningUtils.configureLogging(); // use simple logger for the example
@@ -756,9 +756,8 @@ public class DatalogSynthesisImpl {
 			kb.addStatements(this.inputTuple);
 			try (final Reasoner reasoner = new VLogReasoner(kb)) {
 				reasoner.reason();
-				List<Fact> ngr = getNonGeneratedResults(reasoner);
 				int newWhyNots = 0;
-				for (Fact t : ngr) {
+				for (Fact t : this.outputPTuple) {
 					long generate = ReasoningUtils.isDerived(t, reasoner);
 					if (generate == 0) {
 						loop = true;
