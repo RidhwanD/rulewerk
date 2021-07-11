@@ -293,16 +293,31 @@ public class DatalogSynthesisImpl {
 	
 	// ============================================== WHY PROVENANCE =============================================== //
 	
+	public boolean whyProvDebugTool(PositiveLiteral t, List<Rule> wpResult) throws IOException {
+		System.out.println("Debug "+t+" for result "+wpResult);
+		boolean satisfied = true;
+		KnowledgeBase kb = new KnowledgeBase();
+		kb.addStatements(this.inputTuple);
+		kb.addStatements(wpResult);
+		try (final Reasoner reasoner = new VLogReasoner(kb)) {
+			reasoner.reason();
+			if (ReasoningUtils.isDerived(t, reasoner) == 0) {
+				System.out.println("FALSE: "+kb.getRules()+" not derive "+t);
+				satisfied = false;
+			}
+		}
+		return satisfied;
+	}
+	
 	public List<Rule> whyProvDelta(PositiveLiteral t, List<Rule> Pplus) throws IOException{
 		logger.info("Investigate "+t);
-		// Alternative of why provenance  the delta debugging here
+		// Alternative of why provenance using the delta debugging
 		int d = 2;
-		List<Rule> initPplus = new ArrayList<>(Pplus);
-		while (d <= Pplus.size() && d > 0) {
+		while (d < Pplus.size() && d > 0) {
 			List<List<Rule>> partition = split(Pplus, d);
 			logger.debug("Partition: "+partition);
 			boolean deltaBuggy = false; boolean revDeltaBuggy = false;
-			int idx = 0; int idxSaved = 0;
+			int idx = 0;
 			while (idx < partition.size() && !deltaBuggy) {
 				KnowledgeBase kb = new KnowledgeBase();
 				kb.addStatements(partition.get(idx));
@@ -311,39 +326,39 @@ public class DatalogSynthesisImpl {
 					this.rulewerkCall++;
 					reasoner.reason();
 					if (ReasoningUtils.isDerived(t, reasoner) == 1) {
+						Pplus = partition.get(idx);
 						deltaBuggy = true;
-					}
-				}
-				if (!deltaBuggy) {
-					KnowledgeBase kb2 = new KnowledgeBase();
-					List<Rule> revDelta = new ArrayList<Rule>(Pplus);
-					revDelta.removeAll(partition.get(idx));
-					kb2.addStatements(revDelta);
-					kb2.addStatements(this.inputTuple);
-					try (final Reasoner reasoner2 = new VLogReasoner(kb2)) {
-						this.rulewerkCall++;
-						reasoner2.reason();
-						long generate = ReasoningUtils.isDerived(t, reasoner2);
-						if (generate == 1) {
-							revDeltaBuggy = true;
-							idxSaved = idx;
-						}
+						d = 2;
 					}
 				}
 				idx += 1;
 			}
-			if (deltaBuggy) {
-				Pplus = partition.get(idx - 1);
-				d = 2;
-			} else if (revDeltaBuggy) {
-				List<Rule> revDelta = new ArrayList<Rule>(Pplus);
-				revDelta.removeAll(partition.get(idxSaved));
-				Pplus = revDelta;
-				d -= 1;
-			} else d *= 2;
+			if (!deltaBuggy) {
+				idx = 0;
+				while (idx < partition.size() && !revDeltaBuggy) {
+					KnowledgeBase kb = new KnowledgeBase();
+					List<Rule> revDelta = new ArrayList<Rule>(Pplus);
+					revDelta.removeAll(partition.get(idx));
+					kb.addStatements(revDelta);
+					kb.addStatements(this.inputTuple);
+					try (final Reasoner reasoner = new VLogReasoner(kb)) {
+						this.rulewerkCall++;
+						reasoner.reason();
+						if (ReasoningUtils.isDerived(t, reasoner) == 1) {
+							Pplus.removeAll(partition.get(idx));
+							revDeltaBuggy = true;
+							d -= 1;
+						}
+					}
+					idx += 1;
+				}
+			}
+			if (!deltaBuggy && !revDeltaBuggy) {
+				d *= 2;
+			}
 		}
-		if (d > 0) return Pplus;
-		else return initPplus;
+		System.out.println(whyProvDebugTool(t, Pplus));
+		return Pplus;
 	}
 	
 	public BoolExpr whyProvExpr(List<Rule> wp) {
@@ -365,7 +380,7 @@ public class DatalogSynthesisImpl {
 	
 	// ============================================== WHY-NOT PROVENANCE =============================================== //
 	
-	public boolean debugTool(PositiveLiteral t, List<Rule> wnpResult) throws IOException {
+	public boolean whyNotProvDebugTool(PositiveLiteral t, List<Rule> wnpResult) throws IOException {
 		System.out.println("Debug "+t+" for result "+wnpResult);
 		// Check based partially on Lemma 4.4
 		boolean satisfied = true;
@@ -401,7 +416,7 @@ public class DatalogSynthesisImpl {
 	public List<Rule> whyNotProv(PositiveLiteral t, List<Rule> Pplus) throws IOException {
 		List<Rule> Pmin = new ArrayList<>(this.ruleSet);
 		Pmin.removeAll(Pplus);
-		List<Rule> code = Pmin;
+		List<Rule> code = new ArrayList<>(Pmin);
 		int d = 2;
 		while (true) {
 			for (List<Rule> codeChunk : split(code, d)) {
@@ -416,8 +431,7 @@ public class DatalogSynthesisImpl {
 				try (final Reasoner reasoner = new VLogReasoner(kb)) {
 					this.rulewerkCall++;
 					reasoner.reason();
-					long generate = ReasoningUtils.isDerived(t, reasoner);
-					if (generate == 0) {
+					if (ReasoningUtils.isDerived(t, reasoner) == 0) {
 						bugProduced = true;
 					}
 				}
@@ -432,7 +446,7 @@ public class DatalogSynthesisImpl {
 			if (d == 0)
                 break;
 		}
-		System.out.println(debugTool(t, Pmin));
+		System.out.println(whyNotProvDebugTool(t, Pmin));
 		return Pmin;
 	}
 	
