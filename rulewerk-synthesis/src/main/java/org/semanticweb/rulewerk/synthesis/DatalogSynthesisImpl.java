@@ -318,7 +318,7 @@ public class DatalogSynthesisImpl {
 		return satisfied;
 	}
 	
-	public List<Rule> whyProvAlt(PositiveLiteral t, List<Rule> Pplus) throws IOException {
+	public List<Rule> whyProvDeltaAlt(PositiveLiteral t, List<Rule> Pplus) throws IOException {
 		List<Rule> code = new ArrayList<>(Pplus);
 		int d = 2;
 		while (true) {
@@ -351,6 +351,7 @@ public class DatalogSynthesisImpl {
 	
 	public List<Rule> whyProvDelta(PositiveLiteral t, List<Rule> Pplus) throws IOException{
 		logger.info("Investigate "+t);
+		List<Rule> code = new ArrayList<>(Pplus);
 		// Alternative of why provenance using the delta debugging
 		int d = 2;
 		while (d < Pplus.size() && d > 0) {
@@ -397,7 +398,7 @@ public class DatalogSynthesisImpl {
 				d *= 2;
 			}
 		}
-//		System.out.println(whyProvDebugTool(t, Pplus));
+		System.out.println(whyProvDebugTool(t, Pplus, code));
 		return Pplus;
 	}
 	
@@ -453,7 +454,7 @@ public class DatalogSynthesisImpl {
 		return satisfied;
 	}
 	
-	public List<Rule> whyNotProv(PositiveLiteral t, List<Rule> Pplus) throws IOException {
+	public List<Rule> whyNotProvAlt(PositiveLiteral t, List<Rule> Pplus) throws IOException {
 		List<Rule> Pmin = new ArrayList<>(this.ruleSet);
 		Pmin.removeAll(Pplus);
 		int d = 2;
@@ -489,7 +490,7 @@ public class DatalogSynthesisImpl {
 		return Pmin;
 	}
 	
-	public List<Rule> whyNotProvAlt(PositiveLiteral t, List<Rule> Pplus) throws IOException{
+	public List<Rule> whyNotProv(PositiveLiteral t, List<Rule> Pplus) throws IOException{
 		logger.info("Investigate "+t);
 		// Use the delta debugging here
 		List<Rule> Pmin = new ArrayList<>(this.ruleSet);
@@ -720,7 +721,7 @@ public class DatalogSynthesisImpl {
 							logger.info("============= Perform Why Not Provenance ==============");
 							wnp++; newWhyNots++;
 							System.out.println("- "+wnp+" call of why-not-provenance");
-							phi = this.ctx.mkAnd(phi, this.whyNotProvExpr(this.whyNotProv(t, pPlus)));
+							phi = this.ctx.mkAnd(phi, this.whyNotProvExpr(this.whyNotProvAlt(t, pPlus)));
 							logger.info("=============== Why Not Provenance End ================");
 						}
 					} else if (generate == 1) {
@@ -749,7 +750,7 @@ public class DatalogSynthesisImpl {
 						logger.info("============= Perform Why Provenance ==============");
 						wp++; newWhys++;
 						System.out.println("- "+wp+" call of why-provenance");
-						phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvAlt(f, pPlus)));
+						phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvDeltaAlt(f, pPlus)));
 						logger.info("=============== Why Provenance End ================");
 					}
 					if (newWhys >= 3) break;
@@ -872,7 +873,7 @@ public class DatalogSynthesisImpl {
 							logger.info("============= Perform Why Not Provenance ==============");
 							wnp++; newWhyNots++;
 							System.out.println("- "+wnp+" call of why-not-provenance");
-							phi = this.ctx.mkAnd(phi, this.whyNotProvExpr(this.whyNotProv(t, pPlus)));
+							phi = this.ctx.mkAnd(phi, this.whyNotProvExpr(this.whyNotProvAlt(t, pPlus)));
 							logger.info("=============== Why Not Provenance End ================");
 						}
 					} else if (generate == 1) {
