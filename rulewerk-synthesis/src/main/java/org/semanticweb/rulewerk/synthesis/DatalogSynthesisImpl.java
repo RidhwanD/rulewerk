@@ -1,10 +1,8 @@
 package org.semanticweb.rulewerk.synthesis;
 
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -451,7 +449,6 @@ public class DatalogSynthesisImpl {
 			if (ReasoningUtils.isDerived(t, reasoner) == 1) {
 				System.out.println("REMAIN: Remainder derive "+t);
 				satisfied = false;
-//				System.exit(2);
 			}
 		}
 		for (Rule r : wnpResult) {
@@ -465,7 +462,6 @@ public class DatalogSynthesisImpl {
 				if (ReasoningUtils.isDerived(t, reasoner) == 0) {
 					System.out.println("NON-DERIVE: "+r+" not derive "+t);
 					satisfied = false;
-//					System.exit(1);
 				}
 			}
 		}
@@ -473,8 +469,6 @@ public class DatalogSynthesisImpl {
 	}
 	
 	public List<Rule> whyNotProvAlt(PositiveLiteral t, List<Rule> inPplus) throws IOException {
-//		FileWriter myWriter = new FileWriter(ReasoningUtils.INPUT_FOLDER + "small" + "/rulewerk-log-whynot.txt");
-//		myWriter.write("WNP: Investigate "+t+" with Rules: "+inPplus+"\n");
 		Set<Rule> Pmin = new HashSet<>(this.ruleSet);
 		Pmin.removeAll(inPplus);
 		Set<Rule> Pplus = new HashSet<>(inPplus);
@@ -497,15 +491,10 @@ public class DatalogSynthesisImpl {
 						bugProduced = true;
 					}
 				}
-//				myWriter.write("d: "+d+" with chunk: "+codeChunk+"\n");
-//				myWriter.write("currRMinus: "+currRMinus+"\n");
-//				myWriter.write("currRPlus: "+currRPlus+"\n");
 				if (bugProduced) {
-//					myWriter.write("BUGGY\n");
 					Pplus = new HashSet<>(currRPlus);
 					Pmin = new HashSet<>(currRMinus);
 				}
-//				myWriter.write("------------------------------------------------------------\n");
 			}
 			if (d == code.size())
                 break;
@@ -513,7 +502,6 @@ public class DatalogSynthesisImpl {
 			if (d == 0)
                 break;
 		}
-//		myWriter.close();
 		if (debug)
 			System.out.println(whyNotProvDebugTool(t, Pmin));
 		return new ArrayList<>(Pmin);
@@ -526,23 +514,19 @@ public class DatalogSynthesisImpl {
 		Pmin.removeAll(Pplus);
 		int d = 2;
 		while (d <= Pmin.size() && d > 0) {
-//			System.out.println("Pmin: "+Pmin);
 			List<List<Rule>> partition = split(Pmin, d);	
 			logger.debug("Partition: "+partition);
-//			System.out.println("d: "+d+" with partition: "+partition);
 			boolean deltabuggy = false; boolean revdeltabuggy = false;
 			for (List<Rule> chunk : partition) {
 				KnowledgeBase kb = new KnowledgeBase();
 				List<Rule> deltaBuggy = new ArrayList<Rule>(this.ruleSet);
 				deltaBuggy.removeAll(chunk);
-//				System.out.println("Chunk: "+chunk+", \n -- deltaBuggy: "+deltaBuggy);
 				kb.addStatements(deltaBuggy);
 				kb.addStatements(this.inputTuple);
 				try (final Reasoner reasoner = new VLogReasoner(kb)) {
 					this.rulewerkCall++;
 					reasoner.reason();
 					if (ReasoningUtils.isDerived(t, reasoner) == 0) {
-//						System.out.println("-- buggy");
 						deltabuggy = true;
 						Pmin = chunk;
 						d = 2;
@@ -557,14 +541,12 @@ public class DatalogSynthesisImpl {
 					revDelta.removeAll(chunk);
 					List<Rule> revDeltaBuggy = new ArrayList<Rule>(this.ruleSet);
 					revDeltaBuggy.removeAll(revDelta);
-//					System.out.println("Chunk: "+chunk+", \n -- revDeltaBuggy: "+revDeltaBuggy);
 					kb.addStatements(revDeltaBuggy);
 					kb.addStatements(this.inputTuple);
 					try (final Reasoner reasoner = new VLogReasoner(kb)) {
 						this.rulewerkCall++;
 						reasoner.reason();
 						if (ReasoningUtils.isDerived(t, reasoner) == 0) {
-//							System.out.println("-- buggy");
 							revdeltabuggy = true;
 							Pmin.removeAll(chunk);
 							d -= 1;
@@ -1048,13 +1030,14 @@ public class DatalogSynthesisImpl {
 				// Ensure all expected output are generated.
 				for (Fact f : this.outputPTuple) {
 					long generate = ReasoningUtils.isDerived(f, reasoner);
-					if (iter == 1 || (iter > 1 && generate == 0)) {
+					if (iter == 1) {
 						logger.info("============= Perform Why Not Provenance ==============");
 						wnp++; loop = true;
 						System.out.println("- "+wnp+" call of why-not-provenance");
 						phi = this.ctx.mkAnd(phi, this.whyNotProvSet(f, pPlus, reasoner));
 						logger.info("=============== Why Not Provenance End ================");
-					}	
+					}
+					if (iter > 1 && generate == 0) logger.error("Tuple "+f+" cannot be generated.");
 				}
 
 				// Ensure all undesired output are not generated.
