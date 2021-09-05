@@ -97,7 +97,38 @@ public class RuleGenerator {
 		
 		return false;
 	}
+	
+	public boolean isValid(Rule metaR) {
+		if (varClauseRepeat(metaR)) return false;
+		if (varAppearsOnce(metaR)) return false;
+		if (reoccurClause(metaR)) return false;
 		
+		return true;
+	}
+	
+	public Rule removeArgument(Rule metaR, Variable v) {
+		// Remove variable v from meta-rule r.
+		if (!metaR.getVariables().toList().contains(v)) {
+			return metaR;
+		} else {
+			List<PositiveLiteral> head = new ArrayList<>();
+			for (Literal l : metaR.getHead()) {
+				List<Term> terms = new ArrayList<>(l.getArguments());
+				terms.remove(v);
+				head.add(Expressions.makePositiveLiteral(l.getPredicate().getName(), terms));
+			}
+			List<Literal> body = new ArrayList<>();
+			for (Literal l : metaR.getBody()) {
+				List<Term> terms = new ArrayList<>(l.getArguments());
+				terms.remove(v);
+				body.add(Expressions.makePositiveLiteral(l.getPredicate().getName(), terms));
+			}
+			Rule newR = Expressions.makeRule(Expressions.makeConjunction(head), Expressions.makeConjunction(body));
+			if (isValid(newR)) return newR;
+			else return metaR;
+		}
+	}
+	
 	public List<Rule> simpleGenerator() {
 		// Simple generator: assume meta rule set has the form P1(x0,...,xn) :- P2(..), ..., Pm(...).
 		Map<Integer,List<List<Predicate>>> generatedPerm = new HashMap<>();
