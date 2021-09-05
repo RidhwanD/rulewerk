@@ -17,16 +17,33 @@ import org.semanticweb.rulewerk.core.model.api.Variable;
 import org.semanticweb.rulewerk.core.model.implementation.Expressions;
 
 public class RuleGenerator {
+	// Assumption: meta rule is of the form P_0(...) :- P_1(...), ..., P_n(...).
 	private List<Rule> metaRuleSet;
 	private List<Predicate> inputRelation;
 	private List<Predicate> outputRelation;
 	private List<Predicate> inventedRelation;
+	private int maxArity;
 	
 	public RuleGenerator(List<Rule> metaRuleSet, List<Predicate> inputRelation, List<Predicate> outputRelation, List<Predicate> inventedRelation){
 		this.metaRuleSet = metaRuleSet;
 		this.inputRelation = inputRelation;
 		this.outputRelation = outputRelation;
 		this.inventedRelation = inventedRelation;
+		this.maxArity = this.getMaximalArity();
+	}
+	
+	public int getMaximalArity() {
+		int maxArity = 0;
+		for (Predicate p : inputRelation) {
+			if (p.getArity() > maxArity) maxArity = p.getArity();
+		}
+		for (Predicate p : outputRelation) {
+			if (p.getArity() > maxArity) maxArity = p.getArity();
+		}
+		for (Predicate p : inventedRelation) {
+			if (p.getArity() > maxArity) maxArity = p.getArity();
+		}
+		return maxArity;
 	}
 	
 	public List<Predicate> getPermutation(int n, List<Predicate> arr, int len, int L) {
@@ -127,6 +144,51 @@ public class RuleGenerator {
 			if (isValid(newR)) return newR;
 			else return metaR;
 		}
+	}
+	
+	public List<Rule> addBodyArgToBody(Rule metaR) {
+		// Given a meta-rule r and a variable v that only appear in body. Add v to head of r.
+		Set<Variable> headVars = new HashSet<>(metaR.getHead().getVariables().toList());
+		Set<Variable> bodyVars = new HashSet<>(metaR.getBody().getVariables().toList());
+		bodyVars.removeAll(headVars);
+		if (bodyVars.size() == 0)
+			return null;
+		else {
+			List<Variable> vars = new ArrayList<>(bodyVars);
+			List<Rule> result = new ArrayList<>();
+			Literal head = metaR.getHead().getLiterals().get(0);
+			for (int j = 0; j < vars.size(); j++) {
+				Variable toAdd = vars.get(j);
+				for (int i = 0; i <= head.getPredicate().getArity(); i++) {
+					List<Term> added = new ArrayList<>(head.getArguments());
+					added.add(i, toAdd);
+					if (added.size() <= this.maxArity) {
+						result.add(Expressions.makeRule(
+								Expressions.makePositiveConjunction(Expressions.makePositiveLiteral(head.getPredicate().getName(), added)), 
+								metaR.getBody()));
+					}
+				}
+			}
+			return result;
+		}
+	}
+	
+	public List<Rule> expandBodyArgs(Rule metaR) {
+		// Given a meta-rule r and a variable v that only appear in body. 
+		// Add v to head of r as long as there is variables to be added, while still below the maximum arity.
+		List<Rule> temp = this.addBodyArgToBody(metaR);
+		Set<Rule> result = new HashSet<>(temp);
+		while (temp.size() > 0) {
+			List<Rule> accumulator = new ArrayList<>();
+			for (Rule r : temp) {
+				List<Rule> res = this.addBodyArgToBody(r);
+				if (res != null)
+					accumulator.addAll(res);
+			}
+			temp = accumulator;
+			result.addAll(temp);
+		}
+		return new ArrayList<>(result);
 	}
 	
 	public List<Rule> simpleGenerator() {
