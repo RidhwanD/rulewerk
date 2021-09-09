@@ -239,6 +239,16 @@ public class RuleGenerator {
 		return true;
 	}
 	
+	public boolean existSimilar(List<Rule> rules, Rule r) {
+		for (Rule comp : rules) {
+			List<Term> vars1 = this.extractLiterals(r);
+			List<Term> vars2 = this.extractLiterals(comp);
+			if (isSimilarVariables(vars1, vars2) && this.extractPredicates(r).equals(this.extractPredicates(comp))) 
+				return true;
+		}
+		return false;
+	}
+	
 	public List<Rule> enumerateLiteralGenerator(int maxBodySize) {
 		List<Rule> result = new ArrayList<>();
 		List<Predicate> considered = new ArrayList<>(this.inputRelation);
@@ -273,7 +283,7 @@ public class RuleGenerator {
 						try {
 								Rule r = Expressions.makeRule(Expressions.makePositiveConjunction(Expressions.makePositiveLiteral(op, varPerm.subList(0, op.getArity()))), 
 								Expressions.makeConjunction(bodies));
-							if (this.isValid(r) && !result.contains(r)) result.add(r);
+							if (this.isValid(r) && !this.existSimilar(result, r)) result.add(r);
 						} catch(Exception c) {
 							// Do nothing.
 						}
