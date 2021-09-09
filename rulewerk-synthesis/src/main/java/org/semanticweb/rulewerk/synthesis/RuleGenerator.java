@@ -63,6 +63,24 @@ public class RuleGenerator {
 		return res;
 	}
 	
+	// TODO: make a generic T permutation
+	public List<Term> getVarPermutation(int n, List<Variable> arr, int len, int L) {
+		List<Term> res = new ArrayList<>();
+		for (int i = 0; i < L; i++) {
+			res.add(arr.get(n % len));
+			n /= len;
+		}
+		return res;
+	}
+
+	public List<List<Term>> permutationVar(List<Variable> arr, int len, int L) {
+		List<List<Term>> res = new ArrayList<>();
+		for (int i = 0; i < (int) Math.pow(len, L); i++) {
+			res.add(getVarPermutation(i, arr, len, L));
+		}
+		return res;
+	}
+	
 	public boolean varClauseRepeat(Rule metaR) {
 		// Check whether in meta-rule r, a variable are repeated in a clause, e.g. Edge(?v0, ?v0)
 		// Assumption: a meta-rule r does not contain any constant in its arguments.
@@ -189,6 +207,51 @@ public class RuleGenerator {
 			result.addAll(temp);
 		}
 		return new ArrayList<>(result);
+	}
+	
+	public List<Rule> enumerateLiteralGenerator(int maxBodySize) {
+		List<Rule> result = new ArrayList<>();
+		List<Predicate> considered = new ArrayList<>(this.inputRelation);
+		considered.addAll(this.outputRelation);
+		considered.addAll(this.inventedRelation);
+		for (int k = 1; k <= maxBodySize; k++) {
+			List<List<Predicate>> perms = this.permutation(considered, considered.size(), k);
+			for (Predicate op : this.outputRelation) {
+				for (List<Predicate> body : perms) {
+					// get maximal number of variables
+					int totalBodyArity = 0;
+					for (Predicate b : body) {
+						totalBodyArity += b.getArity();
+					}
+					int maxVar = Math.max(op.getArity(), totalBodyArity);
+					// generate the variables
+					List<Variable> vars = new ArrayList<>();
+					for (int i = 0; i < maxVar; i++)
+						vars.add(Expressions.makeUniversalVariable("x"+i));
+					// generate permutation of variables
+					List<List<Term>> varsPerm = this.permutationVar(vars, vars.size(), (op.getArity() + totalBodyArity));
+					for (List<Term> varPerm : varsPerm) {
+						List<Literal> bodies = new ArrayList<>();
+						int start = op.getArity();
+						int end = start;
+						for (int i = 0; i < body.size(); i++) {
+							if (i != 0) start += body.get(i-1).getArity();
+							end +=  body.get(i).getArity();
+							bodies.add(Expressions.makePositiveLiteral(body.get(i).getName(), varPerm.subList(start, end)));
+						}
+						try {
+								Rule r = Expressions.makeRule(Expressions.makePositiveConjunction(Expressions.makePositiveLiteral(op, varPerm.subList(0, op.getArity()))), 
+								Expressions.makeConjunction(bodies));
+							if (this.isValid(r) && !result.contains(r)) result.add(r);
+						} catch(Exception c) {
+							// Do nothing.
+						}
+					}
+				}
+			}
+		}
+		
+		return result;
 	}
 	
 	public List<Rule> simpleGenerator() {
