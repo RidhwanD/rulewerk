@@ -46,6 +46,28 @@ public class RuleGenerator {
 		return maxArity;
 	}
 	
+	public List<Term> extractLiterals(Rule r) {
+		List<Term> resVars = new ArrayList<>();
+		for (Literal l : r.getHead().getLiterals()) {
+			resVars.addAll(l.getArguments());
+		}
+		for (Literal l : r.getBody().getLiterals()) {
+			resVars.addAll(l.getArguments());
+		}
+		return resVars;
+	}
+	
+	public List<Predicate> extractPredicates(Rule r) {
+		List<Predicate> resPreds = new ArrayList<>();
+		for (Literal l : r.getHead().getLiterals()) {
+			resPreds.add(l.getPredicate());
+		}
+		for (Literal l : r.getBody().getLiterals()) {
+			resPreds.add(l.getPredicate());
+		}
+		return resPreds;
+	}
+	
 	public List<Predicate> getPermutation(int n, List<Predicate> arr, int len, int L) {
 		List<Predicate> res = new ArrayList<>();
 		for (int i = 0; i < L; i++) {
@@ -99,13 +121,7 @@ public class RuleGenerator {
 		// Check whether in meta-rule r, a variable appears exactly once.
 		// Assumption: a meta-rule r does not contain any constant in its arguments.
 		List<Variable> vars = metaR.getVariables().toList();
-		List<Term> occurenceVars = new ArrayList<>();
-		for (Literal l : metaR.getHead()) {
-			occurenceVars.addAll(l.getArguments());
-		}
-		for (Literal l : metaR.getBody()) {
-			occurenceVars.addAll(l.getArguments());
-		}
+		List<Term> occurenceVars = this.extractLiterals(metaR);
 		for (Variable v : vars) {
 			if (Collections.frequency(occurenceVars, v) == 1) return true;
 		}
@@ -209,6 +225,20 @@ public class RuleGenerator {
 		return new ArrayList<>(result);
 	}
 	
+	public boolean isSimilarVariables(List<Term> vars1, List<Term> vars2) {
+		if (vars1.size() != vars2.size()) return false;
+		Map<Term, Term> mapping = new HashMap<>();
+		for (int i = 0; i < vars1.size(); i++) {
+			if (!mapping.containsKey(vars1.get(i))) {
+				mapping.put(vars1.get(i), vars2.get(i));
+			} else {
+				if (!vars2.get(i).equals(mapping.get(vars1.get(i)))) 
+					return false;
+			}
+		}
+		return true;
+	}
+	
 	public List<Rule> enumerateLiteralGenerator(int maxBodySize) {
 		List<Rule> result = new ArrayList<>();
 		List<Predicate> considered = new ArrayList<>(this.inputRelation);
@@ -230,6 +260,7 @@ public class RuleGenerator {
 						vars.add(Expressions.makeUniversalVariable("x"+i));
 					// generate permutation of variables
 					List<List<Term>> varsPerm = this.permutationVar(vars, vars.size(), (op.getArity() + totalBodyArity));
+					// enumerate all valid candidate rules
 					for (List<Term> varPerm : varsPerm) {
 						List<Literal> bodies = new ArrayList<>();
 						int start = op.getArity();
@@ -254,7 +285,7 @@ public class RuleGenerator {
 		return result;
 	}
 	
-	public List<Rule> simpleGenerator() {
+	public List<Rule> simpleMetaGenerator() {
 		// Simple generator: assume meta rule set has the form P1(x0,...,xn) :- P2(..), ..., Pm(...).
 		Map<Integer,List<List<Predicate>>> generatedPerm = new HashMap<>();
 		List<Rule> result = new ArrayList<>();
