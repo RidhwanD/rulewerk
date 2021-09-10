@@ -149,11 +149,34 @@ public class RuleGenerator {
 		return false;
 	}
 	
+	public boolean isArityMatch(Literal l) {
+		for (Predicate p : inputRelation) {
+			if (p.getArity() == l.getPredicate().getArity()) return true;
+		}
+		for (Predicate p : outputRelation) {
+			if (p.getArity() == l.getPredicate().getArity()) return true;
+		}
+		for (Predicate p : inventedRelation) {
+			if (p.getArity() == l.getPredicate().getArity()) return true;
+		}
+		return false;
+	}
+	
+	public boolean canBeInstantiated(Rule metaR) {
+		Literal head = metaR.getHead().getLiterals().get(0);
+		List<Literal> body = metaR.getBody().getLiterals();
+		boolean res = this.isArityMatch(head);
+		for (Literal l : body) {
+			res = res && this.isArityMatch(l);
+		}
+		return res;
+	}
+	
 	public boolean isValid(Rule metaR) {
 		if (varClauseRepeat(metaR)) return false;
 		if (varAppearsOnce(metaR)) return false;
 		if (reoccurClause(metaR)) return false;
-		
+		if (!canBeInstantiated(metaR)) return false;
 		return true;
 	}
 	
@@ -233,6 +256,7 @@ public class RuleGenerator {
 	}
 	
 	public List<Rule> renameVars(Rule metaR, Variable v) {
+		// Assumption: v does not appear in r 
 		List<List<Term>> vars = new ArrayList<>();
 		vars.add(this.extractLiterals(metaR));
 		List<List<Term>> resVars = new ArrayList<>();
