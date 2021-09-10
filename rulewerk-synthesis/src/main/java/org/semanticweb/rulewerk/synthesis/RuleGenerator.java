@@ -184,12 +184,12 @@ public class RuleGenerator {
 		// Given a meta-rule r and a variable v that only appear in body. Add v to head of r.
 		Set<Variable> headVars = new HashSet<>(metaR.getHead().getVariables().toList());
 		Set<Variable> bodyVars = new HashSet<>(metaR.getBody().getVariables().toList());
+		List<Rule> result = new ArrayList<>();
 		bodyVars.removeAll(headVars);
 		if (bodyVars.size() == 0)
-			return null;
+			return result;
 		else {
 			List<Variable> vars = new ArrayList<>(bodyVars);
-			List<Rule> result = new ArrayList<>();
 			Literal head = metaR.getHead().getLiterals().get(0);
 			for (int j = 0; j < vars.size(); j++) {
 				Variable toAdd = vars.get(j);
@@ -211,7 +211,11 @@ public class RuleGenerator {
 		// Given a meta-rule r and a variable v that only appear in body. 
 		// Add v to head of r as long as there is variables to be added, while still below the maximum arity.
 		List<Rule> temp = this.addBodyArgToBody(metaR);
-		Set<Rule> result = new HashSet<>(temp);
+		List<Rule> result = new ArrayList<>();
+		for (Rule r : temp) {
+			if (!this.existSimilar(result, r))
+				result.add(r);
+		}
 		while (temp.size() > 0) {
 			List<Rule> accumulator = new ArrayList<>();
 			for (Rule r : temp) {
@@ -220,9 +224,12 @@ public class RuleGenerator {
 					accumulator.addAll(res);
 			}
 			temp = accumulator;
-			result.addAll(temp);
+			for (Rule r : temp) {
+				if (!this.existSimilar(result, r))
+					result.add(r);
+			}
 		}
-		return new ArrayList<>(result);
+		return result;
 	}
 	
 	public boolean isSimilarVariables(List<Term> vars1, List<Term> vars2) {
