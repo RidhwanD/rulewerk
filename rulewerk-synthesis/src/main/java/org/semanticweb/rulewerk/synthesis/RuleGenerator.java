@@ -298,6 +298,48 @@ public class RuleGenerator {
 		return result;
 	}
 	
+	public List<Rule> insertVar(Rule metaR, Variable v) {
+		// Assumption: v does not appear in r 
+		List<List<Term>> vars = new ArrayList<>();
+		int maxVars = this.maxArity * (metaR.getBody().getLiterals().size()+1);
+		vars.add(this.extractLiterals(metaR));
+		List<List<Term>> resVars = new ArrayList<>();
+		for (int j = 0; j < maxVars - this.extractLiterals(metaR).size(); j++) {
+			List<List<Term>> temp = new ArrayList<>();
+			for (List<Term> vs: vars) {
+				for (int i = 0; i < vs.size(); i++) {
+					List<Term> temp2 = new ArrayList<>(vs);
+					temp2.add(i, v);
+					resVars.add(temp2);
+					temp.add(temp2);
+				}
+			}
+			vars = temp;
+		}
+		for (List<Term> vs : resVars) {
+			System.out.println(vs);
+		}
+		List<Rule> result = new ArrayList<>();
+		Predicate head = metaR.getHead().getLiterals().get(0).getPredicate();
+		List<Literal> body = metaR.getBody().getLiterals();
+		for (List<Term> varPerm : resVars) {
+			List<Literal> bodies = new ArrayList<>();
+			List<List<Term>> splitVars = DatalogSynthesisUtils.split(varPerm, metaR.getBody().getLiterals().size()+1);
+			for (int i = 0; i < body.size(); i++) {
+				bodies.add(Expressions.makePositiveLiteral(body.get(i).getPredicate().getName(), splitVars.get(i+1)));
+			}
+			try {
+					Rule r = Expressions.makeRule(Expressions.makePositiveConjunction(
+							Expressions.makePositiveLiteral(head.getName(), splitVars.get(0))), 
+							Expressions.makeConjunction(bodies));
+				if (this.isValid(r) && !this.existSimilar(result, r)) result.add(r);
+			} catch(Exception c) {
+				// Do nothing.
+			}
+		}
+		return result;
+	}
+	
 	public boolean isSimilarVariables(List<Term> vars1, List<Term> vars2) {
 		if (vars1.size() != vars2.size()) return false;
 		Map<Term, Term> mapping = new HashMap<>();
