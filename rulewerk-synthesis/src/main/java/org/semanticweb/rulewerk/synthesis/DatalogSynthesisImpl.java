@@ -55,7 +55,7 @@ public class DatalogSynthesisImpl {
 	private int rulewerkCall = 0;
 	private int z3Call = 0;
 	private int iteration = 0;
-	private boolean debug = false;
+	private boolean debug = true;
 	
 	public DatalogSynthesisImpl(List<Fact> inputTuple, List<Predicate> expPred, List<Fact> outputPTuple, List<Fact> outputNTuple, List<Rule> ruleSet, Context ctx){
 		this.inputTuple = inputTuple;
@@ -269,32 +269,6 @@ public class DatalogSynthesisImpl {
 		return edb;
 	}
 	
-	private static <T> List<List<T>> split(List<T> list, int numberOfParts) {
-		List<List<T>> numberOfPartss = new ArrayList<>(numberOfParts);
-		int size = list.size();
-		int sizePernumberOfParts = (int) Math.ceil(((double) size) / numberOfParts);
-		int leftElements = size;
-		int i = 0;
-		while (i < size && numberOfParts != 0) {
-			numberOfPartss.add(list.subList(i, i + sizePernumberOfParts));
-			i = i + sizePernumberOfParts;
-			leftElements = leftElements - sizePernumberOfParts;
-			sizePernumberOfParts = (int) Math.ceil(((double) leftElements) / --numberOfParts);
-		}
-		return numberOfPartss;
-	}
-	
-	private static <T> List<List<T>> split2(List<T> list, int numberOfParts) {
-		List<List<T>> numberOfPartss = new ArrayList<>(numberOfParts);
-		float avg = list.size() / (float) numberOfParts;
-		float last = 0;
-        while (last < list.size()) {
-            numberOfPartss.add(list.subList((int) last,(int) (last+avg)));
-            last += avg;
-        }
-		return numberOfPartss;
-	}
-	
 	private PositiveLiteral produceQuery(Predicate p) {
 		List<Term> vars = new ArrayList<>();
 		for (int i = 0; i < p.getArity(); i++) {
@@ -334,7 +308,7 @@ public class DatalogSynthesisImpl {
 		List<Rule> code = new ArrayList<>(Pplus);
 		int d = 2;
 		while (true) {
-			for (List<Rule> codeChunk : split2(code, d)) {
+			for (List<Rule> codeChunk : DatalogSynthesisUtils.split2(code, d)) {
 				Set<Rule> currRPlus = new HashSet<>(codeChunk);
 				boolean bugProduced = false;
 				KnowledgeBase kb = new KnowledgeBase();
@@ -368,7 +342,7 @@ public class DatalogSynthesisImpl {
 		// Alternative of why provenance using the delta debugging
 		int d = 2;
 		while (d < Pplus.size() && d > 0) {
-			List<List<Rule>> partition = split2(Pplus, d);
+			List<List<Rule>> partition = DatalogSynthesisUtils.split2(Pplus, d);
 			logger.debug("Partition: "+partition);
 			boolean deltaBuggy = false; boolean revDeltaBuggy = false;
 			int idx = 0;
@@ -475,7 +449,7 @@ public class DatalogSynthesisImpl {
 		List<Rule> code = new ArrayList<>(Pmin);
 		int d = 2;
 		while (true) {
-			for (List<Rule> codeChunk : split2(code, d)) {
+			for (List<Rule> codeChunk : DatalogSynthesisUtils.split2(code, d)) {
 				Set<Rule> currRMinus = new HashSet<>(Pmin);
 				currRMinus.removeAll(codeChunk);
 				Set<Rule> currRPlus = new HashSet<>(Pplus);
@@ -514,7 +488,7 @@ public class DatalogSynthesisImpl {
 		Pmin.removeAll(Pplus);
 		int d = 2;
 		while (d <= Pmin.size() && d > 0) {
-			List<List<Rule>> partition = split(Pmin, d);	
+			List<List<Rule>> partition = DatalogSynthesisUtils.split(Pmin, d);	
 			logger.debug("Partition: "+partition);
 			boolean deltabuggy = false; boolean revdeltabuggy = false;
 			for (List<Rule> chunk : partition) {
