@@ -232,6 +232,48 @@ public class RuleGenerator {
 		return result;
 	}
 	
+	public List<Rule> renameVars(Rule metaR, Variable v) {
+		List<List<Term>> vars = new ArrayList<>();
+		vars.add(this.extractLiterals(metaR));
+		List<List<Term>> resVars = new ArrayList<>();
+		for (int j = 0; j < this.extractLiterals(metaR).size(); j++) {
+			List<List<Term>> temp = new ArrayList<>();
+			for (List<Term> vs: vars) {
+				for (int i = 0; i < vs.size(); i++) {
+					List<Term> temp2 = new ArrayList<>(vs);
+					if (!v.equals(temp2.get(i))) {
+						temp2.set(i, v);
+						if (!resVars.contains(temp2))
+							resVars.add(temp2);
+						temp.add(temp2);
+					}
+				}
+			}
+			vars = temp;
+		}
+		List<Rule> result = new ArrayList<>();
+		Predicate head = metaR.getHead().getLiterals().get(0).getPredicate();
+		List<Literal> body = metaR.getBody().getLiterals();
+		for (List<Term> varPerm : resVars) {
+			List<Literal> bodies = new ArrayList<>();
+			int start = head.getArity();
+			int end = start;
+			for (int i = 0; i < body.size(); i++) {
+				if (i != 0) start += body.get(i-1).getPredicate().getArity();
+				end +=  body.get(i).getPredicate().getArity();
+				bodies.add(Expressions.makePositiveLiteral(body.get(i).getPredicate().getName(), varPerm.subList(start, end)));
+			}
+			try {
+					Rule r = Expressions.makeRule(Expressions.makePositiveConjunction(Expressions.makePositiveLiteral(head, varPerm.subList(0, head.getArity()))), 
+					Expressions.makeConjunction(bodies));
+				if (this.isValid(r) && !this.existSimilar(result, r)) result.add(r);
+			} catch(Exception c) {
+				// Do nothing.
+			}
+		}
+		return result;
+	}
+	
 	public boolean isSimilarVariables(List<Term> vars1, List<Term> vars2) {
 		if (vars1.size() != vars2.size()) return false;
 		Map<Term, Term> mapping = new HashMap<>();
