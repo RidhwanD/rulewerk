@@ -136,9 +136,9 @@ public final class ReasoningUtils {
 		return answers.getCount();
 	}
 
-	public static long isDerived(final PositiveLiteral queryAtom, final Reasoner reasoner) {
+	public static boolean isDerived(final PositiveLiteral queryAtom, final Reasoner reasoner) {
 		final QueryAnswerCount answers = reasoner.countQueryAnswers(queryAtom, true);
-		return answers.getCount();
+		return answers.getCount() > 0;
 	}
 	
 	public static long printOutQueryCountMult(final List<Predicate> preds, final Reasoner reasoner) {

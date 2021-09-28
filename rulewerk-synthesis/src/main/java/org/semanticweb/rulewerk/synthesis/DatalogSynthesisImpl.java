@@ -277,6 +277,20 @@ public class DatalogSynthesisImpl {
 		return Expressions.makePositiveLiteral(p, vars);
 	}
 	
+	public boolean isBuggy(PositiveLiteral t, List<Rule> rules, boolean ifDerived) throws IOException {
+		KnowledgeBase kb = new KnowledgeBase();
+		kb.addStatements(rules);
+		kb.addStatements(this.inputTuple);
+		try (final Reasoner reasoner = new VLogReasoner(kb)) {
+			this.rulewerkCall++;
+			reasoner.reason();
+			if (ReasoningUtils.isDerived(t, reasoner)) {
+				return ifDerived;
+			}
+		}
+		return !ifDerived;
+	}
+	
 	// ============================================== WHY PROVENANCE =============================================== //
 	
 	public boolean whyProvDebugTool(PositiveLiteral t, List<Rule> wpResult, List<Rule> Pplus) throws IOException {
@@ -287,7 +301,7 @@ public class DatalogSynthesisImpl {
 		kb.addStatements(wpResult);
 		try (final Reasoner reasoner = new VLogReasoner(kb)) {
 			reasoner.reason();
-			if (ReasoningUtils.isDerived(t, reasoner) == 0) {
+			if (!ReasoningUtils.isDerived(t, reasoner)) {
 				System.out.println("NON-DERIVE: "+kb.getRules()+" not derive "+t);
 				satisfied = false;
 			}
@@ -296,7 +310,7 @@ public class DatalogSynthesisImpl {
 		kb.removeStatements(wpResult);
 		try (final Reasoner reasoner = new VLogReasoner(kb)) {
 			reasoner.reason();
-			if (ReasoningUtils.isDerived(t, reasoner) == 1) {
+			if (ReasoningUtils.isDerived(t, reasoner)) {
 				System.out.println("REMAIN: "+kb.getRules()+" - remaining program still derive "+t);
 				satisfied = false;
 			}
@@ -312,15 +326,7 @@ public class DatalogSynthesisImpl {
 				Set<Rule> currRPlus = new HashSet<>(codeChunk);
 				boolean bugProduced = false;
 				KnowledgeBase kb = new KnowledgeBase();
-				kb.addStatements(currRPlus);
-				kb.addStatements(this.inputTuple);
-				try (final Reasoner reasoner = new VLogReasoner(kb)) {
-					this.rulewerkCall++;
-					reasoner.reason();
-					if (ReasoningUtils.isDerived(t, reasoner) == 1) {
-						bugProduced = true;
-					}
-				}
+				bugProduced = this.isBuggy(t, new ArrayList<>(currRPlus), true);
 				if (bugProduced) {
 					Pplus = new ArrayList<>(currRPlus);
 				}
@@ -347,36 +353,22 @@ public class DatalogSynthesisImpl {
 			boolean deltaBuggy = false; boolean revDeltaBuggy = false;
 			int idx = 0;
 			while (idx < partition.size() && !deltaBuggy) {
-				KnowledgeBase kb = new KnowledgeBase();
-				kb.addStatements(partition.get(idx));
-				kb.addStatements(this.inputTuple);
-				try (final Reasoner reasoner = new VLogReasoner(kb)) {
-					this.rulewerkCall++;
-					reasoner.reason();
-					if (ReasoningUtils.isDerived(t, reasoner) == 1) {
-						Pplus = partition.get(idx);
-						deltaBuggy = true;
-						d = 2;
-					}
+				deltaBuggy = this.isBuggy(t, partition.get(idx), true);
+				if (deltaBuggy) {
+					Pplus = partition.get(idx);
+					d = 2;
 				}
 				idx += 1;
 			}
 			if (!deltaBuggy) {
 				idx = 0;
 				while (idx < partition.size() && !revDeltaBuggy) {
-					KnowledgeBase kb = new KnowledgeBase();
 					List<Rule> revDelta = new ArrayList<Rule>(Pplus);
 					revDelta.removeAll(partition.get(idx));
-					kb.addStatements(revDelta);
-					kb.addStatements(this.inputTuple);
-					try (final Reasoner reasoner = new VLogReasoner(kb)) {
-						this.rulewerkCall++;
-						reasoner.reason();
-						if (ReasoningUtils.isDerived(t, reasoner) == 1) {
-							Pplus.removeAll(partition.get(idx));
-							revDeltaBuggy = true;
-							d -= 1;
-						}
+					revDeltaBuggy = this.isBuggy(t, revDelta, true);
+					if (revDeltaBuggy) {
+						Pplus.removeAll(partition.get(idx));
+						d -= 1;
 					}
 					idx += 1;
 				}
@@ -420,7 +412,7 @@ public class DatalogSynthesisImpl {
 		kb.addStatements(PPlusDelta);
 		try (final Reasoner reasoner = new VLogReasoner(kb)) {
 			reasoner.reason();
-			if (ReasoningUtils.isDerived(t, reasoner) == 1) {
+			if (ReasoningUtils.isDerived(t, reasoner)) {
 				System.out.println("REMAIN: Remainder derive "+t);
 				satisfied = false;
 			}
@@ -433,7 +425,7 @@ public class DatalogSynthesisImpl {
 			kbr.addStatements(ppdr);
 			try (final Reasoner reasoner = new VLogReasoner(kbr)) {
 				reasoner.reason();
-				if (ReasoningUtils.isDerived(t, reasoner) == 0) {
+				if (!ReasoningUtils.isDerived(t, reasoner)) {
 					System.out.println("NON-DERIVE: "+r+" not derive "+t);
 					satisfied = false;
 				}
@@ -454,17 +446,7 @@ public class DatalogSynthesisImpl {
 				currRMinus.removeAll(codeChunk);
 				Set<Rule> currRPlus = new HashSet<>(Pplus);
 				currRPlus.addAll(codeChunk);
-				boolean bugProduced = false;
-				KnowledgeBase kb = new KnowledgeBase();
-				kb.addStatements(currRPlus);
-				kb.addStatements(this.inputTuple);
-				try (final Reasoner reasoner = new VLogReasoner(kb)) {
-					this.rulewerkCall++;
-					reasoner.reason();
-					if (ReasoningUtils.isDerived(t, reasoner) == 0) {
-						bugProduced = true;
-					}
-				}
+				boolean bugProduced = this.isBuggy(t, new ArrayList<>(currRPlus), false);
 				if (bugProduced) {
 					Pplus = new HashSet<>(currRPlus);
 					Pmin = new HashSet<>(currRMinus);
@@ -492,40 +474,26 @@ public class DatalogSynthesisImpl {
 			logger.debug("Partition: "+partition);
 			boolean deltabuggy = false; boolean revdeltabuggy = false;
 			for (List<Rule> chunk : partition) {
-				KnowledgeBase kb = new KnowledgeBase();
 				List<Rule> deltaBuggy = new ArrayList<Rule>(this.ruleSet);
 				deltaBuggy.removeAll(chunk);
-				kb.addStatements(deltaBuggy);
-				kb.addStatements(this.inputTuple);
-				try (final Reasoner reasoner = new VLogReasoner(kb)) {
-					this.rulewerkCall++;
-					reasoner.reason();
-					if (ReasoningUtils.isDerived(t, reasoner) == 0) {
-						deltabuggy = true;
-						Pmin = chunk;
-						d = 2;
-						break;
-					}
+				deltabuggy = this.isBuggy(t, deltaBuggy, false);
+				if (deltabuggy) {
+					Pmin = chunk;
+					d = 2;
+					break;
 				}
 			}
 			if (!deltabuggy) {
 				for (List<Rule> chunk : partition) {
-					KnowledgeBase kb = new KnowledgeBase();
 					List<Rule> revDelta = new ArrayList<Rule>(Pmin);
 					revDelta.removeAll(chunk);
 					List<Rule> revDeltaBuggy = new ArrayList<Rule>(this.ruleSet);
 					revDeltaBuggy.removeAll(revDelta);
-					kb.addStatements(revDeltaBuggy);
-					kb.addStatements(this.inputTuple);
-					try (final Reasoner reasoner = new VLogReasoner(kb)) {
-						this.rulewerkCall++;
-						reasoner.reason();
-						if (ReasoningUtils.isDerived(t, reasoner) == 0) {
-							revdeltabuggy = true;
-							Pmin.removeAll(chunk);
-							d -= 1;
-							break;
-						}
+					revdeltabuggy = this.isBuggy(t, revDeltaBuggy, false);
+					if (revdeltabuggy) {
+						Pmin.removeAll(chunk);
+						d -= 1;
+						break;
 					}
 				}
 			}
@@ -586,8 +554,7 @@ public class DatalogSynthesisImpl {
 			try (final Reasoner reasoner = new VLogReasoner(kb)) {
 				this.rulewerkCall++;
 				reasoner.reason();
-				long generate = ReasoningUtils.isDerived(newt, reasoner);
-				if (generate == 1) coprovIn.add(r);
+				if (ReasoningUtils.isDerived(newt, reasoner)) coprovIn.add(r);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -670,7 +637,7 @@ public class DatalogSynthesisImpl {
 	public List<Fact> getNonExpectedResultsDecl(Reasoner reasoner) {
 		List<Fact> NOutput = new ArrayList<Fact>();
 		for (Fact t : this.outputNTuple) {
-			if (ReasoningUtils.isDerived(t, reasoner) == 1) {
+			if (ReasoningUtils.isDerived(t, reasoner)) {
 				NOutput.add(t);
 			}
 		}
@@ -708,8 +675,8 @@ public class DatalogSynthesisImpl {
 				reasoner.reason();
 				int newWhyNots = 0;
 				for (Fact t : this.outputPTuple) {
-					long generate = ReasoningUtils.isDerived(t, reasoner);
-					if (generate == 0) {
+					boolean generate = ReasoningUtils.isDerived(t, reasoner);
+					if (!generate) {
 						loop = true;
 						if (pPlus.size() < this.ruleSet.size()) {
 							logger.info("============= Perform Why Not Provenance ==============");
@@ -718,7 +685,7 @@ public class DatalogSynthesisImpl {
 							phi = this.ctx.mkAnd(phi, this.whyNotProvExpr(this.whyNotProvAlt(t, pPlus)));
 							logger.info("=============== Why Not Provenance End ================");
 						}
-					} else if (generate == 1) {
+					} else if (generate) {
 						if (this.coprov) {
 							if (pPlus.size() < this.ruleSet.size() && pPlus.size() > 0) {
 								logger.info("============= Perform Co-Provenance ==============");
@@ -793,7 +760,7 @@ public class DatalogSynthesisImpl {
 		}
 		try (final Reasoner reasoner = new VLogReasoner(kb)) {
 			reasoner.reason();
-			if (ReasoningUtils.isDerived(t, reasoner) == 0) {
+			if (!ReasoningUtils.isDerived(t, reasoner)) {
 				System.out.println("NON-DERIVE: "+kb.getRules()+" not derive "+t);
 				satisfied = false;
 			}
@@ -815,7 +782,7 @@ public class DatalogSynthesisImpl {
 		}
 		try (final Reasoner reasoner = new VLogReasoner(kb)) {
 			reasoner.reason();
-			if (ReasoningUtils.isDerived(t, reasoner) == 1) {
+			if (ReasoningUtils.isDerived(t, reasoner)) {
 				System.out.println("DERIVE: "+kb.getRules()+" still derive "+t);
 				satisfied = false;
 			}
@@ -884,8 +851,8 @@ public class DatalogSynthesisImpl {
 				reasoner.reason();
 				int newWhyNots = 0;
 				for (Fact t : this.outputPTuple) {
-					long generate = ReasoningUtils.isDerived(t, reasoner);
-					if (generate == 0) {
+					boolean generate = ReasoningUtils.isDerived(t, reasoner);
+					if (!generate) {
 						loop = true;
 						if (pPlus.size() < this.ruleSet.size()) {
 							logger.info("============= Perform Why Not Provenance ==============");
@@ -894,7 +861,7 @@ public class DatalogSynthesisImpl {
 							phi = this.ctx.mkAnd(phi, this.whyNotProvExpr(this.whyNotProv(t, pPlus)));
 							logger.info("=============== Why Not Provenance End ================");
 						}
-					} else if (generate == 1) {
+					} else if (generate) {
 						if (this.coprov) {
 							if (pPlus.size() < this.ruleSet.size() && pPlus.size() > 0) {
 								logger.info("============= Perform Co-Provenance ==============");
@@ -1003,7 +970,7 @@ public class DatalogSynthesisImpl {
 				this.rulewerkCall++;
 				// Ensure all expected output are generated.
 				for (Fact f : this.outputPTuple) {
-					long generate = ReasoningUtils.isDerived(f, reasoner);
+					boolean generate = ReasoningUtils.isDerived(f, reasoner);
 					if (iter == 1) {
 						logger.info("============= Perform Why Not Provenance ==============");
 						wnp++; loop = true;
@@ -1011,7 +978,7 @@ public class DatalogSynthesisImpl {
 						phi = this.ctx.mkAnd(phi, this.whyNotProvSet(f, pPlus, reasoner));
 						logger.info("=============== Why Not Provenance End ================");
 					}
-					if (iter > 1 && generate == 0) logger.error("Tuple "+f+" cannot be generated.");
+					if (iter > 1 && !generate) logger.error("Tuple "+f+" cannot be generated.");
 				}
 
 				// Ensure all undesired output are not generated.
