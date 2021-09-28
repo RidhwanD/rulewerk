@@ -325,7 +325,6 @@ public class DatalogSynthesisImpl {
 			for (List<Rule> codeChunk : DatalogSynthesisUtils.split2(code, d)) {
 				Set<Rule> currRPlus = new HashSet<>(codeChunk);
 				boolean bugProduced = false;
-				KnowledgeBase kb = new KnowledgeBase();
 				bugProduced = this.isBuggy(t, new ArrayList<>(currRPlus), true);
 				if (bugProduced) {
 					Pplus = new ArrayList<>(currRPlus);
@@ -682,7 +681,7 @@ public class DatalogSynthesisImpl {
 							logger.info("============= Perform Why Not Provenance ==============");
 							wnp++; newWhyNots++;
 							System.out.println("- "+wnp+" call of why-not-provenance");
-							phi = this.ctx.mkAnd(phi, this.whyNotProvExpr(this.whyNotProvAlt(t, pPlus)));
+							phi = this.ctx.mkAnd(phi, this.whyNotProvExpr(this.whyNotDeltaOrig(t, pPlus)));
 							logger.info("=============== Why Not Provenance End ================");
 						}
 					} else if (generate) {
@@ -711,7 +710,7 @@ public class DatalogSynthesisImpl {
 						logger.info("============= Perform Why Provenance ==============");
 						wp++; newWhys++;
 						System.out.println("- "+wp+" call of why-provenance");
-						phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyProvDeltaAlt(f, pPlus)));
+						phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyDeltaOrig(f, pPlus)));
 						logger.info("=============== Why Provenance End ================");
 					}
 					if (newWhys >= 3) break;
@@ -1013,5 +1012,79 @@ public class DatalogSynthesisImpl {
 			System.out.println("Cannot find solution.");
 			return null;
 		}
+	}
+	
+	////////////////////////////////////////// ORIGINAL DELTA DEBUGGING ALGS BY ZELLER //////////////////////////////////////////
+	
+	public List<Rule> whyNotDeltaOrigAcc(PositiveLiteral t, List<Rule> Pmin, List<Rule> accumulator) throws IOException {
+		List<Rule> code = new ArrayList<>(Pmin);
+		List<List<Rule>> codeChunks = DatalogSynthesisUtils.split2(code, 2);
+		boolean bugProduced = false;
+		for (List<Rule> codeChunk : codeChunks) {
+			List<Rule> rules = new ArrayList<>(this.ruleSet);
+			rules.removeAll(codeChunk);
+			rules.removeAll(accumulator);
+			bugProduced = isBuggy(t, rules, false);
+			if (bugProduced) {
+				if (codeChunk.size() > 1) {
+					List<Rule> res = whyNotDeltaOrigAcc(t, codeChunk, accumulator);
+					return res;
+				} else return codeChunk;
+			}
+		}
+		if (!bugProduced && Pmin.size() > 1) {
+			List<Rule> acc1 = new ArrayList<>(accumulator);
+			acc1.addAll(codeChunks.get(1));
+			List<Rule> res = whyNotDeltaOrigAcc(t, codeChunks.get(0), acc1);
+			List<Rule> acc2 = new ArrayList<>(accumulator);
+			acc2.addAll(codeChunks.get(0));
+			res.addAll(whyNotDeltaOrigAcc(t, codeChunks.get(1), acc2));
+			return res;
+		}
+		return code;
+	}
+	
+	public List<Rule> whyNotDeltaOrig(PositiveLiteral t, List<Rule> Pplus) throws IOException {
+		List<Rule> Pmin = new ArrayList<>(this.ruleSet);
+		Pmin.removeAll(Pplus);
+		List<Rule> res = whyNotDeltaOrigAcc(t, Pmin, new ArrayList<>());
+		if (debug)
+			System.out.println(whyNotProvDebugTool(t, new HashSet<>(res)));
+		return res;
+	}
+	
+	public List<Rule> whyDeltaOrigAcc(PositiveLiteral t, List<Rule> Pplus, List<Rule> accumulator) throws IOException {
+		List<Rule> code = new ArrayList<>(Pplus);
+		List<List<Rule>> codeChunks = DatalogSynthesisUtils.split2(code, 2);
+		boolean bugProduced = false;
+		List<Rule> result = new ArrayList<>();
+		for (List<Rule> codeChunk : codeChunks) {
+			List<Rule> rules = new ArrayList<>(this.ruleSet);
+			rules.removeAll(codeChunk);
+			rules.removeAll(accumulator);
+			bugProduced = isBuggy(t, rules, false);
+			if (bugProduced) {
+				if (codeChunk.size() > 1) {
+					result.addAll(whyNotDeltaOrigAcc(t, codeChunk, accumulator));
+				} else return codeChunk;
+			}
+		}
+		if (!bugProduced) {
+			List<Rule> acc1 = new ArrayList<>(accumulator);
+			acc1.addAll(codeChunks.get(1));
+			List<Rule> res = whyNotDeltaOrigAcc(t, codeChunks.get(0), acc1);
+			List<Rule> acc2 = new ArrayList<>(accumulator);
+			acc2.addAll(codeChunks.get(0));
+			res.addAll(whyNotDeltaOrigAcc(t, codeChunks.get(1), acc2));
+			return res;
+		}
+		return result;
+	}
+	
+	public List<Rule> whyDeltaOrig(PositiveLiteral t, List<Rule> Pplus) throws IOException {
+		List<Rule> res = whyNotDeltaOrigAcc(t, Pplus, new ArrayList<>());
+		if (debug)
+			System.out.println(whyProvDebugTool(t, Pplus, res));
+		return res;
 	}
 }
