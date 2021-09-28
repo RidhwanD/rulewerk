@@ -1,6 +1,7 @@
 package org.semanticweb.rulewerk.synthesis;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -32,6 +33,11 @@ public class RuleGenerator {
 		this.maxArity = this.getMaximalArity();
 	}
 	
+	/**
+	 * Determine the maximal arity of all considered {@link Predicate}s.
+	 *
+	 * @return the maximal arity of {@link Predicate}s considered in the {@link RuleGenerator}.
+	 */
 	public int getMaximalArity() {
 		int maxArity = 0;
 		for (Predicate p : inputRelation) {
@@ -46,7 +52,13 @@ public class RuleGenerator {
 		return maxArity;
 	}
 	
-	public List<Term> extractLiterals(Rule r) {
+	/**
+	 * Extract the set of all {@link Term}s from a {@link Rule}.
+	 *
+	 * @param r 	non-null {@link Rule}
+	 * @return the set of all {@link Term}s corresponding to the input
+	 */
+	public List<Term> extractTerms(Rule r) {
 		List<Term> resVars = new ArrayList<>();
 		for (Literal l : r.getHead().getLiterals()) {
 			resVars.addAll(l.getArguments());
@@ -57,6 +69,12 @@ public class RuleGenerator {
 		return resVars;
 	}
 	
+	/**
+	 * Extract the set of all {@link Predicate}s from a {@link Rule}.
+	 *
+	 * @param r 	non-null {@link Rule}
+	 * @return the set of all {@link Predicate}s corresponding to the input
+	 */
 	public List<Predicate> extractPredicates(Rule r) {
 		List<Predicate> resPreds = new ArrayList<>();
 		for (Literal l : r.getHead().getLiterals()) {
@@ -103,9 +121,13 @@ public class RuleGenerator {
 		return res;
 	}
 	
+	/**
+	 * Check whether in a meta-{@link Rule}, a {@link Variable} is repeated in a clause.
+	 *
+	 * @param metaR 	non-null meta-{@link Rule}
+	 * @return true if there is a repetition. Otherwise false.
+	 */
 	public boolean varClauseRepeat(Rule metaR) {
-		// Check whether in meta-rule r, a variable are repeated in a clause, e.g. Edge(?v0, ?v0)
-		// Assumption: a meta-rule r does not contain any constant in its arguments.
 		for (Literal l : metaR.getHead()) {
 			List<Variable> headVars = l.getVariables().toList();
 			if (headVars.size() < l.getPredicate().getArity()) return true;
@@ -117,38 +139,42 @@ public class RuleGenerator {
 		return false;
 	}
 	
+	/**
+	 * Check whether in a meta-{@link Rule}, a {@link Variable} appears exactly once.
+	 *
+	 * @param metaR 	non-null meta-{@link Rule}
+	 * @return true if {@link Variable}s appear exactly once. Otherwise false.
+	 */
 	public boolean varAppearsOnce(Rule metaR) {
-		// Check whether in meta-rule r, a variable appears exactly once.
-		// Assumption: a meta-rule r does not contain any constant in its arguments.
 		List<Variable> vars = metaR.getVariables().toList();
-		List<Term> occurenceVars = this.extractLiterals(metaR);
+		List<Term> occurenceVars = this.extractTerms(metaR);
 		for (Variable v : vars) {
 			if (Collections.frequency(occurenceVars, v) == 1) return true;
 		}
 		return false;
 	}
 	
+	/**
+	 * Check whether in a meta-{@link Rule}, two clauses share same set of {@link Variable}s in same order.
+	 *
+	 * @param metaR 	non-null meta-{@link Rule}
+	 * @return true if two clauses share the same set of {@link Variable}s. Otherwise false.
+	 */
 	public boolean reoccurClause(Rule metaR) {
-		// Check whether in meta-rule r, two clauses share same set of variables in same order.
-		// Assumption: a meta-rule r does not contain any constant in its arguments.
-		
-		// In combination?
 		List<Literal> clauses = new ArrayList<>(metaR.getBody().getLiterals());
 		clauses.addAll(metaR.getHead().getLiterals());
 		Set<Literal> clausesSet = new HashSet<>(clauses);
 		if (clausesSet.size() < clauses.size()) return true;
 		
-		// Or separated by head and body?
-		List<Literal> headClauses = new ArrayList<>(metaR.getHead().getLiterals());
-		Set<Literal> headClausesSet = new HashSet<>(headClauses);
-		if (headClausesSet.size() < headClauses.size()) return true;
-		List<Literal> bodyClauses = new ArrayList<>(metaR.getBody().getLiterals());
-		Set<Literal> bodyClausesSet = new HashSet<>(bodyClauses);
-		if (bodyClausesSet.size() < bodyClauses.size()) return true;
-		
 		return false;
 	}
 	
+	/**
+	 * Check whether in a {@link Literal}, in a meta-{@link Rule} can be matched with any {@link Predicate}s.
+	 *
+	 * @param l 	non-null {@link Literal}
+	 * @return true if it can be matched. Otherwise false.
+	 */
 	public boolean isArityMatch(Literal l) {
 		for (Predicate p : inputRelation) {
 			if (p.getArity() == l.getPredicate().getArity()) return true;
@@ -162,7 +188,13 @@ public class RuleGenerator {
 		return false;
 	}
 	
-	public boolean canBeInstantiated(Rule metaR) {
+	/**
+	 * Check whether a meta-{@link Rule} can be instantiated.
+	 *
+	 * @param metaR 	non-null meta-{@link Rule}
+	 * @return true if instantiable. Otherwise false.
+	 */
+	public boolean isInstantiable(Rule metaR) {
 		Literal head = metaR.getHead().getLiterals().get(0);
 		List<Literal> body = metaR.getBody().getLiterals();
 		boolean res = this.isArityMatch(head);
@@ -172,16 +204,28 @@ public class RuleGenerator {
 		return res;
 	}
 	
+	/**
+	 * Check whether a meta-{@link Rule} is valid.
+	 *
+	 * @param metaR 	non-null meta-{@link Rule}
+	 * @return true if valid. Otherwise false.
+	 */
 	public boolean isValid(Rule metaR) {
 		if (varClauseRepeat(metaR)) return false;
 		if (varAppearsOnce(metaR)) return false;
 		if (reoccurClause(metaR)) return false;
-		if (!canBeInstantiated(metaR)) return false;
+		if (!isInstantiable(metaR)) return false;
 		return true;
 	}
 	
+	/**
+	 * Remove a {@link Variable} from a meta-{@link Rule}.
+	 *
+	 * @param metaR 	non-null meta-{@link Rule}
+	 * @param v 		non-null {@link Variable}
+	 * @return a new meta-{@link Rule} if the result is valid. Otherwise, return the input meta-{@link Rule}.
+	 */
 	public Rule removeArgument(Rule metaR, Variable v) {
-		// Remove variable v from meta-rule r.
 		if (!metaR.getVariables().toList().contains(v)) {
 			return metaR;
 		} else {
@@ -203,8 +247,13 @@ public class RuleGenerator {
 		}
 	}
 	
-	public List<Rule> addBodyArgToBody(Rule metaR) {
-		// Given a meta-rule r and a variable v that only appear in body. Add v to head of r.
+	/**
+	 * Add {@link Variable}s that only appear in the body of a meta-{@link Rule} to its head.
+	 *
+	 * @param metaR 	non-null meta-{@link Rule}
+	 * @return a set of valid meta-{@link Rule}s that contains every combination of {@link Variable}s addition. 
+	 */
+	private List<Rule> addBodyArgToBody(Rule metaR) {
 		Set<Variable> headVars = new HashSet<>(metaR.getHead().getVariables().toList());
 		Set<Variable> bodyVars = new HashSet<>(metaR.getBody().getVariables().toList());
 		List<Rule> result = new ArrayList<>();
@@ -230,9 +279,13 @@ public class RuleGenerator {
 		}
 	}
 	
+	/**
+	 * Add {@link Variable}s that only appear in the body of a meta-{@link Rule} to its head as long as there is variables to be added, while still below the maximum arity.
+	 *
+	 * @param metaR 	non-null meta-{@link Rule}
+	 * @return a set of valid meta-{@link Rule}s that contains every combination of {@link Variable}s addition. 
+	 */
 	public List<Rule> expandBodyArgs(Rule metaR) {
-		// Given a meta-rule r and a variable v that only appear in body. 
-		// Add v to head of r as long as there is variables to be added, while still below the maximum arity.
 		List<Rule> temp = this.addBodyArgToBody(metaR);
 		List<Rule> result = new ArrayList<>();
 		for (Rule r : temp) {
@@ -255,12 +308,18 @@ public class RuleGenerator {
 		return result;
 	}
 	
+	/**
+	 * Rename a {@link Variable} in a meta-{@link Rule}.
+	 *
+	 * @param metaR 	non-null meta-{@link Rule}
+	 * @param v		 	non-null {@link Variable} that does not appear in the meta-{@link Rule}
+	 * @return a set of valid meta-{@link Rule}s that contains possible combination of {@link Variable} renaming. 
+	 */
 	public List<Rule> renameVars(Rule metaR, Variable v) {
-		// Assumption: v does not appear in r 
-		List<List<Term>> vars = new ArrayList<>();
-		vars.add(this.extractLiterals(metaR));
+		List<Term> terms = this.extractTerms(metaR);
+		List<List<Term>> vars = new ArrayList<>(Arrays.asList(terms));
 		List<List<Term>> resVars = new ArrayList<>();
-		for (int j = 0; j < this.extractLiterals(metaR).size(); j++) {
+		for (int j = 0; j < terms.size(); j++) {
 			List<List<Term>> temp = new ArrayList<>();
 			for (List<Term> vs: vars) {
 				for (int i = 0; i < vs.size(); i++) {
@@ -275,6 +334,7 @@ public class RuleGenerator {
 			}
 			vars = temp;
 		}
+		System.out.println(resVars);
 		List<Rule> result = new ArrayList<>();
 		Predicate head = metaR.getHead().getLiterals().get(0).getPredicate();
 		List<Literal> body = metaR.getBody().getLiterals();
@@ -290,7 +350,7 @@ public class RuleGenerator {
 			try {
 					Rule r = Expressions.makeRule(Expressions.makePositiveConjunction(Expressions.makePositiveLiteral(head, varPerm.subList(0, head.getArity()))), 
 					Expressions.makeConjunction(bodies));
-				if (this.isValid(r) && !this.existSimilar(result, r)) result.add(r);
+				if (this.isValid(r)) result.add(r);
 			} catch(Exception c) {
 				// Do nothing.
 			}
@@ -298,13 +358,20 @@ public class RuleGenerator {
 		return result;
 	}
 	
+	/**
+	 * Insert a {@link Variable} into a meta-{@link Rule}.
+	 *
+	 * @param metaR 	non-null meta-{@link Rule}
+	 * @param v		 	non-null {@link Variable} that does not appear in the meta-{@link Rule}
+	 * @return a set of valid meta-{@link Rule}s that contains possible combination of {@link Variable} addition. 
+	 */
 	public List<Rule> insertVar(Rule metaR, Variable v) {
 		// Assumption: v does not appear in r 
 		List<List<Term>> vars = new ArrayList<>();
 		int maxVars = this.maxArity * (metaR.getBody().getLiterals().size()+1);
-		vars.add(this.extractLiterals(metaR));
+		vars.add(this.extractTerms(metaR));
 		List<List<Term>> resVars = new ArrayList<>();
-		for (int j = 0; j < maxVars - this.extractLiterals(metaR).size(); j++) {
+		for (int j = 0; j < maxVars - this.extractTerms(metaR).size(); j++) {
 			List<List<Term>> temp = new ArrayList<>();
 			for (List<Term> vs: vars) {
 				for (int i = 0; i < vs.size(); i++) {
@@ -340,6 +407,13 @@ public class RuleGenerator {
 		return result;
 	}
 	
+	/**
+	 * Check whether there is a possible mappings from a {@link List} of {@link Variable}s to another set of {@link Variable}s.
+	 *
+	 * @param vars1 	non-null a {@link List} of {@link Variable}s
+	 * @param vars2	 	non-null a {@link List} of {@link Variable}s
+	 * @return true if there is a mapping. Otherwise false.
+	 */
 	public boolean isSimilarVariables(List<Term> vars1, List<Term> vars2) {
 		if (vars1.size() != vars2.size()) return false;
 		Map<Term, Term> mapping = new HashMap<>();
@@ -354,16 +428,29 @@ public class RuleGenerator {
 		return true;
 	}
 	
+	/**
+	 * Check whether there exists a meta-{@link Rule} that is similar with the considered meta-{@link Rule}.
+	 *
+	 * @param rules 	non-null a {@link List} of meta-{@link Rule}s
+	 * @param r	 		non-null a meta-{@link Rule}
+	 * @return true if there is a similar {@link Rule}. Otherwise false.
+	 */
 	public boolean existSimilar(List<Rule> rules, Rule r) {
 		for (Rule comp : rules) {
-			List<Term> vars1 = this.extractLiterals(r);
-			List<Term> vars2 = this.extractLiterals(comp);
+			List<Term> vars1 = this.extractTerms(r);
+			List<Term> vars2 = this.extractTerms(comp);
 			if (isSimilarVariables(vars1, vars2) && this.extractPredicates(r).equals(this.extractPredicates(comp))) 
 				return true;
 		}
 		return false;
 	}
 	
+	/**
+	 * Generate the {@link Rule} set by enumerating {@link Literal}s.
+	 *
+	 * @param maxBodySize 	non-null the maximum body size of each {@link Rule}.
+	 * @return a {@link List} of every possible {@link Rule}s within certain size.
+	 */
 	public List<Rule> enumerateLiteralGenerator(int maxBodySize) {
 		List<Rule> result = new ArrayList<>();
 		List<Predicate> considered = new ArrayList<>(this.inputRelation);
@@ -400,7 +487,7 @@ public class RuleGenerator {
 								Expressions.makeConjunction(bodies));
 							if (this.isValid(r) && !this.existSimilar(result, r)) result.add(r);
 						} catch(Exception c) {
-							// Do nothing.
+							// Do nothing.	
 						}
 					}
 				}
@@ -410,6 +497,11 @@ public class RuleGenerator {
 		return result;
 	}
 	
+	/**
+	 * Generate the {@link Rule} set by using the meta-{@link Rule} set.
+	 *
+	 * @return a {@link List} of every possible {@link Rule}s from the meta-{@link Rule} set.
+	 */
 	public List<Rule> simpleMetaGenerator() {
 		// Simple generator: assume meta rule set has the form P1(x0,...,xn) :- P2(..), ..., Pm(...).
 		Map<Integer,List<List<Predicate>>> generatedPerm = new HashMap<>();
