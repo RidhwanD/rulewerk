@@ -56,6 +56,8 @@ public class DatalogSynthesisImpl {
 	private int z3Call = 0;
 	private int iteration = 0;
 	private boolean debug = true;
+	private int whybuggy = 0;
+	private int whynotbuggy = 0;
 	
 	public DatalogSynthesisImpl(List<Fact> inputTuple, List<Predicate> expPred, List<Fact> outputPTuple, List<Fact> outputNTuple, List<Rule> ruleSet, Context ctx){
 		this.inputTuple = inputTuple;
@@ -304,6 +306,7 @@ public class DatalogSynthesisImpl {
 			if (!ReasoningUtils.isDerived(t, reasoner)) {
 				System.out.println("NON-DERIVE: "+kb.getRules()+" not derive "+t);
 				satisfied = false;
+				this.whybuggy++;
 			}
 		}
 		kb.addStatements(Pplus);
@@ -313,6 +316,7 @@ public class DatalogSynthesisImpl {
 			if (ReasoningUtils.isDerived(t, reasoner)) {
 				System.out.println("REMAIN: "+kb.getRules()+" - remaining program still derive "+t);
 				satisfied = false;
+				this.whybuggy++;
 			}
 		}
 		return satisfied;
@@ -414,6 +418,7 @@ public class DatalogSynthesisImpl {
 			if (ReasoningUtils.isDerived(t, reasoner)) {
 				System.out.println("REMAIN: Remainder derive "+t);
 				satisfied = false;
+				this.whynotbuggy++;
 			}
 		}
 		for (Rule r : wnpResult) {
@@ -427,6 +432,7 @@ public class DatalogSynthesisImpl {
 				if (!ReasoningUtils.isDerived(t, reasoner)) {
 					System.out.println("NON-DERIVE: "+r+" not derive "+t);
 					satisfied = false;
+					this.whynotbuggy++;
 				}
 			}
 		}
@@ -732,6 +738,10 @@ public class DatalogSynthesisImpl {
 			System.out.println("- "+wp+" call of why-provenance");
 			System.out.println("- "+wnp+" call of why-not-provenance");
 			System.out.println("- "+cp+" call of co-provenance");
+			if (debug) {
+				System.out.println("why-provenance buggy: "+this.whybuggy);
+				System.out.println("why-not-provenance buggy: "+this.whynotbuggy);
+			}
 			return pPlus;
 		} else {
 			System.out.println("Cannot find solution.");
@@ -906,6 +916,10 @@ public class DatalogSynthesisImpl {
 			System.out.println("- "+wp+" call of why-provenance");
 			System.out.println("- "+wnp+" call of why-not-provenance");
 			System.out.println("- "+cp+" call of co-provenance");
+			if (debug) {
+				System.out.println("why-provenance buggy: "+this.whybuggy);
+				System.out.println("why-not-provenance buggy: "+this.whynotbuggy);
+			}
 			return pPlus;
 		} else {
 			System.out.println("Cannot find solution.");
@@ -1007,6 +1021,10 @@ public class DatalogSynthesisImpl {
 			System.out.println("- "+wp+" call of why-provenance");
 			System.out.println("- "+wnp+" call of why-not-provenance");
 			System.out.println("Made "+this.z3Call+" calls to Z3 and "+this.rulewerkCall+" calls to Rulewerk.");
+			if (debug) {
+				System.out.println("why-provenance buggy: "+this.whybuggy);
+				System.out.println("why-not-provenance buggy: "+this.whynotbuggy);
+			}
 			return pPlus;
 		} else {
 			System.out.println("Cannot find solution.");
@@ -1062,27 +1080,29 @@ public class DatalogSynthesisImpl {
 			List<Rule> rules = new ArrayList<>(this.ruleSet);
 			rules.removeAll(codeChunk);
 			rules.removeAll(accumulator);
-			bugProduced = isBuggy(t, rules, false);
+			bugProduced = isBuggy(t, rules, true);
 			if (bugProduced) {
 				if (codeChunk.size() > 1) {
-					result.addAll(whyNotDeltaOrigAcc(t, codeChunk, accumulator));
-				} else return codeChunk;
+					result.addAll(whyDeltaOrigAcc(t, codeChunk, accumulator));
+				} else {
+					result.addAll(codeChunk);
+				}
 			}
 		}
-		if (!bugProduced) {
+		if (Pplus.size() > 1) {
 			List<Rule> acc1 = new ArrayList<>(accumulator);
 			acc1.addAll(codeChunks.get(1));
-			List<Rule> res = whyNotDeltaOrigAcc(t, codeChunks.get(0), acc1);
+			List<Rule> res = whyDeltaOrigAcc(t, codeChunks.get(0), acc1);
 			List<Rule> acc2 = new ArrayList<>(accumulator);
 			acc2.addAll(codeChunks.get(0));
-			res.addAll(whyNotDeltaOrigAcc(t, codeChunks.get(1), acc2));
+			res.addAll(whyDeltaOrigAcc(t, codeChunks.get(1), acc2));
 			return res;
 		}
 		return result;
 	}
 	
 	public List<Rule> whyDeltaOrig(PositiveLiteral t, List<Rule> Pplus) throws IOException {
-		List<Rule> res = whyNotDeltaOrigAcc(t, Pplus, new ArrayList<>());
+		List<Rule> res = whyDeltaOrigAcc(t, Pplus, new ArrayList<>());
 		if (debug)
 			System.out.println(whyProvDebugTool(t, Pplus, res));
 		return res;
