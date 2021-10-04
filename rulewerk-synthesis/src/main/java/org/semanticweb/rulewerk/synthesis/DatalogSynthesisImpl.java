@@ -27,6 +27,8 @@ import org.semanticweb.rulewerk.core.model.api.Variable;
 import org.semanticweb.rulewerk.core.model.implementation.Expressions;
 import org.semanticweb.rulewerk.core.reasoner.KnowledgeBase;
 import org.semanticweb.rulewerk.core.reasoner.Reasoner;
+import org.semanticweb.rulewerk.parser.ParsingException;
+import org.semanticweb.rulewerk.parser.RuleParser;
 import org.semanticweb.rulewerk.reasoner.vlog.VLogReasoner;
 
 import com.microsoft.z3.BoolExpr;
@@ -1037,39 +1039,39 @@ public class DatalogSynthesisImpl {
 	public List<Rule> whyNotDeltaOrigAcc(PositiveLiteral t, List<Rule> Pmin, List<Rule> accumulator) throws IOException {
 		List<Rule> code = new ArrayList<>(Pmin);
 		List<List<Rule>> codeChunks = DatalogSynthesisUtils.split2(code, 2);
-		boolean bugProduced = false;
+		boolean existBug = false;
 		List<Rule> result = new ArrayList<>();
 		for (List<Rule> codeChunk : codeChunks) {
+			boolean bugProduced = false;
 			if (codeChunk.size() > 0) {
 				List<Rule> rules = new ArrayList<>(this.ruleSet);
 				rules.removeAll(codeChunk);
 				rules.removeAll(accumulator);
 				bugProduced = isBuggy(t, rules, false);
+				existBug = (existBug || bugProduced);
 				if (bugProduced) {
 					if (codeChunk.size() > 1) {
 						List<Rule> res = whyNotDeltaOrigAcc(t, codeChunk, accumulator);
-						return res;
-					} else return codeChunk;
+						result.addAll(res);
+					} else result.addAll(codeChunk);
 				}
 			}
 		}
-		if (!bugProduced && Pmin.size() > 1) {
+		if (!existBug && Pmin.size() > 1) {
 			List<Rule> acc1 = new ArrayList<>(accumulator);
 			acc1.addAll(codeChunks.get(1));
-			List<Rule> res = whyNotDeltaOrigAcc(t, codeChunks.get(0), acc1);
+			List<Rule> res1 = whyNotDeltaOrigAcc(t, codeChunks.get(0), acc1);
+			result.addAll(res1);
 			List<Rule> acc2 = new ArrayList<>(accumulator);
-			acc2.addAll(codeChunks.get(0));
-			res.addAll(whyNotDeltaOrigAcc(t, codeChunks.get(1), acc2));
-			return res;
+			acc2.addAll(res1);
+			result.addAll(whyNotDeltaOrigAcc(t, codeChunks.get(1), acc2));
 		}
 		return result;
 	}
 	
 	public List<Rule> whyNotDeltaOrig(PositiveLiteral t, List<Rule> Pplus) throws IOException {
-		System.out.println("Why not "+t+" in "+Pplus);
 		List<Rule> Pmin = new ArrayList<>(this.ruleSet);
 		Pmin.removeAll(Pplus);
-//		List<Rule> res = whyDeltaOrigAcc(t, Pmin, Pplus);
 		List<Rule> res = whyNotDeltaOrigAcc(t, Pmin, new ArrayList<>());
 		if (debug)
 			System.out.println(whyNotProvDebugTool(t, new HashSet<>(res)));
@@ -1096,9 +1098,10 @@ public class DatalogSynthesisImpl {
 		if (Pplus.size() > 1) {
 			List<Rule> acc1 = new ArrayList<>(accumulator);
 			acc1.addAll(codeChunks.get(1));
-			result.addAll(whyDeltaOrigAcc(t, codeChunks.get(0), acc1));
+			List<Rule> res1 = whyDeltaOrigAcc(t, codeChunks.get(0), acc1);
+			result.addAll(res1);
 			List<Rule> acc2 = new ArrayList<>(accumulator);
-			acc2.addAll(codeChunks.get(0));
+			acc2.addAll(res1);
 			result.addAll(whyDeltaOrigAcc(t, codeChunks.get(1), acc2));
 		}
 		return result;
