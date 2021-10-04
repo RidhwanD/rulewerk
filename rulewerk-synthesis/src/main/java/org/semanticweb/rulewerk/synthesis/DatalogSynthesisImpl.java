@@ -405,11 +405,11 @@ public class DatalogSynthesisImpl {
 	// ============================================== WHY-NOT PROVENANCE =============================================== //
 	
 	public boolean whyNotProvDebugTool(PositiveLiteral t, Set<Rule> wnpResult) throws IOException {
-		System.out.println("Debug "+t+" for result "+wnpResult);
 		// Check based partially on Lemma 4.4
 		boolean satisfied = true;
 		List<Rule> PPlusDelta = new ArrayList<>(this.ruleSet);
 		PPlusDelta.removeAll(wnpResult);
+		System.out.println("Debug "+t+" for result "+wnpResult+" againts "+PPlusDelta);
 		KnowledgeBase kb = new KnowledgeBase();
 		kb.addStatements(this.inputTuple);
 		kb.addStatements(PPlusDelta);
@@ -1038,16 +1038,19 @@ public class DatalogSynthesisImpl {
 		List<Rule> code = new ArrayList<>(Pmin);
 		List<List<Rule>> codeChunks = DatalogSynthesisUtils.split2(code, 2);
 		boolean bugProduced = false;
+		List<Rule> result = new ArrayList<>();
 		for (List<Rule> codeChunk : codeChunks) {
-			List<Rule> rules = new ArrayList<>(this.ruleSet);
-			rules.removeAll(codeChunk);
-			rules.removeAll(accumulator);
-			bugProduced = isBuggy(t, rules, false);
-			if (bugProduced) {
-				if (codeChunk.size() > 1) {
-					List<Rule> res = whyNotDeltaOrigAcc(t, codeChunk, accumulator);
-					return res;
-				} else return codeChunk;
+			if (codeChunk.size() > 0) {
+				List<Rule> rules = new ArrayList<>(this.ruleSet);
+				rules.removeAll(codeChunk);
+				rules.removeAll(accumulator);
+				bugProduced = isBuggy(t, rules, false);
+				if (bugProduced) {
+					if (codeChunk.size() > 1) {
+						List<Rule> res = whyNotDeltaOrigAcc(t, codeChunk, accumulator);
+						return res;
+					} else return codeChunk;
+				}
 			}
 		}
 		if (!bugProduced && Pmin.size() > 1) {
@@ -1059,12 +1062,14 @@ public class DatalogSynthesisImpl {
 			res.addAll(whyNotDeltaOrigAcc(t, codeChunks.get(1), acc2));
 			return res;
 		}
-		return code;
+		return result;
 	}
 	
 	public List<Rule> whyNotDeltaOrig(PositiveLiteral t, List<Rule> Pplus) throws IOException {
+		System.out.println("Why not "+t+" in "+Pplus);
 		List<Rule> Pmin = new ArrayList<>(this.ruleSet);
 		Pmin.removeAll(Pplus);
+//		List<Rule> res = whyDeltaOrigAcc(t, Pmin, Pplus);
 		List<Rule> res = whyNotDeltaOrigAcc(t, Pmin, new ArrayList<>());
 		if (debug)
 			System.out.println(whyNotProvDebugTool(t, new HashSet<>(res)));
@@ -1077,9 +1082,8 @@ public class DatalogSynthesisImpl {
 		boolean bugProduced = false;
 		List<Rule> result = new ArrayList<>();
 		for (List<Rule> codeChunk : codeChunks) {
-			List<Rule> rules = new ArrayList<>(this.ruleSet);
-			rules.removeAll(codeChunk);
-			rules.removeAll(accumulator);
+			List<Rule> rules = new ArrayList<>(codeChunk);
+			rules.addAll(accumulator);
 			bugProduced = isBuggy(t, rules, true);
 			if (bugProduced) {
 				if (codeChunk.size() > 1) {
@@ -1092,11 +1096,10 @@ public class DatalogSynthesisImpl {
 		if (Pplus.size() > 1) {
 			List<Rule> acc1 = new ArrayList<>(accumulator);
 			acc1.addAll(codeChunks.get(1));
-			List<Rule> res = whyDeltaOrigAcc(t, codeChunks.get(0), acc1);
+			result.addAll(whyDeltaOrigAcc(t, codeChunks.get(0), acc1));
 			List<Rule> acc2 = new ArrayList<>(accumulator);
 			acc2.addAll(codeChunks.get(0));
-			res.addAll(whyDeltaOrigAcc(t, codeChunks.get(1), acc2));
-			return res;
+			result.addAll(whyDeltaOrigAcc(t, codeChunks.get(1), acc2));
 		}
 		return result;
 	}
