@@ -1061,8 +1061,8 @@ public class DatalogSynthesisImpl {
 				if (bugProduced) {
 					if (codeChunk.size() > 1) {
 						List<Rule> res = whyNotDeltaOrigAcc(t, codeChunk, accumulator);
-						result.addAll(res);
-					} else result.addAll(codeChunk);
+						return res;
+					} else return codeChunk;
 				}
 			}
 		}
