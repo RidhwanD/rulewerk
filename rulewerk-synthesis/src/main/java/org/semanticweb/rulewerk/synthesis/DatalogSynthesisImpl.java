@@ -27,8 +27,6 @@ import org.semanticweb.rulewerk.core.model.api.Variable;
 import org.semanticweb.rulewerk.core.model.implementation.Expressions;
 import org.semanticweb.rulewerk.core.reasoner.KnowledgeBase;
 import org.semanticweb.rulewerk.core.reasoner.Reasoner;
-import org.semanticweb.rulewerk.parser.ParsingException;
-import org.semanticweb.rulewerk.parser.RuleParser;
 import org.semanticweb.rulewerk.reasoner.vlog.VLogReasoner;
 
 import com.microsoft.z3.BoolExpr;
@@ -58,8 +56,10 @@ public class DatalogSynthesisImpl {
 	private int z3Call = 0;
 	private int iteration = 0;
 	private boolean debug = true;
-	private int whybuggy = 0;
-	private int whynotbuggy = 0;
+	private int whyremainbuggy = 0;
+	private int whyderivebuggy = 0;
+	private int whynotremainbuggy = 0;
+	private int whynotderivebuggy = 0;
 	
 	public DatalogSynthesisImpl(List<Fact> inputTuple, List<Predicate> expPred, List<Fact> outputPTuple, List<Fact> outputNTuple, List<Rule> ruleSet, Context ctx){
 		this.inputTuple = inputTuple;
@@ -308,7 +308,7 @@ public class DatalogSynthesisImpl {
 			if (!ReasoningUtils.isDerived(t, reasoner)) {
 				System.out.println("NON-DERIVE: "+kb.getRules()+" not derive "+t);
 				satisfied = false;
-				this.whybuggy++;
+				this.whyderivebuggy++;
 			}
 		}
 		kb.addStatements(Pplus);
@@ -318,7 +318,7 @@ public class DatalogSynthesisImpl {
 			if (ReasoningUtils.isDerived(t, reasoner)) {
 				System.out.println("REMAIN: "+kb.getRules()+" - remaining program still derive "+t);
 				satisfied = false;
-				this.whybuggy++;
+				this.whyremainbuggy++;
 			}
 		}
 		return satisfied;
@@ -420,7 +420,7 @@ public class DatalogSynthesisImpl {
 			if (ReasoningUtils.isDerived(t, reasoner)) {
 				System.out.println("REMAIN: Remainder derive "+t);
 				satisfied = false;
-				this.whynotbuggy++;
+				this.whynotremainbuggy++;
 			}
 		}
 		for (Rule r : wnpResult) {
@@ -434,7 +434,7 @@ public class DatalogSynthesisImpl {
 				if (!ReasoningUtils.isDerived(t, reasoner)) {
 					System.out.println("NON-DERIVE: "+r+" not derive "+t);
 					satisfied = false;
-					this.whynotbuggy++;
+					this.whynotderivebuggy++;
 				}
 			}
 		}
@@ -735,15 +735,17 @@ public class DatalogSynthesisImpl {
 			System.out.println("Made "+this.z3Call+" calls to Z3 and "+this.rulewerkCall+" calls to Rulewerk.");
 		}
 		this.iteration = iter;
+		System.out.println("Synthesis finished in "+iter+" iteration(s):");
+		System.out.println("- "+wp+" call of why-provenance");
+		System.out.println("- "+wnp+" call of why-not-provenance");
+		System.out.println("Made "+this.z3Call+" calls to Z3 and "+this.rulewerkCall+" calls to Rulewerk.");
+		if (debug) {
+			System.out.println("why-provenance non-derive buggy: "+this.whyderivebuggy);
+			System.out.println("why-provenance remain derive buggy: "+this.whyremainbuggy);
+			System.out.println("why-not-provenance non-derive buggy: "+this.whynotderivebuggy);
+			System.out.println("why-not-provenance remain derive buggy: "+this.whynotremainbuggy);
+		}
 		if (result != null) {
-			System.out.println("Synthesis finished in "+iter+" iteration(s):");
-			System.out.println("- "+wp+" call of why-provenance");
-			System.out.println("- "+wnp+" call of why-not-provenance");
-			System.out.println("- "+cp+" call of co-provenance");
-			if (debug) {
-				System.out.println("why-provenance buggy: "+this.whybuggy);
-				System.out.println("why-not-provenance buggy: "+this.whynotbuggy);
-			}
 			return pPlus;
 		} else {
 			System.out.println("Cannot find solution.");
@@ -772,6 +774,7 @@ public class DatalogSynthesisImpl {
 		try (final Reasoner reasoner = new VLogReasoner(kb)) {
 			reasoner.reason();
 			if (!ReasoningUtils.isDerived(t, reasoner)) {
+				this.whyderivebuggy++;
 				System.out.println("NON-DERIVE: "+kb.getRules()+" not derive "+t);
 				satisfied = false;
 			}
@@ -794,7 +797,8 @@ public class DatalogSynthesisImpl {
 		try (final Reasoner reasoner = new VLogReasoner(kb)) {
 			reasoner.reason();
 			if (ReasoningUtils.isDerived(t, reasoner)) {
-				System.out.println("DERIVE: "+kb.getRules()+" still derive "+t);
+				this.whyremainbuggy++;
+				System.out.println("REMAIN: "+kb.getRules()+" still derive "+t);
 				satisfied = false;
 			}
 		}
@@ -869,7 +873,7 @@ public class DatalogSynthesisImpl {
 							logger.info("============= Perform Why Not Provenance ==============");
 							wnp++; newWhyNots++;
 							System.out.println("- "+wnp+" call of why-not-provenance");
-							phi = this.ctx.mkAnd(phi, this.whyNotProvExpr(this.whyNotProv(t, pPlus)));
+							phi = this.ctx.mkAnd(phi, this.whyNotProvExpr(this.whyNotDeltaOrig(t, pPlus)));
 							logger.info("=============== Why Not Provenance End ================");
 						}
 					} else if (generate) {
@@ -913,15 +917,17 @@ public class DatalogSynthesisImpl {
 			System.out.println("Made "+this.z3Call+" calls to Z3 and "+this.rulewerkCall+" calls to Rulewerk.");
 		}
 		this.iteration = iter;
+		System.out.println("Synthesis finished in "+iter+" iteration(s):");
+		System.out.println("- "+wp+" call of why-provenance");
+		System.out.println("- "+wnp+" call of why-not-provenance");
+		System.out.println("Made "+this.z3Call+" calls to Z3 and "+this.rulewerkCall+" calls to Rulewerk.");
+		if (debug) {
+			System.out.println("why-provenance non-derive buggy: "+this.whyderivebuggy);
+			System.out.println("why-provenance remain derive buggy: "+this.whyremainbuggy);
+			System.out.println("why-not-provenance non-derive buggy: "+this.whynotderivebuggy);
+			System.out.println("why-not-provenance remain derive buggy: "+this.whynotremainbuggy);
+		}
 		if (result != null) {
-			System.out.println("Synthesis finished in "+iter+" iteration(s):");
-			System.out.println("- "+wp+" call of why-provenance");
-			System.out.println("- "+wnp+" call of why-not-provenance");
-			System.out.println("- "+cp+" call of co-provenance");
-			if (debug) {
-				System.out.println("why-provenance buggy: "+this.whybuggy);
-				System.out.println("why-not-provenance buggy: "+this.whynotbuggy);
-			}
 			return pPlus;
 		} else {
 			System.out.println("Cannot find solution.");
@@ -1018,15 +1024,18 @@ public class DatalogSynthesisImpl {
 			pPlus = this.derivePPlus(result);
 			if (pPlus.size() == 0) loop = true;
 		}
+		
+		System.out.println("Synthesis finished in "+iter+" iteration(s):");
+		System.out.println("- "+wp+" call of why-provenance");
+		System.out.println("- "+wnp+" call of why-not-provenance");
+		System.out.println("Made "+this.z3Call+" calls to Z3 and "+this.rulewerkCall+" calls to Rulewerk.");
+		if (debug) {
+			System.out.println("why-provenance non-derive buggy: "+this.whyderivebuggy);
+			System.out.println("why-provenance remain derive buggy: "+this.whyremainbuggy);
+			System.out.println("why-not-provenance non-derive buggy: "+this.whynotderivebuggy);
+			System.out.println("why-not-provenance remain derive buggy: "+this.whynotremainbuggy);
+		}
 		if (result != null) {
-			System.out.println("Synthesis finished in "+iter+" iteration(s):");
-			System.out.println("- "+wp+" call of why-provenance");
-			System.out.println("- "+wnp+" call of why-not-provenance");
-			System.out.println("Made "+this.z3Call+" calls to Z3 and "+this.rulewerkCall+" calls to Rulewerk.");
-			if (debug) {
-				System.out.println("why-provenance buggy: "+this.whybuggy);
-				System.out.println("why-not-provenance buggy: "+this.whynotbuggy);
-			}
 			return pPlus;
 		} else {
 			System.out.println("Cannot find solution.");
