@@ -33,11 +33,11 @@ public class DatalogSetUtils {
 	static TermFactory tf = new TermFactory();
 	
 	static UniversalVariable u 		= tf.makeUniversalVariable("u");
-	static UniversalVariable u_min	= tf.makeUniversalVariable("u-");
+	static UniversalVariable u_min	= tf.makeUniversalVariable("uMin");
 	static UniversalVariable v 		= tf.makeUniversalVariable("v");
-	static UniversalVariable v_min 	= tf.makeUniversalVariable("v-");
+	static UniversalVariable v_min 	= tf.makeUniversalVariable("vMin");
 	static UniversalVariable w		= tf.makeUniversalVariable("w");
-	static UniversalVariable w_plus	= tf.makeUniversalVariable("w+");
+	static UniversalVariable w_plus	= tf.makeUniversalVariable("wPlus");
 	static UniversalVariable x		= tf.makeUniversalVariable("x");
 	static UniversalVariable y		= tf.makeUniversalVariable("y");
 	static ExistentialVariable z 	= tf.makeExistentialVariable("z");
@@ -369,22 +369,35 @@ public class DatalogSetUtils {
 		return results;
 	}
 	
+	private static <T> Set<T> setDifference(Set<T> s1, Set<T> s2) {
+		// Return s1 - s2
+		Set<T> result = new HashSet<>();
+		for (T s : s1) {
+			if (!s2.contains(s))
+				result.add(s);
+		}
+		return result;
+	}
+	
 	public static Rule simplify(Rule r) {
-		List<Term> headTerm = r.getHead().getTerms().collect(Collectors.toList());
-		Set<Term> relevantTerms = new HashSet<>(headTerm);
+		Set<Term> relevantTerms = new HashSet<>(r.getHead().getTerms().collect(Collectors.toList()));
+		List<Literal> remainingBody = new ArrayList<>(r.getBody().getLiterals());
 		// Get all relevant terms.
-		for (Literal l : r.getBody()) {
-			List<Term> litTerm = l.getArguments();
-			boolean intersect = false;
-			for (Term t : headTerm) {
-				if (litTerm.contains(t)) {
-					intersect = true;
-					break;
+		boolean modified = true;
+		while (modified) {
+			modified = false;
+			List<Literal> tempBody = new ArrayList<>();
+			for (Literal l : remainingBody) {
+				Set<Term> litTerm = new HashSet<>(l.getArguments());
+				Set<Term> remainingTerms = setDifference(litTerm, relevantTerms);
+				if (remainingTerms.size() < litTerm.size()) {
+					relevantTerms.addAll(l.getArguments());
+					modified = true;
+				} else {
+					tempBody.add(l);
 				}
 			}
-			if (intersect) {
-				relevantTerms.addAll(litTerm);
-			}
+			remainingBody = tempBody;
 		}
 		// Remove body that is not relevant.
 		List<Literal> newBody = new ArrayList<>();
