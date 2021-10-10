@@ -55,7 +55,7 @@ public class DatalogSynthesisImpl {
 	private int rulewerkCall = 0;
 	private int z3Call = 0;
 	private int iteration = 0;
-	private boolean debug = true;
+	private boolean debug = false;
 	private int whyremainbuggy = 0;
 	private int whyderivebuggy = 0;
 	private int whynotremainbuggy = 0;
@@ -688,7 +688,7 @@ public class DatalogSynthesisImpl {
 						if (pPlus.size() < this.ruleSet.size()) {
 							logger.info("============= Perform Why Not Provenance ==============");
 							wnp++; newWhyNots++;
-							System.out.println("- "+wnp+" call of why-not-provenance");
+							logger.info("- "+wnp+" call of why-not-provenance");
 							phi = this.ctx.mkAnd(phi, this.whyNotProvExpr(this.whyNotDeltaOrig(t, pPlus)));
 							logger.info("=============== Why Not Provenance End ================");
 						}
@@ -697,7 +697,7 @@ public class DatalogSynthesisImpl {
 							if (pPlus.size() < this.ruleSet.size() && pPlus.size() > 0) {
 								logger.info("============= Perform Co-Provenance ==============");
 								cp++;
-								System.out.println("- "+cp+" call of co-provenance");
+								logger.info("- "+cp+" call of co-provenance");
 								phi = this.ctx.mkAnd(phi, this.whyNotCoProvExpr(pPlus, this.coprovInv(t, pPlus)));
 								logger.info("=============== Co-Provenance End ================");
 							}
@@ -717,7 +717,7 @@ public class DatalogSynthesisImpl {
 					if (pPlus.size() > 0) {
 						logger.info("============= Perform Why Provenance ==============");
 						wp++; newWhys++;
-						System.out.println("- "+wp+" call of why-provenance");
+						logger.info("- "+wp+" call of why-provenance");
 						phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyDeltaOrig(f, pPlus)));
 						logger.info("=============== Why Provenance End ================");
 					}
@@ -731,8 +731,8 @@ public class DatalogSynthesisImpl {
 				pPlus = this.derivePPlus(result);
 				if (pPlus.size() == 0) loop = true;
 			}
-			System.out.println("Iteration "+iter+" complete.");
-			System.out.println("Made "+this.z3Call+" calls to Z3 and "+this.rulewerkCall+" calls to Rulewerk.");
+			logger.info("Iteration "+iter+" complete.");
+			logger.info("Made "+this.z3Call+" calls to Z3 and "+this.rulewerkCall+" calls to Rulewerk.");
 		}
 		this.iteration = iter;
 		System.out.println("Synthesis finished in "+iter+" iteration(s):");
@@ -862,6 +862,7 @@ public class DatalogSynthesisImpl {
 			kb.addStatements(getTransFromPlus(pPlus));
 			kb.addStatements(rulesFromExpPred());
 			kb.addStatements(this.inputTuple);
+			
 			try (final Reasoner reasoner = new VLogReasoner(kb)) {
 				reasoner.reason();
 				int newWhyNots = 0;
@@ -872,7 +873,7 @@ public class DatalogSynthesisImpl {
 						if (pPlus.size() < this.ruleSet.size()) {
 							logger.info("============= Perform Why Not Provenance ==============");
 							wnp++; newWhyNots++;
-							System.out.println("- "+wnp+" call of why-not-provenance");
+							logger.info("- "+wnp+" call of why-not-provenance");
 							phi = this.ctx.mkAnd(phi, this.whyNotProvExpr(this.whyNotDeltaOrig(t, pPlus)));
 							logger.info("=============== Why Not Provenance End ================");
 						}
@@ -881,7 +882,7 @@ public class DatalogSynthesisImpl {
 							if (pPlus.size() < this.ruleSet.size() && pPlus.size() > 0) {
 								logger.info("============= Perform Co-Provenance ==============");
 								cp++;
-								System.out.println("- "+cp+" call of co-provenance");
+								logger.info("- "+cp+" call of co-provenance");
 								phi = this.ctx.mkAnd(phi, this.whyNotCoProvExpr(pPlus, this.coprovInv(t, pPlus)));
 								logger.info("=============== Co-Provenance End ================");
 							}
@@ -900,7 +901,7 @@ public class DatalogSynthesisImpl {
 					if (pPlus.size() > 0) {
 						logger.info("============= Perform Why Provenance ==============");
 						wp++;
-						System.out.println("- "+wp+" call of why-provenance");
+						logger.info("- "+wp+" call of why-provenance");
 						phi = this.ctx.mkAnd(phi, whyProvSet(nonExpectedTuples, pPlus, reasoner));
 						logger.info("=============== Why Provenance End ================");
 					}
@@ -913,8 +914,8 @@ public class DatalogSynthesisImpl {
 				pPlus = this.derivePPlus(result);
 				if (pPlus.size() == 0) loop = true;
 			}
-			System.out.println("Iteration "+iter+" complete.");
-			System.out.println("Made "+this.z3Call+" calls to Z3 and "+this.rulewerkCall+" calls to Rulewerk.");
+			logger.info("Iteration "+iter+" complete.");
+			logger.info("Made "+this.z3Call+" calls to Z3 and "+this.rulewerkCall+" calls to Rulewerk.");
 		}
 		this.iteration = iter;
 		System.out.println("Synthesis finished in "+iter+" iteration(s):");
@@ -995,7 +996,7 @@ public class DatalogSynthesisImpl {
 					if (iter == 1) {
 						logger.info("============= Perform Why Not Provenance ==============");
 						wnp++; loop = true;
-						System.out.println("- "+wnp+" call of why-not-provenance");
+						logger.info("- "+wnp+" call of why-not-provenance");
 						phi = this.ctx.mkAnd(phi, this.whyNotProvSet(f, pPlus, reasoner));
 						logger.info("=============== Why Not Provenance End ================");
 					}
@@ -1014,7 +1015,7 @@ public class DatalogSynthesisImpl {
 					if (pPlus.size() > 0) {
 						logger.info("============= Perform Why Provenance ==============");
 						wp++; loop = true;
-						System.out.println("- "+wp+" call of why-provenance");
+						logger.info("- "+wp+" call of why-provenance");
 						phi = this.ctx.mkAnd(phi, whyProvSet(nonExpectedTuples, pPlus, reasoner));
 						logger.info("=============== Why Provenance End ================");
 					}
@@ -1090,9 +1091,9 @@ public class DatalogSynthesisImpl {
 	public List<Rule> whyDeltaOrigAcc(PositiveLiteral t, List<Rule> Pplus, List<Rule> accumulator) throws IOException {
 		List<Rule> code = new ArrayList<>(Pplus);
 		List<List<Rule>> codeChunks = DatalogSynthesisUtils.split2(code, 2);
-		boolean bugProduced = false;
 		List<Rule> result = new ArrayList<>();
 		for (List<Rule> codeChunk : codeChunks) {
+			boolean bugProduced = false;
 			List<Rule> rules = new ArrayList<>(codeChunk);
 			rules.addAll(accumulator);
 			bugProduced = isBuggy(t, rules, true);
