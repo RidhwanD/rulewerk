@@ -21,8 +21,9 @@ import com.microsoft.z3.Context;
 
 public class Benchmark {
 	public static void main(String[] arg) throws IOException, ParsingException {
-		List<String> benchmarks = new ArrayList<>(Arrays.asList("1-call-site", "andersen", "escape", "rsg", "sql-01", "sql-07", "sql-13", "1-object", "animals", "inflamation", "rvcheck", "sql-02", "sql-08", "sql-14", "1-object-1-type", "buildwall", "modref", "scc", "sql-03", "sql-09", "sql-15", "1-type", "cliquer", "nearlyscc", "sgen", "sql-04", "sql-10", "traffic", "2-call-site", "debug", "path", "ship", "sql-05", "sql-11", "union-find", "abduce", "downcast", "polysite", "small", "sql-06", "sql-12"));
-		int iter = 40;
+//		List<String> benchmarks = new ArrayList<>(Arrays.asList("1-call-site", "andersen", "escape", "rsg", "sql-01", "sql-07", "sql-13", "1-object", "animals", "inflamation", "rvcheck", "sql-02", "sql-08", "sql-14", "1-object-1-type", "buildwall", "modref", "scc", "sql-03", "sql-09", "sql-15", "1-type", "cliquer", "nearlyscc", "sgen", "sql-04", "sql-10", "traffic", "2-call-site", "debug", "path", "ship", "sql-05", "sql-11", "union-find", "abduce", "downcast", "polysite", "small", "sql-06", "sql-12"));
+		List<String> benchmarks = new ArrayList<>(Arrays.asList("sql-04", "sql-05", "sql-06"));
+		int iter = 100;
 		for (String benchCase : benchmarks) {
 			for (int expCase = 1; expCase <= 4; expCase++) {
 				for (int expNum = 1; expNum <= iter; expNum++) {
@@ -36,8 +37,6 @@ public class Benchmark {
 					try {
 						inputTuple = RuleParser.parse(inputStream).getFacts();
 						System.out.println("Input tuples parsed: " + inputTuple.size() + " facts");
-						for (Fact f : inputTuple)
-							System.out.println(f);
 					} catch (final ParsingException e) {
 						System.out.println("Failed to parse rules: " + e.getMessage());
 						return;
