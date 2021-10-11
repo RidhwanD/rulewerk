@@ -60,7 +60,7 @@ public class DatalogSynthesisImpl {
 	private int whyderivebuggy = 0;
 	private int whynotremainbuggy = 0;
 	private int whynotderivebuggy = 0;
-	private int timeout = 60; 			// seconds
+	private int timeout = 300; 			// seconds
 	
 	public DatalogSynthesisImpl(List<Fact> inputTuple, List<Predicate> expPred, List<Fact> outputPTuple, List<Fact> outputNTuple, List<Rule> ruleSet, Context ctx){
 		this.inputTuple = inputTuple;
@@ -282,7 +282,8 @@ public class DatalogSynthesisImpl {
 		return Expressions.makePositiveLiteral(p, vars);
 	}
 	
-	public boolean isBuggy(PositiveLiteral t, List<Rule> rules, boolean ifDerived) throws IOException {
+	public List<Boolean> isBuggy(PositiveLiteral t, List<Rule> rules, boolean ifDerived) throws IOException {
+		ArrayList<Boolean> result = new ArrayList<>(Arrays.asList(false, false));
 		KnowledgeBase kb = new KnowledgeBase();
 		kb.addStatements(rules);
 		kb.addStatements(this.inputTuple);
@@ -290,12 +291,15 @@ public class DatalogSynthesisImpl {
 			reasoner.setReasoningTimeout(this.timeout);
 			this.rulewerkCall++;
 			if (reasoner.reason()) {
+				result.set(0, true);
 				if (ReasoningUtils.isDerived(t, reasoner)) {
-					return ifDerived;
+					result.set(1, ifDerived);
+				} else {
+					result.set(1, !ifDerived);
 				}
 			}
 		}
-		return !ifDerived;
+		return result;
 	}
 	
 	// ============================================== WHY PROVENANCE =============================================== //
@@ -313,8 +317,8 @@ public class DatalogSynthesisImpl {
 					System.out.println("NON-DERIVE: "+kb.getRules()+" not derive "+t);
 					satisfied = false;
 					this.whyderivebuggy++;
-				}
-			}
+				} 
+			} else System.out.println("NON-TERMINATION: checking timeout");
 		}
 		kb.addStatements(Pplus);
 		kb.removeStatements(wpResult);
@@ -325,8 +329,8 @@ public class DatalogSynthesisImpl {
 					System.out.println("REMAIN: "+kb.getRules()+" - remaining program still derive "+t);
 					satisfied = false;
 					this.whyremainbuggy++;
-				}
-			}
+				} 
+			} else System.out.println("NON-TERMINATION: checking timeout");
 		}
 		return satisfied;
 	}
@@ -338,9 +342,15 @@ public class DatalogSynthesisImpl {
 			for (List<Rule> codeChunk : DatalogSynthesisUtils.split2(code, d)) {
 				Set<Rule> currRPlus = new HashSet<>(codeChunk);
 				boolean bugProduced = false;
-				bugProduced = this.isBuggy(t, new ArrayList<>(currRPlus), true);
-				if (bugProduced) {
-					Pplus = new ArrayList<>(currRPlus);
+				List<Boolean> isBuggy = this.isBuggy(t, new ArrayList<>(currRPlus), true);
+				if (isBuggy.get(0)) {
+					bugProduced = isBuggy.get(1);
+					if (bugProduced) {
+						Pplus = new ArrayList<>(currRPlus);
+					}
+				} else {
+					logger.info("Why-provenance non-termination");
+					return null;
 				}
 			}
 			if (d == code.size())
@@ -365,24 +375,36 @@ public class DatalogSynthesisImpl {
 			boolean deltaBuggy = false; boolean revDeltaBuggy = false;
 			int idx = 0;
 			while (idx < partition.size() && !deltaBuggy) {
-				deltaBuggy = this.isBuggy(t, partition.get(idx), true);
-				if (deltaBuggy) {
-					Pplus = partition.get(idx);
-					d = 2;
+				List<Boolean> isBuggy = this.isBuggy(t, partition.get(idx), true);
+				if (isBuggy.get(0)) {
+					deltaBuggy = isBuggy.get(1);
+					if (deltaBuggy) {
+						Pplus = partition.get(idx);
+						d = 2;
+					}
+					idx += 1;
+				} else {
+					logger.info("Why-provenance non-termination");
+					return null;
 				}
-				idx += 1;
 			}
 			if (!deltaBuggy) {
 				idx = 0;
 				while (idx < partition.size() && !revDeltaBuggy) {
 					List<Rule> revDelta = new ArrayList<Rule>(Pplus);
 					revDelta.removeAll(partition.get(idx));
-					revDeltaBuggy = this.isBuggy(t, revDelta, true);
-					if (revDeltaBuggy) {
-						Pplus.removeAll(partition.get(idx));
-						d -= 1;
+					List<Boolean> isBuggy = this.isBuggy(t, revDelta, true);
+					if (isBuggy.get(0)) {
+						revDeltaBuggy = isBuggy.get(1);
+						if (revDeltaBuggy) {
+							Pplus.removeAll(partition.get(idx));
+							d -= 1;
+						}
+						idx += 1;
+					} else {
+						logger.info("Why-provenance non-termination");
+						return null;
 					}
-					idx += 1;
 				}
 			}
 			if (!deltaBuggy && !revDeltaBuggy) {
@@ -395,7 +417,7 @@ public class DatalogSynthesisImpl {
 	}
 	
 	public BoolExpr whyProvExpr(List<Rule> wp) {
-		if (wp.size() > 0) {
+		if (wp != null && wp.size() > 0) {
 			BoolExpr conjVars = this.rule2var.get(wp.get(0));
 			if (wp.size() > 1) {
 				for (Rule r : wp.subList(1, wp.size())) {
@@ -407,7 +429,7 @@ public class DatalogSynthesisImpl {
 			return negConjVars;
 		} else {
 			logger.info("Add TRUE as why-provenance constraint");
-			return this.ctx.mkTrue();
+			return this.ctx.mkFalse();
 		}
 	}
 	
@@ -429,8 +451,8 @@ public class DatalogSynthesisImpl {
 					System.out.println("REMAIN: Remainder derive "+t);
 					satisfied = false;
 					this.whynotremainbuggy++;
-				}
-			}
+				} 
+			} else System.out.println("NON-TERMINATION: checking timeout");
 		}
 		for (Rule r : wnpResult) {
 			List<Rule> ppdr = new ArrayList<>(PPlusDelta);
@@ -445,8 +467,8 @@ public class DatalogSynthesisImpl {
 						System.out.println("NON-DERIVE: "+r+" not derive "+t);
 						satisfied = false;
 						this.whynotderivebuggy++;
-					}
-				}
+					} 
+				} else System.out.println("NON-TERMINATION: checking timeout");
 			}
 		}
 		return satisfied;
@@ -464,10 +486,16 @@ public class DatalogSynthesisImpl {
 				currRMinus.removeAll(codeChunk);
 				Set<Rule> currRPlus = new HashSet<>(Pplus);
 				currRPlus.addAll(codeChunk);
-				boolean bugProduced = this.isBuggy(t, new ArrayList<>(currRPlus), false);
-				if (bugProduced) {
-					Pplus = new HashSet<>(currRPlus);
-					Pmin = new HashSet<>(currRMinus);
+				List<Boolean> isBuggy = this.isBuggy(t, new ArrayList<>(currRPlus), false);
+				if (isBuggy.get(0)) {
+					boolean bugProduced = isBuggy.get(1);
+					if (bugProduced) {
+						Pplus = new HashSet<>(currRPlus);
+						Pmin = new HashSet<>(currRMinus);
+					}
+				} else {
+					logger.info("Why-not provenance non-termination");
+					return null;
 				}
 			}
 			if (d == code.size())
@@ -494,11 +522,17 @@ public class DatalogSynthesisImpl {
 			for (List<Rule> chunk : partition) {
 				List<Rule> deltaBuggy = new ArrayList<Rule>(this.ruleSet);
 				deltaBuggy.removeAll(chunk);
-				deltabuggy = this.isBuggy(t, deltaBuggy, false);
-				if (deltabuggy) {
-					Pmin = chunk;
-					d = 2;
-					break;
+				List<Boolean> isBuggy = this.isBuggy(t, deltaBuggy, false);
+				if (isBuggy.get(0)) {	
+					deltabuggy = isBuggy.get(1);
+					if (deltabuggy) {
+						Pmin = chunk;
+						d = 2;
+						break;
+					}
+				} else {
+					logger.info("Why-not provenance non-termination");
+					return null;
 				}
 			}
 			if (!deltabuggy) {
@@ -507,11 +541,17 @@ public class DatalogSynthesisImpl {
 					revDelta.removeAll(chunk);
 					List<Rule> revDeltaBuggy = new ArrayList<Rule>(this.ruleSet);
 					revDeltaBuggy.removeAll(revDelta);
-					revdeltabuggy = this.isBuggy(t, revDeltaBuggy, false);
-					if (revdeltabuggy) {
-						Pmin.removeAll(chunk);
-						d -= 1;
-						break;
+					List<Boolean> isBuggy = this.isBuggy(t, revDeltaBuggy, false);
+					if (isBuggy.get(0)) {
+						revdeltabuggy = isBuggy.get(1);
+						if (revdeltabuggy) {
+							Pmin.removeAll(chunk);
+							d -= 1;
+							break;
+						}
+					} else {
+						logger.info("Why-not provenance non-termination");
+						return null;
 					}
 				}
 			}
@@ -525,6 +565,7 @@ public class DatalogSynthesisImpl {
 	}
 	
 	public BoolExpr whyNotProvExpr(List<Rule> wnp) {
+		if (wnp == null) return this.ctx.mkFalse();
 		if (wnp.size() > 0) {
 			BoolExpr disjVars = this.rule2var.get(wnp.get(0));
 			if (wnp.size() > 1) {
@@ -574,6 +615,9 @@ public class DatalogSynthesisImpl {
 				this.rulewerkCall++;
 				if (reasoner.reason()) {
 					if (ReasoningUtils.isDerived(newt, reasoner)) coprovIn.add(r);
+				} else {
+					logger.info("Co-provenance non-termination");
+					return null;
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -589,6 +633,7 @@ public class DatalogSynthesisImpl {
 	}
 	
 	public BoolExpr whyNotCoProvExpr(List<Rule> pPlus, List<Rule> cpr) {
+		if (cpr == null) return this.ctx.mkFalse();
 		if (cpr.size() > 0) {
 			List<Rule> Pmin = new ArrayList<>(this.ruleSet);
 			Pmin.removeAll(pPlus);
@@ -737,6 +782,9 @@ public class DatalogSynthesisImpl {
 						}
 						if (newWhys >= 3) break;
 					}
+				} else {
+					System.out.println("Cannot find solution: Non-termination");
+					return null;
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -794,7 +842,7 @@ public class DatalogSynthesisImpl {
 					System.out.println("NON-DERIVE: "+kb.getRules()+" not derive "+t);
 					satisfied = false;
 				}
-			}
+			} else System.out.println("NON-TERMINATION: checking timeout");
 		}
 		return satisfied;
 	}
@@ -819,7 +867,7 @@ public class DatalogSynthesisImpl {
 					System.out.println("REMAIN: "+kb.getRules()+" still derive "+t);
 					satisfied = false;
 				}
-			}
+			} else System.out.println("NON-TERMINATION: checking timeout");
 		}
 		return satisfied;
 	}
@@ -926,6 +974,9 @@ public class DatalogSynthesisImpl {
 							logger.info("=============== Why Provenance End ================");
 						}
 					}
+				} else {
+					System.out.println("Cannot find solution: Non-termination");
+					return null;
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -1042,6 +1093,9 @@ public class DatalogSynthesisImpl {
 							logger.info("=============== Why Provenance End ================");
 						}
 					}
+				} else {
+					System.out.println("Cannot find solution: Non-termination");
+					return null;
 				}
 			}
 			result = this.consultSATSolver(phi);
@@ -1080,24 +1134,30 @@ public class DatalogSynthesisImpl {
 				List<Rule> rules = new ArrayList<>(this.ruleSet);
 				rules.removeAll(codeChunk);
 				rules.removeAll(accumulator);
-				bugProduced = isBuggy(t, rules, false);
-				existBug = (existBug || bugProduced);
-				if (bugProduced) {
-					if (codeChunk.size() > 1) {
-						List<Rule> res = whyNotDeltaOrigAcc(t, codeChunk, accumulator);
-						return res;
-					} else return codeChunk;
-				}
+				List<Boolean> isBuggy = isBuggy(t, rules, false);
+				if (isBuggy.get(0)) {
+					bugProduced = isBuggy.get(1);
+					existBug = (existBug || bugProduced);
+					if (bugProduced) {
+						if (codeChunk.size() > 1) {
+							List<Rule> res = whyNotDeltaOrigAcc(t, codeChunk, accumulator);
+							return res;
+						} else return codeChunk;
+					}
+				} else return null;
 			}
 		}
 		if (!existBug && Pmin.size() > 1) {
 			List<Rule> acc1 = new ArrayList<>(accumulator);
 			acc1.addAll(codeChunks.get(1));
 			List<Rule> res1 = whyNotDeltaOrigAcc(t, codeChunks.get(0), acc1);
+			if (res1 == null) return null;
 			result.addAll(res1);
 			List<Rule> acc2 = new ArrayList<>(accumulator);
 			acc2.addAll(res1);
-			result.addAll(whyNotDeltaOrigAcc(t, codeChunks.get(1), acc2));
+			List<Rule> res2 = whyNotDeltaOrigAcc(t, codeChunks.get(1), acc2);
+			if (res2 == null) return null;
+			result.addAll(res2);
 		}
 		return result;
 	}
@@ -1119,23 +1179,29 @@ public class DatalogSynthesisImpl {
 			boolean bugProduced = false;
 			List<Rule> rules = new ArrayList<>(codeChunk);
 			rules.addAll(accumulator);
-			bugProduced = isBuggy(t, rules, true);
-			if (bugProduced) {
-				if (codeChunk.size() > 1) {
-					result.addAll(whyDeltaOrigAcc(t, codeChunk, accumulator));
-				} else {
-					result.addAll(codeChunk);
+			List<Boolean> isBuggy = isBuggy(t, rules, true);
+			if (isBuggy.get(0)) {
+				bugProduced = isBuggy.get(1);
+				if (bugProduced) {
+					if (codeChunk.size() > 1) {
+						result.addAll(whyDeltaOrigAcc(t, codeChunk, accumulator));
+					} else {
+						result.addAll(codeChunk);
+					}
 				}
-			}
+			} else return null;
 		}
 		if (Pplus.size() > 1) {
 			List<Rule> acc1 = new ArrayList<>(accumulator);
 			acc1.addAll(codeChunks.get(1));
 			List<Rule> res1 = whyDeltaOrigAcc(t, codeChunks.get(0), acc1);
+			if (res1 == null) return null;
 			result.addAll(res1);
 			List<Rule> acc2 = new ArrayList<>(accumulator);
 			acc2.addAll(res1);
-			result.addAll(whyDeltaOrigAcc(t, codeChunks.get(1), acc2));
+			List<Rule> res2 = whyDeltaOrigAcc(t, codeChunks.get(1), acc2);
+			result.addAll(res2);
+			if (res2 == null) return null;
 		}
 		return result;
 	}
