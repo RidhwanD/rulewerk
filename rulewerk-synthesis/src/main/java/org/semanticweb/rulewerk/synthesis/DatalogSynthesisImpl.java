@@ -217,6 +217,7 @@ public class DatalogSynthesisImpl {
 					Expressions.makePositiveLiteral(p.getName(), vars.subList(0, vars.size()-1)), 
 					Expressions.makePositiveLiteral("in", vars.get(vars.size()-1), vars.get(vars.size()-2))));
 		}
+		System.out.println(result);
 		return result;
 	}
 	
@@ -1001,7 +1002,8 @@ public class DatalogSynthesisImpl {
 	public List<Rule> whyNotDeltaOrig(PositiveLiteral t, List<Rule> Pplus) throws IOException {
 		List<Rule> Pmin = new ArrayList<>(this.ruleSet);
 		Pmin.removeAll(Pplus);
-		List<Rule> res = whyNotDeltaOrigAcc(t, Pmin, new ArrayList<>());
+		Set<Rule> result = new HashSet<>(whyNotDeltaOrigAcc(t, Pmin, new ArrayList<>()));
+		List<Rule> res = new ArrayList<>(result);
 		if (debug)
 			System.out.println(whyNotProvDebugTool(t, new HashSet<>(res)));
 		return res;
@@ -1019,6 +1021,7 @@ public class DatalogSynthesisImpl {
 		List<Rule> code = new ArrayList<>(Pplus);
 		List<List<Rule>> codeChunks = DatalogSynthesisUtils.split2(code, 2);
 		List<Rule> result = new ArrayList<>();
+		boolean existBug = false;
 		for (List<Rule> codeChunk : codeChunks) {
 			boolean bugProduced = false;
 			List<Rule> rules = new ArrayList<>(codeChunk);
@@ -1026,6 +1029,7 @@ public class DatalogSynthesisImpl {
 			List<Boolean> isBuggy = isBuggy(t, rules, true);
 			if (isBuggy.get(0)) {
 				bugProduced = isBuggy.get(1);
+				existBug = (existBug || bugProduced);
 				if (bugProduced) {
 					if (codeChunk.size() > 1) {
 						result.addAll(whyDeltaOrigAcc(t, codeChunk, accumulator));
@@ -1035,7 +1039,7 @@ public class DatalogSynthesisImpl {
 				}
 			} else return null;
 		}
-		if (Pplus.size() > 1) {
+		if (!existBug && Pplus.size() > 1) {
 			List<Rule> acc1 = new ArrayList<>(accumulator);
 			acc1.addAll(codeChunks.get(1));
 			List<Rule> res1 = whyDeltaOrigAcc(t, codeChunks.get(0), acc1);
@@ -1058,7 +1062,8 @@ public class DatalogSynthesisImpl {
 	 * @return A subset of P+ that is the why-provenance of the tuple t.
 	 */
 	public List<Rule> whyDeltaOrig(PositiveLiteral t, List<Rule> Pplus) throws IOException {
-		List<Rule> res = whyDeltaOrigAcc(t, Pplus, new ArrayList<>());
+		Set<Rule> result = new HashSet<>(whyDeltaOrigAcc(t, Pplus, new ArrayList<>()));
+		List<Rule> res = new ArrayList<>(result);
 		if (debug)
 			System.out.println(whyProvDebugTool(t, Pplus, res));
 		return res;
