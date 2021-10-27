@@ -1039,17 +1039,22 @@ public class DatalogSynthesisImpl {
 				}
 			} else return null;
 		}
-		if (!existBug && Pplus.size() > 1) {
+		if (Pplus.size() > 1) {
 			List<Rule> acc1 = new ArrayList<>(accumulator);
+			List<Rule> p0 = new ArrayList<>(codeChunks.get(0));
+			p0.removeAll(result);
 			acc1.addAll(codeChunks.get(1));
-			List<Rule> res1 = whyDeltaOrigAcc(t, codeChunks.get(0), acc1);
+			acc1.removeAll(result);
+			List<Rule> res1 = whyDeltaOrigAcc(t, p0, acc1);
 			if (res1 == null) return null;
-			result.addAll(res1);
 			List<Rule> acc2 = new ArrayList<>(accumulator);
+			List<Rule> p1 = new ArrayList<>(codeChunks.get(1));
 			acc2.addAll(res1);
-			List<Rule> res2 = whyDeltaOrigAcc(t, codeChunks.get(1), acc2);
-			result.addAll(res2);
+			p1.removeAll(result);
+			List<Rule> res2 = whyDeltaOrigAcc(t, p1, acc2);
 			if (res2 == null) return null;
+			result.addAll(res1);
+			result.addAll(res2);
 		}
 		return result;
 	}
@@ -1065,7 +1070,7 @@ public class DatalogSynthesisImpl {
 		Set<Rule> result = new HashSet<>(whyDeltaOrigAcc(t, Pplus, new ArrayList<>()));
 		List<Rule> res = new ArrayList<>(result);
 		if (debug)
-			System.out.println(whyProvDebugTool(t, Pplus, res));
+			System.out.println(whyProvDebugTool(t, res, Pplus));
 		return res;
 	}
 	
@@ -1317,6 +1322,7 @@ public class DatalogSynthesisImpl {
 		if (result != null) {
 			return pPlus;
 		} else {
+			System.out.println(phi);
 			System.out.println("Cannot find solution.");
 			return null;
 		}
