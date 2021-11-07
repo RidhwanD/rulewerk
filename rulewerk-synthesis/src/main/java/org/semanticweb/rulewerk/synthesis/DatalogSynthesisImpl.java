@@ -40,6 +40,7 @@ import com.microsoft.z3.Status;
 public class DatalogSynthesisImpl {
 	private final List<Fact> inputTuple;
 	private final List<Predicate> expPred;
+	private final Set<Predicate> inpPred;
 	private final List<Fact> outputPTuple;
 	private final List<Fact> outputNTuple;
 	private final List<Rule> ruleSet;
@@ -65,6 +66,7 @@ public class DatalogSynthesisImpl {
 	public DatalogSynthesisImpl(List<Fact> inputTuple, List<Predicate> expPred, List<Fact> outputPTuple, List<Fact> outputNTuple, List<Rule> ruleSet, Context ctx){
 		this.inputTuple = inputTuple;
 		this.expPred = expPred;
+		this.inpPred = this.getEDB();
 		this.outputPTuple = outputPTuple;
 		this.outputNTuple = outputNTuple;
 		this.ruleSet = ruleSet;
@@ -217,8 +219,24 @@ public class DatalogSynthesisImpl {
 					Expressions.makePositiveLiteral(p.getName(), vars.subList(0, vars.size()-1)), 
 					Expressions.makePositiveLiteral("in", vars.get(vars.size()-1), vars.get(vars.size()-2))));
 		}
-		System.out.println(result);
 		return result;
+	}
+	
+	private List<Conjunction<Literal>> checkBody(Conjunction<Literal> cn) {
+		List<Literal> edb = new ArrayList<>();
+		List<Literal> idb = new ArrayList<>();
+		for (Literal l : cn.getLiterals()) {
+			if (this.inpPred.contains(l.getPredicate())) {
+				edb.add(l);
+			} else {
+				idb.add(l);
+			}
+		}
+		if (edb.isEmpty() && idb.isEmpty())
+			return Arrays.asList(cn);
+		else {
+			return Arrays.asList(Expressions.makeConjunction(edb), Expressions.makeConjunction(idb));
+		}
 	}
 	
 	/**
@@ -229,10 +247,12 @@ public class DatalogSynthesisImpl {
 		for (Rule r : this.ruleSet) {
 			Conjunction<PositiveLiteral> head = r.getHead();
 			Conjunction<Literal> body = r.getBody();
+			
+			List<Conjunction<Literal>> partition = checkBody(body);
 			List<SetVariable> setVs = new ArrayList<>();
 			List<Literal> newBody = new ArrayList<>();
 			Term cr = this.rule2const.get(r);
-			newBody.add(Expressions.makePositiveLiteral("Rule", cr));
+//				newBody.add(Expressions.makePositiveLiteral("Rule", cr));
 			int newVar = 0;
 			for (Literal l : body) {
 				if (!edb.contains(l.getPredicate())) {
@@ -262,6 +282,7 @@ public class DatalogSynthesisImpl {
 				PositiveLiteral newL = Expressions.makePositiveLiteral(l.getPredicate().getName(), newArgs);
 				newHead.add(newL);
 			}
+			
 			Rule newRule = Expressions.makeRule(
 					Expressions.makePositiveConjunction(newHead),
 					Expressions.makeConjunction(newBody));
@@ -743,7 +764,6 @@ public class DatalogSynthesisImpl {
 	
 	// ============================================== DATALOG(S) PROVENANCE =============================================== //
 	
-	
 	/**
 	 * Retrieve the Datalog(S) existential {@link Rule}s result from P+
 	 *
@@ -754,7 +774,7 @@ public class DatalogSynthesisImpl {
 		List<Statement> transFromPlus = new ArrayList<>();
 		for (Rule r : Pplus) {
 			transFromPlus.addAll(this.ruleSetTrans.get(r));
-			transFromPlus.add(Expressions.makeFact("Rule", this.rule2const.get(r)));
+//			transFromPlus.add(Expressions.makeFact("Rule", this.rule2const.get(r)));
 		}
 		return transFromPlus;
 	}
@@ -1273,7 +1293,7 @@ public class DatalogSynthesisImpl {
 								}
 							}
 						}
-						if (newWhyNots >= 3) break;
+						if (newWhyNots >= 4) break;
 					}
 					List<Fact> nonExpectedTuples = new ArrayList<>();
 					if (this.outputNTuple.size() > 0) {
@@ -1291,7 +1311,7 @@ public class DatalogSynthesisImpl {
 							phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyDeltaOrig(f, pPlus)));
 							logger.info("=============== Why Provenance End ================");
 						}
-						if (newWhys >= 3) break;
+						if (newWhys >= 4) break;
 					}
 				} else {
 					System.out.println("Cannot find solution: Non-termination");
@@ -1322,7 +1342,7 @@ public class DatalogSynthesisImpl {
 		if (result != null) {
 			return pPlus;
 		} else {
-			System.out.println(phi);
+//			System.out.println(phi);
 			System.out.println("Cannot find solution.");
 			return null;
 		}
