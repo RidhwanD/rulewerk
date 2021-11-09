@@ -1,2 +1,0 @@
-inflamation(?v0) :- micturition_pain(?v0), urine_pushing(?v0) .
-inflamation(?v0) :- not_lumbar_pain(?v0), urine_pushing(?v0) .

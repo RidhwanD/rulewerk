@@ -849,6 +849,7 @@ public class DatalogSynthesisImpl {
 	 */
 	public BoolExpr whyProvSet(List<Fact> ts, List<Rule> Pplus, Reasoner reasoner) throws IOException{
 		Set<List<Term>> result = new HashSet<>();
+		int rep = 0;
 		for (PositiveLiteral t : ts) {
 			List<Term> newTerm = new ArrayList<>(t.getArguments());
 			newTerm.add(Expressions.makeUniversalVariable("x"));
@@ -862,6 +863,8 @@ public class DatalogSynthesisImpl {
 			}
 			if (debug)
 				System.out.println(debugWhyProvSet(t, Pplus, debugCont));
+			rep++;
+//			if (rep == 1) break;
 		}
 		if (result.size() > 0) {
 			BoolExpr outerConjunct = this.ctx.mkTrue();
@@ -1293,7 +1296,7 @@ public class DatalogSynthesisImpl {
 								}
 							}
 						}
-						if (newWhyNots >= 4) break;
+						if (newWhyNots >= 3) break;
 					}
 					List<Fact> nonExpectedTuples = new ArrayList<>();
 					if (this.outputNTuple.size() > 0) {
@@ -1311,7 +1314,7 @@ public class DatalogSynthesisImpl {
 							phi = this.ctx.mkAnd(phi, this.whyProvExpr(this.whyDeltaOrig(f, pPlus)));
 							logger.info("=============== Why Provenance End ================");
 						}
-						if (newWhys >= 4) break;
+						if (newWhys >= 3) break;
 					}
 				} else {
 					System.out.println("Cannot find solution: Non-termination");

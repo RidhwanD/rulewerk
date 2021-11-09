@@ -1,1 +1,0 @@
-ans(?v3) :- input1(?v0, ?v1), input1(?v0, ?v2), input2(?v2, ?v3) .

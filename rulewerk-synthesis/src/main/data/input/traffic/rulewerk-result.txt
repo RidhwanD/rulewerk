@@ -1,2 +1,0 @@
-Crashes(?v1) :- GreenSignal(?v0), Intersect(?v1, ?v0), HasTraffic(?v1) .
-Crashes(?v1) :- HasTraffic(?v0), Intersect(?v0, ?v1), GreenSignal(?v1) .

@@ -1,0 +1,67 @@
+inv1(?v0, ?v2) :- Certificate(?v0, ?v1), opSucc(?v1, ?v2).
+inv1(?v0, ?v2) :- Check(?v0, ?v1), opSucc(?v1, ?v2).
+inv1(?v0, ?v2) :- Verify(?v0, ?v1), opSucc(?v1, ?v2).
+inv2(?v2) :- Certificate(?v0, ?v1), opSucc(?v1, ?v2).
+inv2(?v2) :- Check(?v0, ?v1), opSucc(?v1, ?v2).
+inv2(?v2) :- Certificate(?v0, ?v1), Check(?v0, ?v1), opSucc(?v1, ?v2).
+inv2(?v2) :- Verify(?v0, ?v1), opSucc(?v1, ?v2).
+inv2(?v2) :- Certificate(?v0, ?v1), Verify(?v0, ?v1), opSucc(?v1, ?v2).
+inv2(?v2) :- Check(?v0, ?v1), Verify(?v0, ?v1), opSucc(?v1, ?v2).
+inv2(?v2) :- opSucc(?v0, ?v1), opSucc(?v1, ?v2).
+inv3(?v0, ?v2) :- Certificate(?v0, ?v1), opSucc(?v1, ?v2).
+inv3(?v0, ?v2) :- Check(?v0, ?v1), opSucc(?v1, ?v2).
+inv3(?v0, ?v2) :- Verify(?v0, ?v1), opSucc(?v1, ?v2).
+inv4(?v2) :- Certificate(?v0, ?v1), opSucc(?v1, ?v2).
+inv4(?v2) :- Check(?v0, ?v1), opSucc(?v1, ?v2).
+inv4(?v2) :- Certificate(?v0, ?v1), Check(?v0, ?v1), opSucc(?v1, ?v2).
+inv4(?v2) :- Verify(?v0, ?v1), opSucc(?v1, ?v2).
+inv4(?v2) :- Certificate(?v0, ?v1), Verify(?v0, ?v1), opSucc(?v1, ?v2).
+inv4(?v2) :- Check(?v0, ?v1), Verify(?v0, ?v1), opSucc(?v1, ?v2).
+inv4(?v2) :- opSucc(?v0, ?v1), opSucc(?v1, ?v2).
+Correct(?v2) :- Certificate(?v0, ?v1), opSucc(?v1, ?v2).
+Correct(?v2) :- Check(?v0, ?v1), opSucc(?v1, ?v2).
+Correct(?v2) :- Certificate(?v0, ?v1), Check(?v0, ?v1), opSucc(?v1, ?v2).
+Correct(?v2) :- Verify(?v0, ?v1), opSucc(?v1, ?v2).
+Correct(?v2) :- Certificate(?v0, ?v1), Verify(?v0, ?v1), opSucc(?v1, ?v2).
+Correct(?v2) :- Check(?v0, ?v1), Verify(?v0, ?v1), opSucc(?v1, ?v2).
+Correct(?v2) :- opSucc(?v0, ?v1), opSucc(?v1, ?v2).
+inv1(?v0, ?v2) :- inv1(?v0, ?v1), opSucc(?v1, ?v2).
+inv1(?v0, ?v2) :- inv3(?v0, ?v1), opSucc(?v1, ?v2).
+inv2(?v2) :- inv1(?v0, ?v1), opSucc(?v1, ?v2).
+inv2(?v2) :- Certificate(?v0, ?v1), inv1(?v0, ?v1), opSucc(?v1, ?v2).
+inv2(?v2) :- Check(?v0, ?v1), inv1(?v0, ?v1), opSucc(?v1, ?v2).
+inv2(?v2) :- Verify(?v0, ?v1), inv1(?v0, ?v1), opSucc(?v1, ?v2).
+inv2(?v2) :- inv3(?v0, ?v1), opSucc(?v1, ?v2).
+inv2(?v2) :- Certificate(?v0, ?v1), inv3(?v0, ?v1), opSucc(?v1, ?v2).
+inv2(?v2) :- Check(?v0, ?v1), inv3(?v0, ?v1), opSucc(?v1, ?v2).
+inv2(?v2) :- Verify(?v0, ?v1), inv3(?v0, ?v1), opSucc(?v1, ?v2).
+inv2(?v2) :- inv1(?v0, ?v1), inv3(?v0, ?v1), opSucc(?v1, ?v2).
+inv2(?v0) :- inv4(?v0).
+inv2(?v0) :- Correct(?v0).
+inv2(?v0) :- Correct(?v0), inv4(?v0).
+inv3(?v0, ?v2) :- inv1(?v0, ?v1), opSucc(?v1, ?v2).
+inv3(?v0, ?v2) :- inv3(?v0, ?v1), opSucc(?v1, ?v2).
+inv4(?v2) :- inv1(?v0, ?v1), opSucc(?v1, ?v2).
+inv4(?v2) :- Certificate(?v0, ?v1), inv1(?v0, ?v1), opSucc(?v1, ?v2).
+inv4(?v2) :- Check(?v0, ?v1), inv1(?v0, ?v1), opSucc(?v1, ?v2).
+inv4(?v2) :- Verify(?v0, ?v1), inv1(?v0, ?v1), opSucc(?v1, ?v2).
+inv4(?v0) :- inv2(?v0).
+inv4(?v2) :- inv3(?v0, ?v1), opSucc(?v1, ?v2).
+inv4(?v2) :- Certificate(?v0, ?v1), inv3(?v0, ?v1), opSucc(?v1, ?v2).
+inv4(?v2) :- Check(?v0, ?v1), inv3(?v0, ?v1), opSucc(?v1, ?v2).
+inv4(?v2) :- Verify(?v0, ?v1), inv3(?v0, ?v1), opSucc(?v1, ?v2).
+inv4(?v2) :- inv1(?v0, ?v1), inv3(?v0, ?v1), opSucc(?v1, ?v2).
+inv4(?v0) :- Correct(?v0).
+inv4(?v0) :- Correct(?v0), inv2(?v0).
+Correct(?v2) :- inv1(?v0, ?v1), opSucc(?v1, ?v2).
+Correct(?v2) :- Certificate(?v0, ?v1), inv1(?v0, ?v1), opSucc(?v1, ?v2).
+Correct(?v2) :- Check(?v0, ?v1), inv1(?v0, ?v1), opSucc(?v1, ?v2).
+Correct(?v2) :- Verify(?v0, ?v1), inv1(?v0, ?v1), opSucc(?v1, ?v2).
+Correct(?v0) :- inv2(?v0).
+Correct(?v2) :- inv3(?v0, ?v1), opSucc(?v1, ?v2).
+Correct(?v2) :- Certificate(?v0, ?v1), inv3(?v0, ?v1), opSucc(?v1, ?v2).
+Correct(?v2) :- Check(?v0, ?v1), inv3(?v0, ?v1), opSucc(?v1, ?v2).
+Correct(?v2) :- Verify(?v0, ?v1), inv3(?v0, ?v1), opSucc(?v1, ?v2).
+Correct(?v2) :- inv1(?v0, ?v1), inv3(?v0, ?v1), opSucc(?v1, ?v2).
+Correct(?v0) :- inv4(?v0).
+Correct(?v0) :- inv2(?v0), inv4(?v0).

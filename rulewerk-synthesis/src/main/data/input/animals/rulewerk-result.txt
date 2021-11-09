@@ -1,4 +1,0 @@
-bird(?v1) :- feathers(?v0), has_covering(?v1, ?v0) .
-mammal(?v0) :- has_milk(?v0) .
-reptile(?v1) :- scales(?v0), has_covering(?v1, ?v0) .
-fish(?v0) :- has_covering(?v0, ?v1), has_gills(?v0) .

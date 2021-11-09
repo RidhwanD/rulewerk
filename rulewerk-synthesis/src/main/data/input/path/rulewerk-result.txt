@@ -1,2 +1,0 @@
-path(?v0, ?v1) :- edge(?v0, ?v1) .
-path(?v2, ?v1) :- path(?v0, ?v1), path(?v2, ?v0) .

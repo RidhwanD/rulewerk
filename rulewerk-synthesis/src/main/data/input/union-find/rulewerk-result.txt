@@ -1,4 +1,0 @@
-sameset(?v0, ?v1) :- eq(?v0, ?v1), eq(?v0, ?v2) .
-sameset(?v0, ?v2) :- find(?v0, ?v1), sameset(?v2, ?v1) .
-sameset(?v2, ?v0) :- sameset(?v0, ?v1), union(?v2, ?v1) .
-sameset(?v1, ?v2) :- sameset(?v0, ?v1), sameset(?v0, ?v2) .

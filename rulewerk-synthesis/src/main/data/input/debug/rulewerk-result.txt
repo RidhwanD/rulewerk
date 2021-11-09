@@ -1,0 +1,2 @@
+path(?v0, ?v1) :- edge(?v0, ?v1) .
+path(?v0, ?v2) :- path(?v0, ?v1), edge(?v1, ?v2) .

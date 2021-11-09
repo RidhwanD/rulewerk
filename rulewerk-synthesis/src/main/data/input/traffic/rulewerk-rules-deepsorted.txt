@@ -1,0 +1,33 @@
+inv(?v0, ?v1) :- GreenSignal(?v0), GreenSignal(?v1), Intersect(?v0, ?v1).
+inv(?v1, ?v0) :- GreenSignal(?v0), HasTraffic(?v1), Intersect(?v1, ?v0).
+inv(?v0, ?v1) :- GreenSignal(?v0), HasTraffic(?v1), Intersect(?v0, ?v1).
+inv(?v0, ?v1) :- HasTraffic(?v0), HasTraffic(?v1), Intersect(?v0, ?v1).
+Crashes(?v1) :- GreenSignal(?v0), GreenSignal(?v1), Intersect(?v0, ?v1).
+Crashes(?v1) :- GreenSignal(?v0), GreenSignal(?v1), Intersect(?v1, ?v0).
+Crashes(?v1) :- GreenSignal(?v0), HasTraffic(?v1), Intersect(?v1, ?v0).
+Crashes(?v1) :- GreenSignal(?v1), HasTraffic(?v0), Intersect(?v1, ?v0).
+Crashes(?v1) :- GreenSignal(?v1), HasTraffic(?v0), Intersect(?v0, ?v1).
+Crashes(?v1) :- GreenSignal(?v0), HasTraffic(?v1), Intersect(?v0, ?v1).
+Crashes(?v1) :- HasTraffic(?v0), HasTraffic(?v1), Intersect(?v0, ?v1).
+Crashes(?v1) :- HasTraffic(?v0), HasTraffic(?v1), Intersect(?v1, ?v0).
+inv(?v1, ?v0) :- GreenSignal(?v1), Intersect(?v1, ?v0), Crashes(?v0).
+inv(?v0, ?v1) :- GreenSignal(?v1), Intersect(?v0, ?v1), Crashes(?v0).
+inv(?v1, ?v0) :- HasTraffic(?v1), Intersect(?v1, ?v0), Crashes(?v0).
+inv(?v0, ?v1) :- HasTraffic(?v1), Intersect(?v0, ?v1), Crashes(?v0).
+inv(?v0, ?v1) :- Intersect(?v0, ?v1), Crashes(?v0), Crashes(?v1).
+Crashes(?v1) :- GreenSignal(?v0), GreenSignal(?v1), inv(?v1, ?v0).
+Crashes(?v1) :- GreenSignal(?v0), GreenSignal(?v1), inv(?v0, ?v1).
+Crashes(?v1) :- GreenSignal(?v0), HasTraffic(?v1), inv(?v0, ?v1).
+Crashes(?v1) :- GreenSignal(?v1), HasTraffic(?v0), inv(?v1, ?v0).
+Crashes(?v1) :- GreenSignal(?v0), HasTraffic(?v1), inv(?v1, ?v0).
+Crashes(?v1) :- GreenSignal(?v1), HasTraffic(?v0), inv(?v0, ?v1).
+Crashes(?v1) :- HasTraffic(?v0), HasTraffic(?v1), inv(?v0, ?v1).
+Crashes(?v1) :- HasTraffic(?v0), HasTraffic(?v1), inv(?v1, ?v0).
+Crashes(?v1) :- GreenSignal(?v1), Intersect(?v1, ?v0), Crashes(?v0).
+Crashes(?v1) :- GreenSignal(?v1), Intersect(?v0, ?v1), Crashes(?v0).
+Crashes(?v1) :- HasTraffic(?v1), Intersect(?v1, ?v0), Crashes(?v0).
+Crashes(?v1) :- HasTraffic(?v1), Intersect(?v0, ?v1), Crashes(?v0).
+Crashes(?v1) :- GreenSignal(?v1), inv(?v1, ?v0), Crashes(?v0).
+Crashes(?v1) :- GreenSignal(?v1), inv(?v0, ?v1), Crashes(?v0).
+Crashes(?v1) :- HasTraffic(?v1), inv(?v0, ?v1), Crashes(?v0).
+Crashes(?v1) :- HasTraffic(?v1), inv(?v1, ?v0), Crashes(?v0).
