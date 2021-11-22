@@ -21,9 +21,10 @@ import com.microsoft.z3.Context;
 
 public class Benchmark {
 	public static void main(String[] arg) throws IOException, ParsingException {
-		List<String> benchmarks = new ArrayList<>(Arrays.asList("sql-01","sql-02","sql-04","sql-05","sql-06","sql-07","sql-09","sql-12","sql-13","sql-14","sql-03","sql-11","sql-08","traffic", "small", "abduce", "ship", "inflamation", "animals", "rvcheck", "path", "union-find","1-object-1-type","1-type","1-object","escape","modref","andersen","cliquer","rsg","1-call-site","2-call-site","nearlyscc","sgen","scc","buildwall","polysite","downcast","sql-15","sql-10"));
-		int iter = 100;
-		for (int expCase = 2; expCase <= 4; expCase++) {
+		// "sql-01","sql-02","sql-04","sql-05","sql-06","sql-07","sql-09","sql-12","sql-13","sql-14","sql-03","sql-11","sql-08","traffic", "small", "abduce", "ship", "inflamation", "animals", "rvcheck", "path","1-object-1-type","1-type","1-object","rsg","escape","modref","andersen","sgen","buildwall","cliquer","sql-15","1-call-site","2-call-site", "union-find","nearlyscc","scc","polysite","downcast","sql-10"
+		List<String> benchmarks = new ArrayList<>(Arrays.asList("path"));
+		int iter = 1;
+		for (int expCase = 4; expCase <= 4; expCase++) {
 			for (String benchCase : benchmarks) {
 				for (int expNum = 1; expNum <= iter; expNum++) {
 					boolean write = true;
@@ -120,6 +121,8 @@ public class Benchmark {
 						result = ds.synthesisSet();
 					else if (expCase == 4)
 						result = ds.synthesisSetAll();
+					else if (expCase == 5)
+						result = ds.synthesisSet2();
 					long endTime = System.nanoTime();
 					System.out.println("Resulting Program:");
 					long duration = (endTime - startTime);

@@ -61,7 +61,7 @@ public class DatalogSynthesisImpl {
 	private int whyderivebuggy = 0;
 	private int whynotremainbuggy = 0;
 	private int whynotderivebuggy = 0;
-	private int timeout = 300; 			// seconds
+	private int timeout = 600; 			// seconds
 	
 	public DatalogSynthesisImpl(List<Fact> inputTuple, List<Predicate> expPred, List<Fact> outputPTuple, List<Fact> outputNTuple, List<Rule> ruleSet, Context ctx){
 		this.inputTuple = inputTuple;
@@ -248,7 +248,7 @@ public class DatalogSynthesisImpl {
 			Conjunction<PositiveLiteral> head = r.getHead();
 			Conjunction<Literal> body = r.getBody();
 			
-			List<Conjunction<Literal>> partition = checkBody(body);
+//			List<Conjunction<Literal>> partition = checkBody(body);
 			List<SetVariable> setVs = new ArrayList<>();
 			List<Literal> newBody = new ArrayList<>();
 			Term cr = this.rule2const.get(r);
@@ -849,7 +849,6 @@ public class DatalogSynthesisImpl {
 	 */
 	public BoolExpr whyProvSet(List<Fact> ts, List<Rule> Pplus, Reasoner reasoner) throws IOException{
 		Set<List<Term>> result = new HashSet<>();
-		int rep = 0;
 		for (PositiveLiteral t : ts) {
 			List<Term> newTerm = new ArrayList<>(t.getArguments());
 			newTerm.add(Expressions.makeUniversalVariable("x"));
@@ -863,8 +862,66 @@ public class DatalogSynthesisImpl {
 			}
 			if (debug)
 				System.out.println(debugWhyProvSet(t, Pplus, debugCont));
-			rep++;
-//			if (rep == 1) break;
+		}
+		if (result.size() > 0) {
+			BoolExpr outerConjunct = this.ctx.mkTrue();
+			for (List<Term> terms : result) {
+				BoolExpr conjVars = this.rule2var.get(this.const2rule.get(terms.get(0)));
+				if (terms.size() > 1) {
+					for (Term t : terms.subList(1, terms.size())) {
+						conjVars = this.ctx.mkAnd(conjVars, this.rule2var.get(this.const2rule.get(t)));
+					}
+				}
+				BoolExpr negConjVars = this.ctx.mkNot(conjVars);
+				if (result.size() > 1)
+					outerConjunct = this.ctx.mkAnd(outerConjunct, negConjVars);
+				else
+					outerConjunct = negConjVars;
+			}
+			logger.info("Add "+outerConjunct+" as why-provenance constraint");
+			return outerConjunct;
+		} else {
+			logger.info("Add TRUE as why-provenance constraint");
+			return this.ctx.mkTrue();
+		}
+	}
+	
+	/**
+	 * Compute the why-provenance of produced non-desirable output tuples using Datalog(S)-based reasoning.
+	 *
+	 * @param ts 		non-null list of produced non-desirable output {@link PositiveLiteral}s.
+	 * @param Pplus 	non-null set of selected {@link Rule}s P+.
+	 * @param reasoner	non-null Rulewerk {@link Reasoner}.
+	 * @return Boolean expression that denote the resulting why-provenance to strengthen the constraint formula.
+	 */
+	public BoolExpr whyProvSet(List<Fact> ts, List<Rule> Pplus) throws IOException{
+		Set<List<Term>> result = new HashSet<>();
+		int rep = 0;
+		KnowledgeBase kb = new KnowledgeBase();
+		kb.addStatements(DatalogSetUtils.getR_SU());
+		kb.addStatements(getTransFromPlus(Pplus));
+		kb.addStatements(rulesFromExpPred());
+		kb.addStatements(this.inputTuple);
+		try (final Reasoner reasoner = new VLogReasoner(kb)) {
+			reasoner.setReasoningTimeout(this.timeout);
+			if (reasoner.reason()) {
+				for (PositiveLiteral t : ts) {
+					List<Term> newTerm = new ArrayList<>(t.getArguments());
+					newTerm.add(Expressions.makeUniversalVariable("x"));
+					newTerm.add(Expressions.makeUniversalVariable("y"));
+					PositiveLiteral l = Expressions.makePositiveLiteral("WhyProv_"+t.getPredicate().getName(), newTerm);
+					Map<Term,List<Term>> res = ReasoningUtils.getAllDifferentSets(l, reasoner);
+					Set<List<Term>> debugCont = new HashSet<>();
+					for (Term key : res.keySet()) {
+						result.add(res.get(key));
+						debugCont.add(res.get(key));
+					}
+					if (debug)
+						System.out.println(debugWhyProvSet(t, Pplus, debugCont));
+					rep++;
+					if (rep == 3) break;
+				}
+			} else return this.ctx.mkFalse();
 		}
 		if (result.size() > 0) {
 			BoolExpr outerConjunct = this.ctx.mkTrue();
@@ -1454,6 +1511,109 @@ public class DatalogSynthesisImpl {
 	}
 	
 	/**
+	 * Synthesis process using why-not provenance derived from [Zeller, 1999] and Datalog(S)-based why-provenance.
+	 *
+	 * @return List of expected {@link Fact}s that are not derived by the reasoner. 
+	 */
+	public List<Rule> synthesisSet2() {
+		this.rulewerkCall = 0; this.z3Call = 0; this.iteration = 0;
+		int wp = 0; int wnp = 0; int cp = 0;
+		BoolExpr phi = initPhi();
+		Model result = this.consultSATSolver(phi);
+		List<Rule> pPlus = new ArrayList<>();
+		boolean loop = true; int iter = 0;
+		while (result != null && loop) {
+			iter++;
+			loop = false;
+			logger.info("P+:");
+			for (Rule r:pPlus)
+				logger.info("- "+r);
+			KnowledgeBase kb = new KnowledgeBase();
+			kb.addStatements(pPlus);
+			kb.addStatements(this.inputTuple);
+			
+			try (final Reasoner reasoner = new VLogReasoner(kb)) {
+				reasoner.setReasoningTimeout(this.timeout);
+				if (reasoner.reason()) {
+					int newWhyNots = 0;
+					for (Fact t : this.outputPTuple) {
+						boolean generate = ReasoningUtils.isDerived(t, reasoner);
+						if (!generate) {
+							loop = true;
+							if (pPlus.size() < this.ruleSet.size()) {
+								logger.info("============= Perform Why Not Provenance ==============");
+								wnp++; newWhyNots++;
+								logger.info("- "+wnp+" call of why-not-provenance");
+								phi = this.ctx.mkAnd(phi, this.whyNotProvExpr(this.whyNotDeltaOrig(t, pPlus)));
+								logger.info("=============== Why Not Provenance End ================");
+							}
+						} else if (generate) {
+							if (this.coprov) {
+								if (pPlus.size() < this.ruleSet.size() && pPlus.size() > 0) {
+									logger.info("============= Perform Co-Provenance ==============");
+									cp++;
+									logger.info("- "+cp+" call of co-provenance");
+									phi = this.ctx.mkAnd(phi, this.coProvExpr(pPlus, this.coprovInv(t, pPlus)));
+									logger.info("=============== Co-Provenance End ================");
+								}
+							}
+						}
+						if (newWhyNots >= 3) break;
+					}
+					List<Fact> nonExpectedTuples = new ArrayList<>();
+					if (this.outputNTuple.size() > 0) {
+						nonExpectedTuples = this.getNonExpectedResultsDecl(reasoner);
+					} else {
+						nonExpectedTuples = this.getNonExpectedResults(reasoner);
+					}
+					if (nonExpectedTuples.size() > 0) {
+						loop = true;
+						if (pPlus.size() > 0) {
+							logger.info("============= Perform Why Provenance ==============");
+							wp++;
+							logger.info("- "+wp+" call of why-provenance");
+							phi = this.ctx.mkAnd(phi, whyProvSet(nonExpectedTuples, pPlus));
+							logger.info("=============== Why Provenance End ================");
+						}
+					}
+				} else {
+					System.out.println("Cannot find solution: Non-termination");
+					return null;
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			result = this.consultSATSolver(phi);
+			if (result != null) {
+				pPlus = this.derivePPlus(result);
+				if (pPlus.size() == 0) loop = true;
+			}
+			logger.info("Iteration "+iter+" complete.");
+			logger.info("Made "+this.z3Call+" calls to Z3 and "+this.rulewerkCall+" calls to Rulewerk.");
+		}
+		this.iteration = iter;
+		System.out.println("Synthesis finished in "+iter+" iteration(s):");
+		System.out.println("- "+wp+" call of why-provenance");
+		System.out.println("- "+wnp+" call of why-not-provenance");
+		System.out.println("Made "+this.z3Call+" calls to Z3 and "+this.rulewerkCall+" calls to Rulewerk.");
+		if (debug) {
+			System.out.println("why-provenance non-derive buggy: "+this.whyderivebuggy);
+			System.out.println("why-provenance remain derive buggy: "+this.whyremainbuggy);
+			System.out.println("why-not-provenance non-derive buggy: "+this.whynotderivebuggy);
+			System.out.println("why-not-provenance remain derive buggy: "+this.whynotremainbuggy);
+		}
+		if (result != null) {
+			return pPlus;
+		} else {
+			System.out.println("Cannot find solution.");
+			System.out.println("P+:");
+			for (Rule r:pPlus)
+				System.out.println(r);
+			return null;
+		}
+	}
+	
+	/**
 	 * Synthesis process using Datalog(S)-based why-not provenance and why-provenance.
 	 *
 	 * @return List of expected {@link Fact}s that are not derived by the reasoner. 
@@ -1518,7 +1678,7 @@ public class DatalogSynthesisImpl {
 			pPlus = this.derivePPlus(result);
 			if (pPlus.size() == 0) loop = true;
 		}
-		
+		this.iteration = iter;
 		System.out.println("Synthesis finished in "+iter+" iteration(s):");
 		System.out.println("- "+wp+" call of why-provenance");
 		System.out.println("- "+wnp+" call of why-not-provenance");
@@ -1533,7 +1693,7 @@ public class DatalogSynthesisImpl {
 			return pPlus;
 		} else {
 			System.out.println("Cannot find solution.");
-			return null;
+			return new ArrayList<>();
 		}
 	}
 }
