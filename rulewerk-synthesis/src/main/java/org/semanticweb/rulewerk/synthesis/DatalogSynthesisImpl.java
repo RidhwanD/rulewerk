@@ -3,6 +3,8 @@ package org.semanticweb.rulewerk.synthesis;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -82,6 +84,139 @@ public class DatalogSynthesisImpl {
 		this.ruleSetTrans = new HashMap<>();
 		this.transformToDatalogS();
 		ReasoningUtils.configureLogging(); // use simple logger for the example
+	}
+	
+	public boolean isRecursive(Rule r) {
+		// Assume rule head is only one literal
+		// Check is the rule is obviously recursive, A(x) :- A(y), ...
+		for (Literal l : r.getBody()) {
+			if (l.getPredicate().equals(r.getHead().getLiterals().get(0).getPredicate()))
+				return true;
+		}
+		return false;
+	}
+
+	public List<Predicate> getIDBPredicate() {
+		// Assume rule head is only one literal
+		List<Predicate> idb = new ArrayList<>(this.expPred);
+		for (Rule r : this.ruleSet) {
+			Predicate p = r.getHead().getLiterals().get(0).getPredicate();
+			if (!idb.contains(p))
+				idb.add(p);
+		}
+		return idb;
+	}
+	
+    public boolean[][] buildDepMatrix(List<Rule> inp) {
+    	// Assume rule head is only one literal
+    	List<Predicate> IDBpred = getIDBPredicate();
+    	boolean[][] dependOn = new boolean[IDBpred.size()][IDBpred.size()];
+    	for (Rule r : inp) {
+    		Predicate head = r.getHead().getLiterals().get(0).getPredicate();
+    		for (Literal l : r.getBody().getLiterals()) {
+    			Predicate body = l.getPredicate();
+    			if (!this.inpPred.contains(body)) {
+    				dependOn[IDBpred.indexOf(head)][IDBpred.indexOf(body)] = true;
+    			}
+    		}
+    	}
+    	return this.transClosure(dependOn);
+    }
+    
+    public boolean[][] transClosure(boolean[][] inp) {
+		boolean isChanged = true;
+		while (isChanged) {
+			isChanged = false;
+			for (int i = 0; i < inp.length; i++) {
+				for (int j = 0; j < inp.length; j++) {
+					for (int k = 0; k < inp.length; k++) {
+						if (inp[i][j] && inp[j][k] && !inp[i][k] && i != j && j != k) {
+							inp[i][k] = true;
+							isChanged = true;
+						}
+					}
+				}
+			}
+		}
+		return inp;
+	}
+	
+	public List<Rule> getNonRecSubset(List<Rule> ruleSet) {
+		List<Rule> res = new ArrayList<>();
+		for (Rule r : ruleSet) {
+			if (!isRecursive(r)) {
+				List<Rule> temp = new ArrayList<>(res);
+				temp.add(r);
+				if (!this.isCyclic(this.buildDepMatrix(temp))) {
+					res.add(r);
+    			}
+			}
+		}
+		System.out.println(this.isCyclic(this.buildDepMatrix(res)));
+		return res;
+	}
+	
+	public boolean isBase(Rule r) {
+		boolean isBase = true;
+		for (Literal l : r.getBody().getLiterals()) {
+			isBase = isBase && inpPred.contains(l.getPredicate());
+		}
+		return isBase;
+	}
+	
+	public boolean isCyclic(boolean[][] inp) {
+		boolean isCyclic = false;
+		for (int i = 0; i < inp.length; i++) {
+			isCyclic = isCyclic || inp[i][i];
+		}
+		return isCyclic;
+	}
+	
+	public List<Set<Rule>> getMaximalRuleSets(List<Set<Rule>> input) {
+		List<Set<Rule>> result = new ArrayList<>();
+		Collections.sort(input, new SizeComparator());
+		for (int i = input.size()-1; i >= 0; i--) {
+			boolean add = true;
+			for (int j = 0; j < result.size(); j++) {
+				if (result.get(j).containsAll(input.get(i)))
+					add = false;
+			}
+			if (add)
+				result.add(0,input.get(i));
+		}
+		Collections.sort(result, new SizeComparator());
+		return result;
+	}
+	
+	public List<Set<Rule>> getAllNonRecSubsets() throws IOException {
+		List<Set<Rule>> result = new ArrayList<>(Arrays.asList(new HashSet<Rule>()));
+		for (Rule r : this.ruleSet) {
+			if (!isRecursive(r) && !isBase(r)) {
+				List<Set<Rule>> newResult = new ArrayList<>();
+				for (Set<Rule> res : result) {
+    				Set<Rule> temp = new HashSet<>(res);
+					temp.add(r);
+    				if (!this.isCyclic(this.buildDepMatrix(new ArrayList<Rule>(temp)))) {
+	    				newResult.add(temp);
+    				} else {
+    					newResult.add(res);
+    				}
+				}
+				boolean allContains = true;
+				for (Set<Rule> res : newResult) {
+					allContains = allContains && res.contains(r);
+				}
+				if (allContains)
+					newResult.addAll(result);
+				result = newResult;
+			} else if (isBase(r)) {
+				for (Set<Rule> res : result) {
+					res.add(r);
+				}
+			}
+		}
+		System.out.println("Initial sets: "+ result.size());
+		return this.getMaximalRuleSets(result);
 	}
 	
 	/**
@@ -222,23 +357,6 @@ public class DatalogSynthesisImpl {
 		return result;
 	}
 	
-	private List<Conjunction<Literal>> checkBody(Conjunction<Literal> cn) {
-		List<Literal> edb = new ArrayList<>();
-		List<Literal> idb = new ArrayList<>();
-		for (Literal l : cn.getLiterals()) {
-			if (this.inpPred.contains(l.getPredicate())) {
-				edb.add(l);
-			} else {
-				idb.add(l);
-			}
-		}
-		if (edb.isEmpty() && idb.isEmpty())
-			return Arrays.asList(cn);
-		else {
-			return Arrays.asList(Expressions.makeConjunction(edb), Expressions.makeConjunction(idb));
-		}
-	}
-	
 	/**
 	 * Transform each {@link Rule}s in the ruleset to its set of Datalog(S)-derived existential {@link Rule}s.
 	 */
@@ -326,6 +444,21 @@ public class DatalogSynthesisImpl {
 			for (BoolExpr b : rules) {
 				disjVars = this.ctx.mkOr(disjVars, b);
 			}
+		}
+		return disjVars;
+	}
+	
+	/**
+	 * Initiate the constraint formula for the synthesis process.
+	 * 
+	 * @return The disjunction of each {@link Rule}'s boolean variable. 
+	 */
+	private BoolExpr initPhi(List<Rule> inp) {
+		List<BoolExpr> rules = new ArrayList<>(this.var2rule.keySet());
+		BoolExpr disjVars = this.ctx.mkFalse();
+		for (BoolExpr b : rules) {
+			if (inp.contains(this.var2rule.get(b)))
+				disjVars = this.ctx.mkOr(disjVars, b);
 		}
 		return disjVars;
 	}
@@ -1675,7 +1808,8 @@ public class DatalogSynthesisImpl {
 				}
 			}
 			result = this.consultSATSolver(phi);
-			pPlus = this.derivePPlus(result);
+			if (result != null)
+				pPlus = this.derivePPlus(result);
 			if (pPlus.size() == 0) loop = true;
 		}
 		this.iteration = iter;
@@ -1695,5 +1829,217 @@ public class DatalogSynthesisImpl {
 			System.out.println("Cannot find solution.");
 			return new ArrayList<>();
 		}
+	}
+	
+	/**
+	 * Synthesis process using Datalog(S)-based why-not provenance and why-provenance.
+	 *
+	 * @return List of expected {@link Fact}s that are not derived by the reasoner. 
+	 */
+	public List<Rule> synthesisSetAll2() throws IOException {
+		this.rulewerkCall = 0; this.z3Call = 0; this.iteration = 0;
+		int wp = 0; int wnp = 0;  int iter = 0;
+		Model result = null;
+		List<Rule> pPlus = new ArrayList<>();
+		for (int it = 0; it < 1; it++) {
+			if (result == null) {
+				if (it == 0)
+					pPlus = new ArrayList<>(this.getNonRecSubset(this.ruleSet));
+				else {
+					System.out.println("Cannot find in the first iteration");
+					pPlus = new ArrayList<>(this.ruleSet);
+				}
+				boolean loop = true;
+				BoolExpr phi = initPhi(pPlus);
+				result = this.consultSATSolver(phi);
+				while (result != null && loop) {
+					iter++; loop = false;
+					logger.info("P+:");
+					for (Rule r:pPlus)
+						logger.info("- "+r);
+					System.out.println("Using "+pPlus.size()+" rules.");
+					KnowledgeBase kb = new KnowledgeBase();
+					kb.addStatements(DatalogSetUtils.getR_SU());
+					kb.addStatements(getTransFromPlus(pPlus));
+					kb.addStatements(rulesFromExpPred());
+					kb.addStatements(this.inputTuple);
+					try (final Reasoner reasoner = new VLogReasoner(kb)) {
+						reasoner.setReasoningTimeout(this.timeout);
+						if (reasoner.reason()) {
+							this.rulewerkCall++;
+							// Ensure all expected output are generated.
+							for (Fact f : this.outputPTuple) {
+								boolean generate = ReasoningUtils.isDerived(f, reasoner);
+								if (iter == 1) {
+									logger.info("============= Perform Why Not Provenance ==============");
+									wnp++; loop = true;
+									logger.info("- "+wnp+" call of why-not-provenance");
+									phi = this.ctx.mkAnd(phi, this.whyNotProvSet(f, pPlus, reasoner));
+									logger.info("=============== Why Not Provenance End ================");
+								}
+								if (iter > 1 && !generate) {
+									logger.error("Tuple "+f+" cannot be generated.");
+									phi = this.ctx.mkAnd(this.ctx.mkFalse());
+								}
+							}
+			
+							// Ensure all undesired output are not generated.
+							List<Fact> nonExpectedTuples = new ArrayList<>();
+							if (this.outputNTuple.size() > 0) {
+								nonExpectedTuples = this.getNonExpectedResultsDecl(reasoner);
+							} else {
+								nonExpectedTuples = this.getNonExpectedResults(reasoner);
+							}
+							if (nonExpectedTuples.size() > 0) {
+								loop = true;
+								if (pPlus.size() > 0) {
+									logger.info("============= Perform Why Provenance ==============");
+									wp++; loop = true;
+									logger.info("- "+wp+" call of why-provenance");
+									phi = this.ctx.mkAnd(phi, whyProvSet(nonExpectedTuples, pPlus, reasoner));
+									logger.info("=============== Why Provenance End ================");
+								}
+							}
+						} else {
+							System.out.println("Cannot find solution: Non-termination");
+							return null;
+						}
+					}
+					result = this.consultSATSolver(phi);
+					if (result != null)
+						pPlus = this.derivePPlus(result);
+					if (pPlus.size() == 0) loop = true;
+				}
+			}
+		}
+		this.iteration = iter;
+		System.out.println("Synthesis finished in "+iter+" iteration(s):");
+		System.out.println("- "+wp+" call of why-provenance");
+		System.out.println("- "+wnp+" call of why-not-provenance");
+		System.out.println("Made "+this.z3Call+" calls to Z3 and "+this.rulewerkCall+" calls to Rulewerk.");
+		if (debug) {
+			System.out.println("why-provenance non-derive buggy: "+this.whyderivebuggy);
+			System.out.println("why-provenance remain derive buggy: "+this.whyremainbuggy);
+			System.out.println("why-not-provenance non-derive buggy: "+this.whynotderivebuggy);
+			System.out.println("why-not-provenance remain derive buggy: "+this.whynotremainbuggy);
+		}
+		if (result != null) {
+			return pPlus;
+		} else {
+			System.out.println("Cannot find solution.");
+			return new ArrayList<>();
+		}
+	}
+	
+	/**
+	 * Synthesis process using Datalog(S)-based why-not provenance and why-provenance.
+	 *
+	 * @return List of expected {@link Fact}s that are not derived by the reasoner. 
+	 */
+	public List<Rule> synthesisSetAll3() throws IOException {
+		this.rulewerkCall = 0; this.z3Call = 0; this.iteration = 0;
+		int wp = 0; int wnp = 0;  int iter = 0;
+		Model result = null;
+		List<Rule> pPlus = new ArrayList<>();
+		List<Set<Rule>> subsets = this.getAllNonRecSubsets();
+		System.out.println(subsets.size());
+		int it = 0;
+		while (it < subsets.size() && result == null) {
+			if (result == null) {
+				if (it < subsets.size())
+					pPlus = new ArrayList<>(subsets.get(it));
+				else {
+					System.out.println("Cannot find in the first iteration");
+					pPlus = new ArrayList<>(this.ruleSet);
+				}
+				System.out.println(this.isCyclic(this.buildDepMatrix(pPlus)));
+				it++;
+				boolean loop = true;
+				BoolExpr phi = initPhi(pPlus);
+				result = this.consultSATSolver(phi);
+				while (result != null && loop) {
+					iter++; loop = false;
+					System.out.println("P+:");
+					for (Rule r:pPlus)
+						System.out.println("- "+r);
+					System.out.println("Using "+pPlus.size()+" rules.");
+					KnowledgeBase kb = new KnowledgeBase();
+					kb.addStatements(DatalogSetUtils.getR_SU());
+					kb.addStatements(getTransFromPlus(pPlus));
+					kb.addStatements(rulesFromExpPred());
+					kb.addStatements(this.inputTuple);
+					try (final Reasoner reasoner = new VLogReasoner(kb)) {
+						reasoner.setReasoningTimeout(this.timeout);
+						if (reasoner.reason()) {
+							this.rulewerkCall++;
+							// Ensure all expected output are generated.
+							for (Fact f : this.outputPTuple) {
+								boolean generate = ReasoningUtils.isDerived(f, reasoner);
+								if (iter == 1) {
+									logger.info("============= Perform Why Not Provenance ==============");
+									wnp++; loop = true;
+									logger.info("- "+wnp+" call of why-not-provenance");
+									phi = this.ctx.mkAnd(phi, this.whyNotProvSet(f, pPlus, reasoner));
+									logger.info("=============== Why Not Provenance End ================");
+								}
+								if (iter > 1 && !generate) {
+									logger.error("Tuple "+f+" cannot be generated.");
+									phi = this.ctx.mkAnd(this.ctx.mkFalse());
+								}
+							}
+			
+							// Ensure all undesired output are not generated.
+							List<Fact> nonExpectedTuples = new ArrayList<>();
+							if (this.outputNTuple.size() > 0) {
+								nonExpectedTuples = this.getNonExpectedResultsDecl(reasoner);
+							} else {
+								nonExpectedTuples = this.getNonExpectedResults(reasoner);
+							}
+							if (nonExpectedTuples.size() > 0) {
+								loop = true;
+								if (pPlus.size() > 0) {
+									logger.info("============= Perform Why Provenance ==============");
+									wp++; loop = true;
+									logger.info("- "+wp+" call of why-provenance");
+									phi = this.ctx.mkAnd(phi, whyProvSet(nonExpectedTuples, pPlus, reasoner));
+									logger.info("=============== Why Provenance End ================");
+								}
+							}
+						} else {
+							System.out.println("Cannot find solution: Non-termination");
+							return null;
+						}
+					}
+					result = this.consultSATSolver(phi);
+					if (result != null)
+						pPlus = this.derivePPlus(result);
+					if (pPlus.size() == 0) loop = true;
+				}
+			}
+		}
+		this.iteration = iter;
+		System.out.println("Synthesis finished in "+iter+" iteration(s):");
+		System.out.println("- "+wp+" call of why-provenance");
+		System.out.println("- "+wnp+" call of why-not-provenance");
+		System.out.println("Made "+this.z3Call+" calls to Z3 and "+this.rulewerkCall+" calls to Rulewerk.");
+		if (debug) {
+			System.out.println("why-provenance non-derive buggy: "+this.whyderivebuggy);
+			System.out.println("why-provenance remain derive buggy: "+this.whyremainbuggy);
+			System.out.println("why-not-provenance non-derive buggy: "+this.whynotderivebuggy);
+			System.out.println("why-not-provenance remain derive buggy: "+this.whynotremainbuggy);
+		}
+		if (result != null) {
+			return pPlus;
+		} else {
+			System.out.println("Cannot find solution.");
+			return new ArrayList<>();
+		}
+	}
+	
+	class SizeComparator implements Comparator<Set<?>> {
+	    @Override
+	    public int compare(Set<?> o1, Set<?> o2) {
+	        return Integer.valueOf(o1.size()).compareTo(o2.size());
+	    }
 	}
 }
