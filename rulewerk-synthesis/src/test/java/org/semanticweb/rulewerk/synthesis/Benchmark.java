@@ -23,7 +23,7 @@ public class Benchmark {
 	public static void main(String[] arg) throws IOException, ParsingException {
 		// "sql-01","sql-02","sql-04","sql-05","sql-06","sql-07","sql-09","sql-12","sql-13","sql-14","sql-03","sql-08","sql-11","traffic", "small", "abduce", "ship", "inflamation", "animals", "rvcheck", "path","1-object-1-type","1-type","1-object","rsg","escape","modref","andersen","sgen","buildwall","cliquer","sql-15","1-call-site","2-call-site", "union-find","nearlyscc","scc","polysite","downcast","sql-10"
 		// "sql-01","sql-02","sql-04","sql-05","sql-06","sql-07","sql-09","sql-12","sql-13","sql-14","sql-03","sql-08","sql-11","abduce","animals","inflamation","ship","small","traffic","nearlyscc","rvcheck","sql-15","cliquer","union-find","polysite","downcast","sql-10"
-		List<String> benchmarks = new ArrayList<>(Arrays.asList("sql-11"));
+		List<String> benchmarks = new ArrayList<>(Arrays.asList("rvcheck"));
 		int iter = 1;
 		for (int expCase = 7; expCase <= 7; expCase++) {
 			for (String benchCase : benchmarks) {

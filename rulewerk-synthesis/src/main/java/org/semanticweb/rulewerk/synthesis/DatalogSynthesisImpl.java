@@ -68,7 +68,7 @@ public class DatalogSynthesisImpl {
 	public DatalogSynthesisImpl(List<Fact> inputTuple, List<Predicate> expPred, List<Fact> outputPTuple, List<Fact> outputNTuple, List<Rule> ruleSet, Context ctx){
 		this.inputTuple = inputTuple;
 		this.expPred = expPred;
-		this.inpPred = this.getEDB();
+		this.inpPred = this.getEDBPredicate();
 		this.outputPTuple = outputPTuple;
 		this.outputNTuple = outputNTuple;
 		this.ruleSet = ruleSet;
@@ -86,7 +86,7 @@ public class DatalogSynthesisImpl {
 		ReasoningUtils.configureLogging(); // use simple logger for the example
 	}
 	
-	public boolean isRecursive(Rule r) {
+	public boolean isObvRecursive(Rule r) {
 		// Assume rule head is only one literal
 		// Check is the rule is obviously recursive, A(x) :- A(y), ...
 		for (Literal l : r.getBody()) {
@@ -144,7 +144,7 @@ public class DatalogSynthesisImpl {
 	public List<Rule> getNonRecSubset(List<Rule> ruleSet) {
 		List<Rule> res = new ArrayList<>();
 		for (Rule r : ruleSet) {
-			if (!isRecursive(r)) {
+			if (!isObvRecursive(r)) {
 				List<Rule> temp = new ArrayList<>(res);
 				temp.add(r);
 				if (!this.isCyclic(this.buildDepMatrix(temp))) {
@@ -152,7 +152,6 @@ public class DatalogSynthesisImpl {
     			}
 			}
 		}
-		System.out.println(this.isCyclic(this.buildDepMatrix(res)));
 		return res;
 	}
 	
@@ -189,9 +188,11 @@ public class DatalogSynthesisImpl {
 	}
 	
 	public List<Set<Rule>> getAllNonRecSubsets() throws IOException {
+		List<Predicate> idb = this.getIDBPredicate();
+		boolean[][] depM = this.buildDepMatrix(this.ruleSet);
 		List<Set<Rule>> result = new ArrayList<>(Arrays.asList(new HashSet<Rule>()));
 		for (Rule r : this.ruleSet) {
-			if (!isRecursive(r) && !isBase(r)) {
+			if (!isObvRecursive(r) && !isBase(r)) {
 				List<Set<Rule>> newResult = new ArrayList<>();
 				for (Set<Rule> res : result) {
     				Set<Rule> temp = new HashSet<>(res);
@@ -202,11 +203,18 @@ public class DatalogSynthesisImpl {
     					newResult.add(res);
     				}
 				}
+				boolean existOtherWay = false;
+				Predicate head = r.getHead().getLiterals().get(0).getPredicate();
+				for (Literal l : r.getBody()) {
+					if (!this.inpPred.contains(l.getPredicate())) {
+						existOtherWay = existOtherWay || depM[idb.indexOf(head)][idb.indexOf(l.getPredicate())];
+					}
+				}
 				boolean allContains = true;
 				for (Set<Rule> res : newResult) {
 					allContains = allContains && res.contains(r);
 				}
-				if (allContains)
+				if (allContains && existOtherWay)
 					newResult.addAll(result);
 				result = newResult;
 			} else if (isBase(r)) {
@@ -215,7 +223,6 @@ public class DatalogSynthesisImpl {
 				}
 			}
 		}
-		System.out.println("Initial sets: "+ result.size());
 		return this.getMaximalRuleSets(result);
 	}
 	
@@ -292,7 +299,7 @@ public class DatalogSynthesisImpl {
 	public List<Rule> transformInput() {
 		List<Rule> enSimp = new ArrayList<>();
 		List<Predicate> storedPred = new  ArrayList<>();
-		final UniversalVariable z = Expressions.makeUniversalVariable("Z");
+		final UniversalVariable z = Expressions.makeUniversalVariable("r");
 		Predicate iRP = Expressions.makePredicate("isRulePred", 1);
 		for (Fact f : this.inputTuple) {
 			Predicate p = f.getPredicate();
@@ -302,7 +309,7 @@ public class DatalogSynthesisImpl {
 				List<Term> termP = new ArrayList<>();
 				List<Term> termnewP = new ArrayList<>();
 				for (int i = 0; i < p.getArity(); i++) {
-					UniversalVariable x = Expressions.makeUniversalVariable("X"+i);
+					UniversalVariable x = Expressions.makeUniversalVariable("x"+i);
 					termP.add(x);
 					termnewP.add(x);
 				}
@@ -341,12 +348,12 @@ public class DatalogSynthesisImpl {
 	 *
 	 * @return The set of {@link Rule}s that is used to extract Datalog(S) reasoning result. 
 	 */
-	private List<Statement> rulesFromExpPred() {
+	List<Statement> rulesFromExpPred() {
 		List<Statement> result = new ArrayList<>();
 		for (Predicate p : this.expPred) {
 			List<Term> vars = new ArrayList<>();
 			for (int i = 0; i <= p.getArity() + 1; i++) {
-				vars.add(Expressions.makeUniversalVariable("X"+i));
+				vars.add(Expressions.makeUniversalVariable("x"+i));
 			}
 			result.add(Expressions.makeRule(Expressions.makePositiveLiteral(p, vars.subList(0, vars.size()-2)), 
 					Expressions.makePositiveLiteral(p.getName(), vars.subList(0, vars.size()-1))));
@@ -360,17 +367,15 @@ public class DatalogSynthesisImpl {
 	/**
 	 * Transform each {@link Rule}s in the ruleset to its set of Datalog(S)-derived existential {@link Rule}s.
 	 */
-	private void transformToDatalogS() {
-		Set<Predicate> edb = getEDB();
+	void transformToDatalogS() {
+		Set<Predicate> edb = getEDBPredicate();
 		for (Rule r : this.ruleSet) {
 			Conjunction<PositiveLiteral> head = r.getHead();
 			Conjunction<Literal> body = r.getBody();
 			
-//			List<Conjunction<Literal>> partition = checkBody(body);
 			List<SetVariable> setVs = new ArrayList<>();
 			List<Literal> newBody = new ArrayList<>();
 			Term cr = this.rule2const.get(r);
-//				newBody.add(Expressions.makePositiveLiteral("Rule", cr));
 			int newVar = 0;
 			for (Literal l : body) {
 				if (!edb.contains(l.getPredicate())) {
@@ -468,7 +473,7 @@ public class DatalogSynthesisImpl {
 	 * 
 	 * @return the set of EDB {@link Predicate}s.
 	 */
-	private Set<Predicate> getEDB() {
+	public Set<Predicate> getEDBPredicate() {
 		Set<Predicate> edb = new HashSet<>();
 		for (Literal l : this.inputTuple) {
 			edb.add(l.getPredicate());
@@ -485,7 +490,7 @@ public class DatalogSynthesisImpl {
 	private PositiveLiteral produceQuery(Predicate p) {
 		List<Term> vars = new ArrayList<>();
 		for (int i = 0; i < p.getArity(); i++) {
-			vars.add(Expressions.makeUniversalVariable("X"+i));
+			vars.add(Expressions.makeUniversalVariable("x"+i));
 		}
 		return Expressions.makePositiveLiteral(p, vars);
 	}
@@ -907,7 +912,6 @@ public class DatalogSynthesisImpl {
 		List<Statement> transFromPlus = new ArrayList<>();
 		for (Rule r : Pplus) {
 			transFromPlus.addAll(this.ruleSetTrans.get(r));
-//			transFromPlus.add(Expressions.makeFact("Rule", this.rule2const.get(r)));
 		}
 		return transFromPlus;
 	}

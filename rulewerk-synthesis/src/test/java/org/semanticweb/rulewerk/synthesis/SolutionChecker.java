@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
@@ -25,96 +26,105 @@ public class SolutionChecker {
 	}
 	
 	public static void main(String[] arg) throws IOException, ParsingException {
-		String benchCase = "inflamation";
-		System.out.println(benchCase);
-		KnowledgeBase kb = new KnowledgeBase();
-		ReasoningUtils.configureLogging();
-		
-		System.out.println("Parse Input");
-		File inputFile = new File(ReasoningUtils.INPUT_FOLDER + benchCase + "/rulewerk-input.txt");
-		FileInputStream inputStream = new FileInputStream(inputFile);
-		List<Fact> inputTuple;
-		try {
-			inputTuple = RuleParser.parse(inputStream).getFacts();
-			System.out.println("Input tuples parsed: " + inputTuple.size() + " facts");
-		} catch (final ParsingException e) {
-			System.out.println("Failed to parse input: " + e.getMessage());
-			return;
-		}
-		inputStream.close();
-		kb.addStatements(inputTuple);
-		
-		System.out.println("Parse Result");
-		File resultFile = new File(ReasoningUtils.INPUT_FOLDER + benchCase + "/rulewerk-result.txt");
-		FileInputStream resultStream = new FileInputStream(resultFile);
-		List<Rule> resultRule;
-		try {
-			resultRule = RuleParser.parse(resultStream).getRules();
-			System.out.println("Rules parsed: " + resultRule.size() + " facts");
-		} catch (final ParsingException e) {
-			System.out.println("Failed to parse rules: " + e.getMessage());
-			return;
-		}
-		resultStream.close();
-		kb.addStatements(resultRule);
-		
-		// ============================ REASONING ============================== //
-		List<Fact> solution = new ArrayList<>();
-		
-		try (final Reasoner reasoner = new VLogReasoner(kb)) {
-			reasoner.reason();
-			/* Execute some queries */
-			System.out.println("- Generating Answers");
-			File myObj = new File(ReasoningUtils.INPUT_FOLDER + benchCase + "/rulewerk-exp-pred.txt");
-			Scanner myReader = new Scanner(myObj);
-			while (myReader.hasNextLine()) {
-				String[] data = myReader.nextLine().split(" ");
-				List<Term> var = new ArrayList<>();
-				for (int i = 0; i < Integer.valueOf(data[1]); i++) {
-					var.add(Expressions.makeUniversalVariable("x"+i));
+		List<String> benchmarks = new ArrayList<>(Arrays.asList("union-find"));
+		for (String benchCase : benchmarks) {
+			System.out.println(benchCase);
+			int expCase = 7;
+			int expNums = 1;
+			for (int expNum = 1; expNum <= expNums; expNum++) {
+				KnowledgeBase kb = new KnowledgeBase();
+				ReasoningUtils.configureLogging();
+				
+				System.out.println("Parse Input");
+				File inputFile = new File(ReasoningUtils.INPUT_FOLDER + benchCase + "/rulewerk-input.txt");
+				FileInputStream inputStream = new FileInputStream(inputFile);
+				List<Fact> inputTuple;
+				try {
+					inputTuple = RuleParser.parse(inputStream).getFacts();
+					System.out.println("Input tuples parsed: " + inputTuple.size() + " facts");
+				} catch (final ParsingException e) {
+					System.out.println("Failed to parse input: " + e.getMessage());
+					return;
 				}
-				ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(data[0], var), reasoner);
-				solution.addAll(ReasoningUtils.getQueryAnswerAsListWhyProv(Expressions.makePositiveLiteral(data[0], var), reasoner));
+				inputStream.close();
+				kb.addStatements(inputTuple);
+				
+				System.out.println("Parse Result");
+				File resultFile = new File(ReasoningUtils.OUTPUT_FOLDER + benchCase + "/rulewerk-result-"+expCase+"-"+expNum+".txt");
+				FileInputStream resultStream = new FileInputStream(resultFile);
+				List<Rule> resultRule;
+				try {
+					resultRule = RuleParser.parse(resultStream).getRules();
+					System.out.println("Rules parsed: " + resultRule.size() + " facts");
+				} catch (final ParsingException e) {
+					System.out.println("Failed to parse rules: " + e.getMessage());
+					return;
+				}
+				resultStream.close();
+				kb.addStatements(resultRule);
+				
+				// ============================ REASONING ============================== //
+				List<Fact> solution = new ArrayList<>();
+				
+				try (final Reasoner reasoner = new VLogReasoner(kb)) {
+					reasoner.reason();
+					/* Execute some queries */
+					System.out.println("- Generating Answers");
+					File myObj = new File(ReasoningUtils.INPUT_FOLDER + benchCase + "/rulewerk-exp-pred.txt");
+					Scanner myReader = new Scanner(myObj);
+					while (myReader.hasNextLine()) {
+						String[] data = myReader.nextLine().split(" ");
+						List<Term> var = new ArrayList<>();
+						for (int i = 0; i < Integer.valueOf(data[1]); i++) {
+							var.add(Expressions.makeUniversalVariable("x"+i));
+						}
+						ReasoningUtils.printOutQueryAnswers(Expressions.makePositiveLiteral(data[0], var), reasoner);
+						solution.addAll(ReasoningUtils.getQueryAnswerAsListWhyProv(Expressions.makePositiveLiteral(data[0], var), reasoner));
+					}
+					myReader.close();
+				}
+				
+				System.out.println("Parsing Expected Output");
+				File outputPFile = new File(ReasoningUtils.INPUT_FOLDER + benchCase + "/rulewerk-output-plus.txt");
+				FileInputStream outputPStream = new FileInputStream(outputPFile);
+				List<Fact> outputTupleP;
+				try {
+					outputTupleP = RuleParser.parse(outputPStream).getFacts();
+					System.out.println("Expected output tuples parsed: " + outputTupleP.size() + " facts");
+				} catch (final ParsingException e) {
+					System.out.println("Failed to parse rules: " + e.getMessage());
+					return;
+				}
+				outputPStream.close();
+				
+				System.out.println("Parsing Non-Expected Output");
+				File outputMFile = new File(ReasoningUtils.INPUT_FOLDER + benchCase + "/rulewerk-output-min.txt");
+				FileInputStream outputMStream = new FileInputStream(outputMFile);
+				List<Fact> outputTupleM;
+				try {
+					outputTupleM = RuleParser.parse(outputMStream).getFacts();
+					System.out.println("Non-expected output tuples parsed: " + outputTupleM.size() + " facts");
+				} catch (final ParsingException e) {
+					System.out.println("Failed to parse rules: " + e.getMessage());
+					return;
+				}
+				outputMStream.close();
+				
+				Set<Fact> sol = new HashSet<Fact>(solution);
+				Set<Fact> exp = new HashSet<Fact>(outputTupleP);
+				Set<Fact> nexp = new HashSet<Fact>(outputTupleM);
+				Set<Fact> intersect = new HashSet<Fact>(solution);
+				intersect.retainAll(nexp);
+				if (nexp.isEmpty()) {
+					System.out.println(expNum+" Output as expected: " + isSameSet(sol, exp));
+					System.out.println(sol.containsAll(exp));
+				} else {
+					System.out.print(expNum+" Output as expected: ");
+					System.out.println(sol.containsAll(exp) && intersect.isEmpty());
+					System.out.println(sol.containsAll(exp));
+					System.out.println(intersect.isEmpty());
+				}
 			}
-			myReader.close();
-		}
-		
-		System.out.println("Parsing Expected Output");
-		File outputPFile = new File(ReasoningUtils.INPUT_FOLDER + benchCase + "/rulewerk-output-plus.txt");
-		FileInputStream outputPStream = new FileInputStream(outputPFile);
-		List<Fact> outputTupleP;
-		try {
-			outputTupleP = RuleParser.parse(outputPStream).getFacts();
-			System.out.println("Expected output tuples parsed: " + outputTupleP.size() + " facts");
-		} catch (final ParsingException e) {
-			System.out.println("Failed to parse rules: " + e.getMessage());
-			return;
-		}
-		outputPStream.close();
-		
-		System.out.println("Parsing Non-Expected Output");
-		File outputMFile = new File(ReasoningUtils.INPUT_FOLDER + benchCase + "/rulewerk-output-min.txt");
-		FileInputStream outputMStream = new FileInputStream(outputMFile);
-		List<Fact> outputTupleM;
-		try {
-			outputTupleM = RuleParser.parse(outputMStream).getFacts();
-			System.out.println("Non-expected output tuples parsed: " + outputTupleM.size() + " facts");
-		} catch (final ParsingException e) {
-			System.out.println("Failed to parse rules: " + e.getMessage());
-			return;
-		}
-		outputMStream.close();
-		
-		Set<Fact> sol = new HashSet<Fact>(solution);
-		Set<Fact> exp = new HashSet<Fact>(outputTupleP);
-		Set<Fact> nexp = new HashSet<Fact>(outputTupleM);
-		Set<Fact> intersect = new HashSet<Fact>(solution);
-		intersect.retainAll(nexp);
-		if (nexp.isEmpty()) {
-			System.out.println("Output as expected: " + isSameSet(sol, exp));
-		} else {
-			System.out.print("Output as expected: ");
-			System.out.println(sol.containsAll(exp) && intersect.isEmpty());
 		}
 	}
 }

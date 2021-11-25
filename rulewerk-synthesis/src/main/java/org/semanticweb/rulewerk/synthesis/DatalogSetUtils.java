@@ -54,8 +54,13 @@ public class DatalogSetUtils {
 	static Predicate U 		= Expressions.makePredicate("U", 3);
 	static Predicate ckSub	= Expressions.makePredicate("ckSub", 3);
 	static Predicate sub	= Expressions.makePredicate("sub", 2);
-	static Predicate eq	= Expressions.makePredicate("eq", 2);
+	static Predicate eq	= Expressions.makePredicate("equal", 2);
 	
+	/**
+	 * Generate the set of core existential rules for the Datalog(S)-based reasoning, denoted R_{SU}.
+	 *
+	 * @return the set R_{SU}.
+	 */
 	public static Set<Statement> getR_SU() {
 		Set<Statement> r_su = new HashSet<Statement>();
 
@@ -135,7 +140,14 @@ public class DatalogSetUtils {
 		return r_su;
 	}
 	
-	public static int countSetVarOccurenceBody(Rule r, SetVariable v) {
+	/**
+	 * Count the number of occurrences of a {@link SetVariable} in a {@link Rule}'s body.
+	 *  
+	 * @param r		non-null {@link Rule}
+	 * @param v		non-null {@link SetVariable}
+	 * @return the number of occurrences of v in r.
+	 */
+	static int countSetVarOccurenceBody(Rule r, SetVariable v) {
 		int count = 0;
 		List<Literal> ls = new ArrayList<Literal>(r.getBody().getLiterals());
 		for (Literal pl : ls) {
@@ -153,6 +165,12 @@ public class DatalogSetUtils {
 		return count;
 	}
 	
+	/**
+	 * Normalize a Datalog(S) {@link Rule} before generating its existential rules set.
+	 *  
+	 * @param r		non-null {@link Rule}.
+	 * @return normalized {@link Rule} of the corresponding input.
+	 */
 	public static Rule normalize(Rule r) {
 		// Replace every set term of the form S1 U S2 in a non-special predicate in the body with a fresh set variable S
 		// and add body atoms S = S1 U S2.
@@ -205,6 +223,12 @@ public class DatalogSetUtils {
 			return r;
 	}
 	
+	/**
+	 * Obtain the {@link SetTerm} ordering from a Datalog(S) {@link Statement}.
+	 *  
+	 * @param s		non-null Datalog(S) {@link Statement}.
+	 * @return ordered list of {@link SetTerm}.
+	 */
 	public static List<SetTerm> getOrder(Statement s) {
 		Set<SetTerm> terms = new HashSet<SetTerm>();
 		if (s instanceof Rule) {
@@ -247,11 +271,23 @@ public class DatalogSetUtils {
 		return order;
 	}
 	
-	private static UniversalVariable getVariable(Term t) {
+	/**
+	 * Generate a {@link Variable} from a {@link Term}.
+	 *  
+	 * @param t		non-null {@link Term}.
+	 * @return a {@link UniversalVariable} corresponding to the {@link Term}.
+	 */
+	static UniversalVariable getVariable(Term t) {
 		return Expressions.makeUniversalVariable("v_("+t.getName()+")");
 	}
 	
-	private static Literal replaceLiteral(Literal l) {
+	/**
+	 * Replace {@link SetTerm}s in a {@link Literal} with their corresponding {@link Variable}s.
+	 *  
+	 * @param l		non-null {@link Literal}.
+	 * @return The {@link Literal} where its {@link SetTerm}s are replaced with {@link Variable}s.
+	 */
+	static Literal replaceLiteral(Literal l) {
 		List<Term> newTerms = new ArrayList<Term>();
 		for (Term t : l.getArguments()) {
 			if (t.isSetTerm())
@@ -262,15 +298,21 @@ public class DatalogSetUtils {
 		Predicate p = l.getPredicate();
 		if (p instanceof SetPredicate) {
 			if (((SetPredicate) p).getPredicateType() == SetPredicateType.IS_ELEMENT_OF)
-				p = in;
+				p = Expressions.makePredicate(in.getName(), in.getArity());
 			else if (((SetPredicate) p).getPredicateType() == SetPredicateType.IS_SUBSET_OF)
-				p = sub;
+				p = Expressions.makePredicate(sub.getName(), sub.getArity());
 			else
 				p = Expressions.makePredicate(p.getName(), p.getArity());
 		}
 		return Expressions.makePositiveLiteral(p, newTerms);
 	}
 	
+	/**
+	 * Transform a Datalog(S) {@link Statement} to a set of existential {@link Rule}s.
+	 *  
+	 * @param s		non-null {@link Statement}.
+	 * @return A set of existential {@link Rule}s corresponding to the input.
+	 */
 	public static Set<Statement> transform(Statement s) {
 		Set<Statement> results = new HashSet<Statement>();
 		if (s instanceof Rule) {
@@ -282,6 +324,12 @@ public class DatalogSetUtils {
 		return results;
 	}
 	
+	/**
+	 * Transform a Datalog(S) {@link Fact} to a set of existential {@link Rule}s.
+	 *  
+	 * @param f		non-null {@link Fact}.
+	 * @return A set of existential {@link Rule}s corresponding to the input.
+	 */
 	public static Set<Statement> transformFact(Fact f) {
 		if (f.getSetTerms().count() == 0) return new HashSet<Statement>(Arrays.asList(f));
 		Set<Statement> results = new HashSet<Statement>();
@@ -321,6 +369,12 @@ public class DatalogSetUtils {
 		return results;
 	}
 	
+	/**
+	 * Transform a Datalog(S) {@link Rule} to a set of existential {@link Rule}s.
+	 *  
+	 * @param r		non-null {@link Rule}.
+	 * @return A set of existential {@link Rule}s corresponding to the input.
+	 */
 	public static Set<Rule> transformRule(Rule r) {
 		// if not Datalog(S) rule, return r as is.
 		if (r.getSetTerms().count() == 0) return new HashSet<Rule>(Arrays.asList(r));
@@ -369,8 +423,14 @@ public class DatalogSetUtils {
 		return results;
 	}
 	
-	private static <T> Set<T> setDifference(Set<T> s1, Set<T> s2) {
-		// Return s1 - s2
+	/**
+	 * Compute the difference of two {@link Set}s.
+	 *  
+	 * @param s1	non-null {@link Set}.
+	 * @param s2	non-null {@link Set}.
+	 * @return The difference s1 - s2.
+	 */
+	static <T> Set<T> setDifference(Set<T> s1, Set<T> s2) {
 		Set<T> result = new HashSet<>();
 		for (T s : s1) {
 			if (!s2.contains(s))
@@ -379,6 +439,12 @@ public class DatalogSetUtils {
 		return result;
 	}
 	
+	/**
+	 * Simplify an existential {@link Rule} by removing redundant {@link Literal}s.
+	 *  
+	 * @param r		non-null existential {@link Rule}.
+	 * @return A simplified rule corresponding to the input.
+	 */
 	public static Rule simplify(Rule r) {
 		Set<Term> relevantTerms = new HashSet<>(r.getHead().getTerms().collect(Collectors.toList()));
 		List<Literal> remainingBody = new ArrayList<>(r.getBody().getLiterals());
@@ -415,4 +481,6 @@ public class DatalogSetUtils {
 		}
 		return Expressions.makeRule(r.getHead(), Expressions.makeConjunction(newBody));
 	}
+	
+	
 }

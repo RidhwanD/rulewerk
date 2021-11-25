@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.semanticweb.rulewerk.core.model.api.Literal;
 import org.semanticweb.rulewerk.core.model.api.PositiveLiteral;
@@ -53,10 +54,10 @@ public class RuleGenerator {
 	}
 	
 	/**
-	 * Extract the set of all {@link Term}s from a {@link Rule}.
+	 * Extract the list of all {@link Term}s from a {@link Rule}.
 	 *
 	 * @param r 	non-null {@link Rule}
-	 * @return the set of all {@link Term}s corresponding to the input
+	 * @return the list of all {@link Term}s corresponding to the input
 	 */
 	public List<Term> extractTerms(Rule r) {
 		List<Term> resVars = new ArrayList<>();
@@ -129,11 +130,11 @@ public class RuleGenerator {
 	 */
 	public boolean varClauseRepeat(Rule metaR) {
 		for (Literal l : metaR.getHead()) {
-			List<Variable> headVars = l.getVariables().toList();
+			List<Variable> headVars = l.getVariables().collect(Collectors.toList());
 			if (headVars.size() < l.getPredicate().getArity()) return true;
 		}
 		for (Literal l : metaR.getBody()) {
-			List<Variable> bodyVars = l.getVariables().toList();
+			List<Variable> bodyVars = l.getVariables().collect(Collectors.toList());
 			if (bodyVars.size() < l.getPredicate().getArity()) return true;
 		}
 		return false;
@@ -146,7 +147,7 @@ public class RuleGenerator {
 	 * @return true if {@link Variable}s appear exactly once. Otherwise false.
 	 */
 	public boolean varAppearsOnce(Rule metaR) {
-		List<Variable> vars = metaR.getVariables().toList();
+		List<Variable> vars = metaR.getVariables().collect(Collectors.toList());
 		List<Term> occurenceVars = this.extractTerms(metaR);
 		for (Variable v : vars) {
 			if (Collections.frequency(occurenceVars, v) == 1) return true;
@@ -170,7 +171,7 @@ public class RuleGenerator {
 	}
 	
 	/**
-	 * Check whether in a {@link Literal}, in a meta-{@link Rule} can be matched with any {@link Predicate}s.
+	 * Check whether a {@link Literal} in a meta-{@link Rule} can be matched with any {@link Predicate}s.
 	 *
 	 * @param l 	non-null {@link Literal}
 	 * @return true if it can be matched. Otherwise false.
@@ -226,7 +227,7 @@ public class RuleGenerator {
 	 * @return a new meta-{@link Rule} if the result is valid. Otherwise, return the input meta-{@link Rule}.
 	 */
 	public Rule removeArgument(Rule metaR, Variable v) {
-		if (!metaR.getVariables().toList().contains(v)) {
+		if (!metaR.getVariables().collect(Collectors.toList()).contains(v)) {
 			return metaR;
 		} else {
 			List<PositiveLiteral> head = new ArrayList<>();
@@ -253,9 +254,9 @@ public class RuleGenerator {
 	 * @param metaR 	non-null meta-{@link Rule}
 	 * @return a set of valid meta-{@link Rule}s that contains every combination of {@link Variable}s addition. 
 	 */
-	private List<Rule> addBodyArgToBody(Rule metaR) {
-		Set<Variable> headVars = new HashSet<>(metaR.getHead().getVariables().toList());
-		Set<Variable> bodyVars = new HashSet<>(metaR.getBody().getVariables().toList());
+	private List<Rule> addBodyArgToHead(Rule metaR) {
+		Set<Variable> headVars = new HashSet<>(metaR.getHead().getVariables().collect(Collectors.toList()));
+		Set<Variable> bodyVars = new HashSet<>(metaR.getBody().getVariables().collect(Collectors.toList()));
 		List<Rule> result = new ArrayList<>();
 		bodyVars.removeAll(headVars);
 		if (bodyVars.size() == 0)
@@ -286,7 +287,7 @@ public class RuleGenerator {
 	 * @return a set of valid meta-{@link Rule}s that contains every combination of {@link Variable}s addition. 
 	 */
 	public List<Rule> expandBodyArgs(Rule metaR) {
-		List<Rule> temp = this.addBodyArgToBody(metaR);
+		List<Rule> temp = this.addBodyArgToHead(metaR);
 		List<Rule> result = new ArrayList<>();
 		for (Rule r : temp) {
 			if (!this.existSimilar(result, r))
@@ -295,7 +296,7 @@ public class RuleGenerator {
 		while (temp.size() > 0) {
 			List<Rule> accumulator = new ArrayList<>();
 			for (Rule r : temp) {
-				List<Rule> res = this.addBodyArgToBody(r);
+				List<Rule> res = this.addBodyArgToHead(r);
 				if (res != null)
 					accumulator.addAll(res);
 			}
@@ -334,7 +335,6 @@ public class RuleGenerator {
 			}
 			vars = temp;
 		}
-		System.out.println(resVars);
 		List<Rule> result = new ArrayList<>();
 		Predicate head = metaR.getHead().getLiterals().get(0).getPredicate();
 		List<Literal> body = metaR.getBody().getLiterals();
@@ -374,7 +374,7 @@ public class RuleGenerator {
 		for (int j = 0; j < maxVars - this.extractTerms(metaR).size(); j++) {
 			List<List<Term>> temp = new ArrayList<>();
 			for (List<Term> vs: vars) {
-				for (int i = 0; i < vs.size(); i++) {
+				for (int i = 0; i <= vs.size(); i++) {
 					List<Term> temp2 = new ArrayList<>(vs);
 					temp2.add(i, v);
 					resVars.add(temp2);
@@ -382,9 +382,6 @@ public class RuleGenerator {
 				}
 			}
 			vars = temp;
-		}
-		for (List<Term> vs : resVars) {
-			System.out.println(vs);
 		}
 		List<Rule> result = new ArrayList<>();
 		Predicate head = metaR.getHead().getLiterals().get(0).getPredicate();
@@ -437,10 +434,11 @@ public class RuleGenerator {
 	 */
 	public boolean existSimilar(List<Rule> rules, Rule r) {
 		for (Rule comp : rules) {
-			List<Term> vars1 = this.extractTerms(r);
-			List<Term> vars2 = this.extractTerms(comp);
-			if (isSimilarVariables(vars1, vars2) && this.extractPredicates(r).equals(this.extractPredicates(comp))) 
+			List<Term> vars2 = this.extractTerms(r);
+			List<Term> vars1 = this.extractTerms(comp);
+			if (isSimilarVariables(vars1, vars2) && this.extractPredicates(r).equals(this.extractPredicates(comp))) {
 				return true;
+			}
 		}
 		return false;
 	}
@@ -456,9 +454,11 @@ public class RuleGenerator {
 		List<Predicate> considered = new ArrayList<>(this.inputRelation);
 		considered.addAll(this.outputRelation);
 		considered.addAll(this.inventedRelation);
+		List<Predicate> forHead = new ArrayList<>(this.outputRelation);
+		forHead.addAll(this.inventedRelation);
 		for (int k = 1; k <= maxBodySize; k++) {
 			List<List<Predicate>> perms = this.permutation(considered, considered.size(), k);
-			for (Predicate op : this.outputRelation) {
+			for (Predicate op : forHead) {
 				for (List<Predicate> body : perms) {
 					// get maximal number of variables
 					int totalBodyArity = 0;
